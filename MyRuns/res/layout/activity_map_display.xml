@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="120dp">
+        
+		<fragment 
+			android:id="@+id/map"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:name="com.google.android.gms.maps.MapFragment"/>  
+			
+		<TextView 
+		    android:id="@+id/type_stats"
+		    android:layout_width="match_parent"
+		    android:layout_height="wrap_content"
+		    android:layout_marginTop="5dp">
+		</TextView>
+		
+		<TextView 
+		    android:id="@+id/avg_speed_stats"
+		    android:layout_width="match_parent"
+		    android:layout_marginTop="25dp"
+		    android:layout_height="wrap_content">
+		</TextView>
+		
+		<TextView 
+		    android:id="@+id/cur_speed_stats"
+		    android:layout_width="match_parent"
+		    android:layout_marginTop="45dp"
+		    android:layout_height="wrap_content">
+		</TextView>
+		
+		<TextView 
+		    android:id="@+id/climb_stats_stats"
+		    android:layout_marginTop="65dp"
+		    android:layout_width="match_parent"
+		    android:layout_height="wrap_content">
+		</TextView>
+		
+		<TextView 
+		    android:id="@+id/calories_stats"
+		    android:layout_width="match_parent"
+		    android:layout_marginTop="85dp"
+		    android:layout_height="wrap_content">
+		</TextView>
+		
+		<TextView 
+		    android:id="@+id/distance_stats"
+		    android:layout_marginTop="105dp"
+		    android:layout_width="match_parent"
+		    android:layout_height="wrap_content">
+		</TextView>
+    </FrameLayout>         
+
+    <LinearLayout 
+        android:id="@+id/bottom_buttons"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="5dp"
+		android:layout_alignParentBottom="true"
+		android:orientation="horizontal" >
+		
+        <Button
+            android:id="@+id/button_map_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginLeft="50dp"
+            android:onClick="onSaveClicked"
+            android:text="@string/title_button_save" >
+        </Button>
+
+        <Button
+            android:id="@+id/button_map_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginRight="50dp"
+            android:onClick="onCancelClicked"
+            android:text="@string/title_button_cancel" >
+        </Button>
+	</LinearLayout>
+	
+</RelativeLayout>

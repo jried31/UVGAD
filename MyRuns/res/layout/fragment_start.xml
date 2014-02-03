@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+   
+    <TextView
+        android:text="@string/StartFragment_InputType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+    </TextView>
+    
+    <Spinner
+        android:id="@+id/Spinner_InputType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:entries="@array/InputTypeEntries" >
+    </Spinner>
+    
+    <TextView
+        android:text="@string/StartFragment_ActivityType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+    </TextView>
+    
+    <Spinner
+        android:id="@+id/Spinner_ActivityType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:entries="@array/ActivityTypeEntries" >
+    </Spinner>
+    
+    <Button
+            android:id="@+id/ButtonStart"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_gravity="center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/button_start"
+            android:onClick="onStartClicked">
+    </Button>
+</LinearLayout>

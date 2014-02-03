@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" >
+
+    <TextView
+        android:id="@+id/recommend_uvi"
+        android:layout_width="180dp"
+        android:layout_height="140dp"
+        android:gravity="center"
+        android:layout_marginLeft="0dp"
+        android:layout_marginTop="0dp"
+        android:text=""
+        android:textSize="120sp"
+        android:textStyle="bold" />
+    
+    
+    <ImageView
+        android:id="@+id/clothes"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="25dp"
+        android:layout_marginTop="140dp"
+        android:src="@drawable/clothes"  />
+
+    <ImageView
+        android:id="@+id/sunglass"
+        android:layout_alignLeft="@+id/clothes"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="65dp"
+        android:layout_marginTop="140dp"
+        android:src="@drawable/sunglass" />
+    
+    <ImageView
+        android:id="@+id/suncream"
+        android:layout_alignLeft="@+id/sunglass"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="65dp"
+        android:layout_marginTop="140dp"
+        android:src="@drawable/suncream" />
+    
+    <ImageView
+        android:id="@+id/hat"
+        android:layout_alignLeft="@+id/suncream"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="65dp"
+        android:layout_marginTop="140dp"
+        android:src="@drawable/hat" />
+    
+    <ImageView
+        android:id="@+id/hide"
+        android:layout_alignLeft="@+id/hat"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="65dp"
+        android:layout_marginTop="140dp"
+        android:src="@drawable/hide" />
+
+    <EditText
+        android:id="@+id/recommend_text"
+        android:layout_width="320dp"
+        android:layout_height="360dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="200dp"
+        android:text=""
+        android:ems="1000"  
+        android:inputType="textMultiLine" /> 
+        
+</RelativeLayout>

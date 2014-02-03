@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+    <PreferenceCategory
+        android:title="@string/account_preference_title">
+        
+        <PreferenceScreen
+                android:title="@string/user_profile_title"
+                android:summary="@string/user_profile_summary">
+
+            <intent android:targetPackage="edu.dartmouth.cs.myruns5"
+                    android:targetClass="edu.dartmouth.cs.myruns5.ProfileActivity">
+            </intent>
+
+        </PreferenceScreen>  
+        
+        <CheckBoxPreference
+            android:key="privacy_setting"
+            android:title="@string/privacy_setting_title"
+            android:summary="@string/privacy_setting_summary">
+            
+        </CheckBoxPreference>  
+        
+        
+        
+    </PreferenceCategory>
+    
+    <PreferenceCategory
+        android:title="@string/additional_settings_title">
+         
+        <ListPreference
+            android:key="unit_preference"
+            android:title="@string/unit_preference_title"
+            android:summary="@string/unit_preference_summary"
+            android:entries="@array/unit_preference_entries"
+            android:entryValues="@array/unit_preference_entryValues"
+            android:defaultValue="0"
+            android:dialogTitle="@string/unit_preference_dialogTitle" >
+            
+        </ListPreference> 
+        
+        <EditTextPreference
+            android:key="comment"
+            android:title="@string/comment_title"
+            android:summary="@string/comment_summary"
+            android:dialogTitle="@string/comment_dialogTitle">
+            
+        </EditTextPreference>
+        
+    </PreferenceCategory>
+    
+    <PreferenceCategory
+        android:title="@string/misc_title">
+        
+        <PreferenceScreen
+                android:title="@string/class_homepage_title"
+                android:summary="@string/class_homepage_summary">
+
+            <intent android:action="android.intent.action.VIEW"
+                    android:data="http://www.cs.dartmouth.edu/~campbell">
+                
+            </intent>
+
+        </PreferenceScreen>       
+        
+        
+        
+    </PreferenceCategory>
+        
+
+</PreferenceScreen>
