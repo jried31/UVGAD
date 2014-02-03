@@ -25,7 +25,7 @@
     <string name="ui_sensor_service_toast_success_file_created">Data file created.</string>
     <string name="ui_sensor_service_toast_error_file_saving_failed">Failed saving the file. Check your storage.</string>
     
-<string name = "app_id">183800615143978</string>    <string name="app_name">MyRuns5</string>
+<string name = "app_id">183800615143978</string>    <string name="app_name">MyRuns</string>
     <string name="action_settings">Settings</string>
     <string name="login">Log In</string>
     <string name="logout">Log Out</string>

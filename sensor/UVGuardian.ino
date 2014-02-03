@@ -12,27 +12,9 @@ under CC-SA v3 license.
 #include "eepromAnything.h"
 #include <Time.h>
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 #define USESPEED			1  //set to zero to free up code space if option is not needed
 #define USEMOTION			1  //set to zero to free up code space if option is not needed
 #define USEHTTPPOST			0  //set to zero to free up code space if option is not needed
-=======
-#define USESPEED			0  //set to zero to free up code space if option is not needed
-#define USEMOTION			0  //set to zero to free up code space if option is not needed
-#define USEHTTPPOST			1  //set to zero to free up code space if option is not needed
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
-#define USESPEED			0  //set to zero to free up code space if option is not needed
-#define USEMOTION			0  //set to zero to free up code space if option is not needed
-#define USEHTTPPOST			1  //set to zero to free up code space if option is not needed
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
-#define USESPEED			0  //set to zero to free up code space if option is not needed
-#define USEMOTION			0  //set to zero to free up code space if option is not needed
-#define USEHTTPPOST			1  //set to zero to free up code space if option is not needed
->>>>>>> 41caeac9d001c06e34ff3e61ed5c48033055001e
 #define USECALL                         1  //set to zero to disable sms commands
 
 GeogramONE ggo;
@@ -43,25 +25,6 @@ PA6C gps(&Serial);
 goCoord lastValid;
 geoFence fence;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
->>>>>>> 41caeac9d001c06e34ff3e61ed5c48033055001e
-unsigned long time_test;
-unsigned long setup_http_return;
-
-
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
->>>>>>> 41caeac9d001c06e34ff3e61ed5c48033055001e
 volatile uint8_t call;
 volatile uint8_t move;
 volatile uint8_t battery = 0;
@@ -112,24 +75,6 @@ char lat[] = "\",\"lat\":\"";
 char lng[] = "\",\"lng\":\"";
 char time[] = "\",\"time\":\"";
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-double my_uv[] = {0,0};
-double uv_index = 0;
-
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
-double my_uv[] = {0,0};
-double uv_index = 0;
-
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
-double my_uv[] = {0,0};
-double uv_index = 0;
-
->>>>>>> 41caeac9d001c06e34ff3e61ed5c48033055001e
 void setup()
 {
         Serial.begin(9600);
@@ -154,22 +99,7 @@ void setup()
 	#endif
         #if USEHTTPPOST
         Serial.println("Starting HTTP...");
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         setupHTTP();
-=======
-        setup_http_return = GetPhoneNumber();
-        //setupHTTP();
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
-        setup_http_return = GetPhoneNumber();
-        //setupHTTP();
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
-        setup_http_return = GetPhoneNumber();
-        //setupHTTP();
->>>>>>> 41caeac9d001c06e34ff3e61ed5c48033055001e
         #endif // USEHTTPPOST
 
 	ggo.configureBreachParameters(&breachSpeed, &breachReps);
@@ -196,32 +126,7 @@ void setup()
 
 void loop()
 {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 	if(!gps.getCoordinates(&lastValid))
-=======
-=======
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
->>>>>>> 41caeac9d001c06e34ff3e61ed5c48033055001e
-        //Serial.print(1010);
-        //Serial.println("uv_test");
-	Serial.print("Time: ");
-        time_test = millis();
-        //prints time since program started
-        //Serial.println(time_test);
-        // wait a second so as not to send massive amounts of data
-        //delay(100);
-
-        if(!gps.getCoordinates(&lastValid))
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
->>>>>>> 41caeac9d001c06e34ff3e61ed5c48033055001e
 	{
 		int8_t tZ = EEPROM.read(TIMEZONE);
 		bool eM = EEPROM.read(ENGMETRIC);
@@ -283,30 +188,7 @@ void loop()
 	if(cmd3)
 		command3();
 	#endif
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
       if( lastValid.signalLock ) {
-=======
-=======
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
->>>>>>> 41caeac9d001c06e34ff3e61ed5c48033055001e
-      //if( lastValid.signalLock ) {
-      if( 1 ) {
-        
-        uv_index = (analogRead(sensorPin)-320.0)/25.0; 
-        my_uv[0] = uv_index;
-        httpPost(my_uv);
-        
-        
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
->>>>>>> 41caeac9d001c06e34ff3e61ed5c48033055001e
         Serial.print(uv);
         Serial.print((analogRead(sensorPin)-320.0)/25.0);
         Serial.print(time);
@@ -351,19 +233,7 @@ void loop()
         // End
         Serial.println("\"}");
         
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         delay(1000);
-=======
-        //delay(1000);
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
-        //delay(1000);
->>>>>>> 47b1eec80e46022b2a5bde07a77ec3053d603cd3
-=======
-        //delay(1000);
->>>>>>> 41caeac9d001c06e34ff3e61ed5c48033055001e
       }
       
 	if(battery)
