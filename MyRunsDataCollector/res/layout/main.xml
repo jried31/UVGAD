@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <Button
+        android:id="@+id/btnLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+            android:onClick="onLightClicked"
+        android:text="@string/collect_light" />
+
+    <Button
+        android:id="@+id/btnAccelerometer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+            android:onClick="onAccelerometerClicked"
+        android:text="@string/collect_accelerometer" />
+
+</LinearLayout>

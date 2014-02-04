@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="center|center_vertical"
+    android:orientation="vertical">
+
+    <RadioGroup
+        android:id="@+id/radioGroupLabels"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="30dp" >
+
+        <RadioButton
+            android:id="@+id/radioStanding"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:checked="true"
+            android:text="@string/ui_collector_radio_standing_title" />
+
+        <RadioButton
+            android:id="@+id/radioWalking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_walking_title" />
+
+        <RadioButton
+            android:id="@+id/radioJogging"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_jogging_title" />
+        
+        <RadioButton
+            android:id="@+id/radioSprinting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_sprinting_title" />
+        
+        <RadioButton
+            android:id="@+id/radioOther"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_other_title" />
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/btnStart"
+        android:layout_width="200dp"
+        android:layout_height="60dp"
+        android:background="@color/track_color_slow"
+        android:onClick="onStartClicked"
+        android:text="@string/ui_collector_button_start_title" />
+
+    <Button
+        android:id="@+id/btnStop"
+        android:layout_width="200dp"
+        android:layout_height="70dp"
+        android:onClick="onStopClicked"
+        android:background="@color/red"
+        android:text="@string/ui_collector_button_stop_title" />
+    
+    <Button
+        android:id="@+id/btnDeleteData"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:onClick="onDeleteDataClicked"
+        android:text="@string/ui_collector_button_delete_title" />
+
+</LinearLayout>

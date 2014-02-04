@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <RadioGroup
+        android:id="@+id/radioGroupLabels"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="30dp" >
+
+        <RadioButton
+            android:id="@+id/radioShade"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:checked="true"
+            android:text="@string/ui_collector_radio_shade_title" />
+
+        <RadioButton
+            android:id="@+id/radioSun"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_sun_title" />
+        <RadioButton
+            android:id="@+id/radioCloud"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_cloud_title" />
+        <RadioButton
+            android:id="@+id/radioOther"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_other_title" />
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/btnCollect"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:onClick="onCollectClicked"
+        android:text="@string/ui_collector_button_start_title" />
+
+    <Button
+        android:id="@+id/btnDeleteData"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:onClick="onDeleteDataClicked"
+        android:text="@string/ui_collector_button_delete_title" />
+
+</LinearLayout>
