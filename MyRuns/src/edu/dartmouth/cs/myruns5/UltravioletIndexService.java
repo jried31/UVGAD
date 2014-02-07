@@ -203,78 +203,79 @@ public class UltravioletIndexService extends Service implements LocationListener
 			// http://www.uvawareness.com/uv-index/uv-index.php?location=ucla
 
 			// URL to the main website
-			if (postCode.equals("")) {
-				System.out.println("Post Code is empty!");
-				return;
-			}
-			String website = "http://www.uvawareness.net/s/index.php", referrerWebsite = "http://www.uvawareness.com/uv-index/uv-index.php";
-			Uri.Builder uri = Uri.parse(referrerWebsite).buildUpon();
-			uri.appendQueryParameter("location", postCode);
-
-			HttpClient httpclient = new DefaultHttpClient();
-			HttpGet httppost = new HttpGet(website);
-			httppost.addHeader("Referer", uri.build().toString());// "http://www.uvawareness.com/uv-index/uv-index.php?location=3450%20sawtelle%20blvd");
-
-			// Execute HTTP Post Request
-			org.apache.http.HttpResponse response = httpclient
-					.execute(httppost);
-			HttpEntity entity = response.getEntity();
-			InputStream instream = entity.getContent();
-			InputStreamReader isr = new InputStreamReader(instream);
-			BufferedReader rd = new BufferedReader(isr);
-			StringBuffer buffer = new StringBuffer();
-
-			try {
-				String line = "";
-				while ((line = rd.readLine()) != null) {
-					buffer.append(line);
+			if (postCode != null) {
+				String website = "http://www.uvawareness.net/s/index.php", referrerWebsite = "http://www.uvawareness.com/uv-index/uv-index.php";
+				Uri.Builder uri = Uri.parse(referrerWebsite).buildUpon();
+				uri.appendQueryParameter("location", postCode);
+	
+				HttpClient httpclient = new DefaultHttpClient();
+				HttpGet httppost = new HttpGet(website);
+				httppost.addHeader("Referer", uri.build().toString());// "http://www.uvawareness.com/uv-index/uv-index.php?location=3450%20sawtelle%20blvd");
+	
+				// Execute HTTP Post Request
+				org.apache.http.HttpResponse response = httpclient.execute(httppost);
+				HttpEntity entity = response.getEntity();
+				InputStream instream = entity.getContent();
+				InputStreamReader isr = new InputStreamReader(instream);
+				BufferedReader rd = new BufferedReader(isr);
+				StringBuffer buffer = new StringBuffer();
+	
+				try {
+					String line = "";
+					while ((line = rd.readLine()) != null) {
+						buffer.append(line);
+					}
+					responseString = buffer.toString();
+					isr.close();
+				} finally {
+					instream.close();
 				}
-				responseString = buffer.toString();
-				isr.close();
-			} finally {
-				instream.close();
+				
+				if (responseString != null) 
+				{
+					Document doc = Jsoup.parse(responseString);
+					Elements content = doc.getElementsByClass("fcDayCon");
+	
+					for (Element fcDayCon : content) {
+						// Found the UVI data for the proper day
+						Element dayCon = fcDayCon.getElementsByClass("fcDate").first();
+	
+						String day = dayCon.html().toUpperCase(Locale.US);
+						if (day.equals(DAY_OF_WEEK.values()[dayOfWeek - 1].name())) {
+							int it = 0;
+							Elements contents = fcDayCon.getElementsByClass("uval");
+							// Iteration of UVal values go from
+							// 6am,7,8,9,10,11,12pm,1,2,3,4,5,6pm
+							for (int i = 0; i < 13; i++) {
+								// If hour is 6am, 5pm and 6pm, no UVI then
+								if(i == 0 || i == 11 || i == 12){
+									HOURLY_UVI_FORECAST[i] = 0;
+									continue;
+								}
+								Element uval = contents.get(i);
+								String val = uval.html();
+	
+								// val will return an empty string if no value present
+								if (val.equals(""))
+									HOURLY_UVI_FORECAST[i] = 1;
+								else {
+									HOURLY_UVI_FORECAST[i] = Float.parseFloat(val);
+								}
+							}
+	
+							break;
+						}
+					}
+					hasData = true;
+				}
+			}else{				
+				System.out.println("Post Code is empty!");
 			}
+			
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-
-		if (responseString != null) {
-			Document doc = Jsoup.parse(responseString);
-			Elements content = doc.getElementsByClass("fcDayCon");
-
-			for (Element fcDayCon : content) {
-				// Found the UVI data for the proper day
-				Element dayCon = fcDayCon.getElementsByClass("fcDate").first();
-
-				String day = dayCon.html().toUpperCase(Locale.US);
-				if (day.equals(DAY_OF_WEEK.values()[dayOfWeek - 1].name())) {
-					int it = 0;
-					Elements contents = fcDayCon.getElementsByClass("uval");
-					// Iteration of UVal values go from
-					// 6am,7,8,9,10,11,12pm,1,2,3,4,5,6pm
-					for (int i = 0; i < 13; i++) {
-						// If hour is 6am, 5pm and 6pm, no UVI then
-						if(i == 0 || i == 11 || i == 12){
-							HOURLY_UVI_FORECAST[i] = 0;
-							continue;
-						}
-						Element uval = contents.get(i);
-						String val = uval.html();
-
-						// val will return an empty string if no value present
-						if (val.equals(""))
-							HOURLY_UVI_FORECAST[i] = 1;
-						else {
-							HOURLY_UVI_FORECAST[i] = Float.parseFloat(val);
-						}
-					}
-
-					break;
-				}
-			}
-			hasData = true;
 		}
 	}
 
@@ -282,20 +283,20 @@ public class UltravioletIndexService extends Service implements LocationListener
 		Geocoder geoCoder = new Geocoder(getApplicationContext(),
 				Locale.getDefault());
 		List<Address> address = null;
-		String postCode = "";
+		String postCode = null;
 		
 		if (geoCoder != null) {
 			try {
 				address = geoCoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+				if (address.size() > 0) {
+					postCode = address.get(0).getPostalCode();
+				}
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-			if (address.size() > 0) {
-				postCode = address.get(0).getPostalCode();
-			}
+
 		}
-		
 		return postCode;
 	}
 
@@ -341,7 +342,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 		 * now.get(Calendar.MINUTE);// 24 hr format long firstExecutionDelay =
 		 * (updateInterval - minute) Globals.ONE_MINUTE;
 		 */
-		timer.scheduleAtFixedRate(updateUVITask, 0, 10000);
+		timer.scheduleAtFixedRate(updateUVITask, 0, 60000);
 		// super.onCreate();
 		
 	}

@@ -12,5 +12,4 @@ public class StartFragment extends PreferenceFragment {
 		return inflater.inflate(R.layout.fragment_start, container, false);
 	}
 	
-
 }

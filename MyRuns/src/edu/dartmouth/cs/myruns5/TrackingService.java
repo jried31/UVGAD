@@ -455,7 +455,7 @@ public class TrackingService extends Service
 	      
 	                          try {                                  
 	                        	  long uviReading=0;
-								sunClassificationFile.append(System.currentTimeMillis() +"\t" + classification + "\t" + uviReading + "\n");           
+								sunClassificationFile.append(System.currentTimeMillis() +"\t" + classification + "\t" + uviReading + pitchReading + "\n");           
 	                          } catch (IOException ex){
 	                          }
 	                          finally{
@@ -489,9 +489,6 @@ public class TrackingService extends Service
 	// Timer object to periodically update final type
 	Timer updateFinalTypeTimer = new Timer();
 	
-	/************ AsyncTask **************/
-
-	private int mActivityInference = -1;
 	private int mMaxActivityInferenceWindow = 5;//Allow 5 readings to dictate the Voted activity
 	int inferenceCount=0;
 	Map<Integer,Integer> mInferredActivityTypeMap = new HashMap<Integer,Integer>(Globals.FEAT_NUMBER_FEATURES);

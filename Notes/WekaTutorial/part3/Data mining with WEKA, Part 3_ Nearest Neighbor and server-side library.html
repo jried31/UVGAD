@@ -1,0 +1,1447 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Cache-control" content="no-cache">
+<title>Data mining with WEKA, Part 3: Nearest Neighbor and server-side library</title>
+<meta http-equiv="PICS-Label" content="(PICS-1.1 &quot;http://www.icra.org/ratingsv02.html&quot; l gen true r (cz 1 lz 1 nz 1 oz 1 vz 1) &quot;http://www.rsac.org/ratingsv01.html&quot; l gen true r (n 0 s 0 v 0 l 0) &quot;http://www.classify.org/safesurf/&quot; l gen true r (SS~~000 1))">
+<link rel="schema.DC" href="http://purl.org/DC/elements/1.0/">
+<link rel="SHORTCUT ICON" href="http://www.ibm.com/favicon.ico">
+<meta name="Owner" content="developerWorks Content/Raleigh/IBM">
+<meta name="DC.Language" scheme="rfc1766" content="en">
+<meta name="IBM.Country" content="ZZ">
+<meta name="Security" content="Public">
+<meta name="IBM.SpecialPurpose" content="SP001">
+<meta name="IBM.PageAttributes" content="sid=1003,1004">
+<meta name="Source" content="v16 Template Generator">
+<meta name="Robots" content="index,follow">
+<meta name="Abstract" content="Data mining can be used to turn seemingly meaningless data into useful information, with rules, trends, and inferences that can be used to improve your business and revenue. This article will go over the last common data mining technique, 'Nearest Neighbor,' and will show you how to use the WEKA Java library in your server-side code to integrate data mining technology into your Web applications.">
+<meta name="Description" content="Data mining can be used to turn seemingly meaningless data into useful information, with rules, trends, and inferences that can be used to improve your business and revenue. This article will go over the last common data mining technique, 'Nearest Neighbor,' and will show you how to use the WEKA Java library in your server-side code to integrate data mining technology into your Web applications.">
+<meta name="Keywords" content="data mining, data mine, weka, regression, nearest neighbor, clustering, classification tree, open source, foss, tttosca">
+<meta name="DC.Date" scheme="iso8601" content="2010-06-08">
+<meta name="DC.Type" scheme="IBM_ContentClassTaxonomy" content="CT316">
+<meta name="DC.Subject" scheme="IBM_SubjectTaxonomy" content="TT400">
+<meta scheme="IBM_WTMCategory" name="IBM.WTMCategory" content="SOFDCOSRZZ">
+<meta name="DC.Rights" content="© Copyright&nbsp;IBM Corporation&nbsp;2010">
+<meta name="IBM.Effective" scheme="W3CDTF" content="2010-06-08">
+<meta name="title" content="Data mining with WEKA, Part 3: Nearest Neighbor and server-side library">
+
+<!-- HEADER_SCRIPTS_AND_CSS_INCLUDE -->
+<link href="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/all.css" media="all" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/screen.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/screen-uas.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/screen-fonts.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/handheld.css" media="handheld" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/print.css" media="print" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/overlay.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<!-- dW-specific CSS -->
+<link href="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/dw-screen.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/dw-screen-comments-ratings-signin.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/jquery.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<!-- xM Masthead/Footer -->
+<link href="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/dw-mf2013-N.css" rel="stylesheet" title="www" type="text/css">
+<script src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/ibmcommon.js" type="text/javascript">//</script><link title="IBM Search" href="http://www.ibm.com/search/opensearch/description.xml" type="application/opensearchdescription+xml" rel="search">
+<script src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/dynamicnav.js" type="text/javascript">//</script>
+<!-- dW functional JS -->
+<script language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/urltactic.js" type="text/javascript"></script>
+<!-- Rating_START -->
+<script language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/showrating.js" type="text/javascript"></script>
+<style type="text/css">
+.metavalue {
+  display: none;
+}
+</style>
+<!-- Rating_END --><!-- RESERVED_HEADER_INCLUDE -->
+<script language="javascript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/ajax1.js" type="text/javascript"></script>
+<script language="javascript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/search_counter-maverick.js" type="text/javascript"></script>
+<script language="javascript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/request_referer_capture-maverick.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript">
+ <!--
+ setDefaultQuery('opensourceart');
+ //-->
+</script>
+<script language="JavaScript" type="text/javascript">
+ <!--
+ function openNewWindow(url,tar,arg){window.open(url,tar,arg);}
+ //-->
+</script>
+<!-- Include file support -->
+<script language="JavaScript" type="text/javascript">
+(function($) {
+	jQuery.extend({
+		getInc: function(u,d){
+			if(u==null)return;
+			jQuery.ajax({
+	    		type: "GET",
+			url: u,
+			dataType: "text",
+	        	success: function(t) {
+				jQuery(d).html(t);
+				ibmCommon.initShowHide(jQuery(d).children()[0]);			
+			},
+			async: true
+			});
+		}
+	});
+})(jQuery);
+</script>
+<script charset="UTF-8" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/usen-utf8.js" type="text/javascript" id="mhMenu"></script><script charset="UTF-8" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/Controller.js" type="text/javascript" id="wiBundle"></script></head>
+
+<body id="ibm-com">
+<div id="ibm-top" class="ibm-landing-page">
+
+<!-- MASTHEAD_BEGIN -->
+<!-- MASTHEAD_BEGIN -->
+<div class="ibm-access"><a href="#ibm-content">Skip to main content</a></div>
+<div id="ibm-masthead-dw">
+  
+    <!-- TOP ROW -->    
+    <div id="dw-masthead-top-row">
+        <ul id="ibm-mast-options-dw">
+			<li id="dw-mast-top-4">
+				<a href="http://www.ibm.com/developerworks/"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/dwn-dw-badge.png" alt="dW" aria-label="dW" height="22" width="43"></a>
+			</li>
+		    <li id="dw-mast-top-0" class="navtab">
+				<a class="" href="http://www.ibm.com/developerworks/dwwi/DWAuthRouter?m=loginpage&amp;lang=en&amp;d=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka3%2Findex.html" title="">Sign in (or register)</a>
+			</li>
+		    <li id="dw-mast-top-1" class="navtab">
+				<a href="#SELECTLANG">English</a>
+			</li>
+			<li id="dw-mast-top-2" class="navtab dw-mf-hide">
+				<a href="#">[userid]</a>
+			</li>
+			<li id="dw-mast-top-3" class="navtab">
+				<a href="#">IBM</a>
+			</li>
+		</ul>
+	</div>
+    
+    <!-- TOP ROW SLIDER -->
+    <div id="ibm-my-menu-dw">    
+        <div class="ibm-ribbon-pane-dw">
+            <div class="ibm-ribbon-section-dw">
+                <!-- Sign-in -->
+				<div class="dw-mast-columns">                
+					<div class="dw-mast-col-1-1">
+						<div id="dw-mast-sso">
+							<div id="signin_error_mf" class="no-display"></div>
+							<div id="dw-mast-sso-form">
+								<form id="sForm_mf" action="" method="post" name="sForm_name_mf" onsubmit="return false;">
+									<div id="dw-mast-sso-id" class="dw-mast-sso-id-en">
+										<label for="ibmid_mf">IBM ID:</label>
+										<input class="" id="ibmid_mf" name="ibmid_name_mf" maxlength="100" onkeypress="handleEP(event,this.form,'mf');" type="text">
+									</div>
+									<div id="dw-mast-sso-pw" class="dw-mast-sso-pw-en">
+										<label for="pw_mf">Password:</label>
+										<input class="" id="pw_mf" value="" name="pw_name_mf" maxlength="100" onkeypress="handleEP(event,this.form,'mf');" type="password">
+									</div>
+									<div id="dw-mast-sso-target" class="dw-mast-sso-target-en">
+										<p class="dw-mf-perm-box">
+											<input id="perm_mf" name="perm_name_mf" type="checkbox"><label for="perm_mf"> Keep me signed in.</label>
+										</p>
+									</div>					
+									<div id="dw-mast-sso-terms">
+										<p class="dw-mast-sso-terms-en">By clicking <strong>Submit</strong>, you agree to the <a href="https://www.ibm.com/developerworks/community/terms/">developerWorks terms of use</a>.</p>
+									</div>
+									<div>
+										<input class="dw-mf-submit-btn" name="ibm_submit_name_mf" value="Submit" onclick="signin('mf');return false;" type="submit">
+									</div>
+								</form>
+							</div>
+							<div id="dw-mast-sso-update">
+								<div id="dw-mast-sso-update-id">
+									<ul>
+										<li><a class="ibm-forward-link" href="#" onclick="(function () {window.location='/developerworks/dwwi/DWAuthRouter?m=reg&amp;lang=en&amp;d='+encodeURIComponent(location.href);})();">Need an IBM ID?</a></li>
+										<li><a class="ibm-forward-link" href="http://www.ibm.com/developerworks/dwwi/jsp/WSHelp.jsp?lang=en_US">Forgot your IBM ID?</a></li>
+									</ul>
+								</div>
+								<div id="dw-mast-sso-update-pw">
+									<ul class="dw-mf-pwupdate">
+										<li><a class="ibm-forward-link" href="#" onclick="(function () {window.location='https://www.ibm.com/account/profile?page=forgot&amp;lang=en_US&amp;appname=ibm&amp;required=null&amp;d='+encodeURIComponent(getAuthUrl())+'%3Fm%3Dloginpage%26lang%3Den_US%26d%3D'+encodeURIComponent(location.href);})();">Forgot your password?</a></li>
+										<li><a class="ibm-forward-link" href="#" onclick="(function () {window.location='https://www.ibm.com/account/profile?page=chpw&amp;lang=en_US&amp;appname=ibm&amp;required=null&amp;d='+encodeURIComponent(location.href);})();">Change your password</a></li>
+									</ul>
+								</div>
+							</div>
+							<div id="dw-mast-sso-text">
+						<p>The first time you sign into developerWorks, a profile is created for you.  <strong>Select
+ information in your profile (name, country/region, and company) is 
+displayed to the public and will accompany any content you post</strong>.  You may update your IBM account at any time.</p>
+								<p class="dw-mf-secure">All information submitted is secure.</p>
+							</div>
+							<div class="dw-mast-close">
+								<ul>
+									<li><div class="dw-mast-close-sign"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+								</ul>
+							</div>							
+						</div>                    
+						<div id="dw-mast-dname" class="dw-mf-hide">
+							<p>The first time you sign in to developerWorks, a profile is 
+created for you, so you need to choose a display name.  Your display 
+name accompanies the content you post on developerworks.</p><p><strong>Please choose a display name between 3-31 characters</strong>.  Your display name must be unique in the developerWorks community and should not be your email address for privacy reasons.</p>
+							<div id="signin_dname_error_mf" class="no-display"></div>
+							<div id="dw-mast-dname-form">
+								<form id="dForm_mf" action="" method="post" name="dForm_name_mf" onsubmit="return false;">
+									<div id="dw-mast-dname-mf">
+										<label for="dname_mf">Display name:</label>
+										<input id="dname_mf" name="dname_name_mf" maxlength="31" size="25" onkeypress="handleEP(event,this.form,'mf');" type="text">
+									</div>
+									<div id="dw-mast-dname-terms">
+										<p>By clicking <strong>Submit</strong>, you agree to the <a href="https://www.ibm.com/developerworks/community/terms/">developerWorks terms of use</a>.</p>
+									</div>
+									<div>
+										<input class="dw-mf-submit-btn" name="dname_submit_name_mf" value="Submit" onclick="signin('mf');return false;" type="submit">
+									</div>
+								</form>								
+							</div>
+							<div id="dw-mast-dname-secure">
+								<p class="dw-mf-secure">All information submitted is secure.</p>
+							</div>
+							<div class="dw-mast-close">
+								<ul>
+									<li><div class="dw-mast-close-sign"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+								</ul>
+							</div>							
+						</div>
+						<div id="dw-mast-auth" class="dw-mf-hide">
+							<div>
+								<h2>My developerWorks:</h2>
+								<ul>
+									<li><a id="dw-mast-top-0-0" href="http://www.ibm.com/developerworks/community/homepage/web/updates/?lang=en">My home</a></li>
+									<li><a href="http://www.ibm.com/developerworks/community/profiles/html/myProfileView.do?lang=en">My profile</a></li>
+									<li><a href="http://www.ibm.com/developerworks/community/groups/service/html/mycommunities?lang=en">My communities</a></li>
+									<li><a href="http://www.ibm.com/developerworks/community/news">Settings</a></li>
+								</ul>     
+							</div>
+							<div id="dw-mast-notify" class="dw-mf-hide">
+								<h2>My notifications:</h2>
+								<ul>
+									<li><a id="new_notify" href="http://www.ibm.com/developerworks/community/homepage?lang=en">{[num_notify] new notifications}([num_notify] new notification)</a></li>
+									<li><a id="new_invite" href="http://www.ibm.com/developerworks/community/profiles/html/wc.do?action=in&amp;requireAuth=true&amp;widgetId=friends&amp;lang=[lang]">{[num_invite] network requests}([num_invite] network request)</a></li>  
+								</ul>
+							</div>
+							<div class="dw-mast-more">
+								<ul class="ibm-link-list">
+									<li><a class="dw-more-link" href="#" onclick="signOut(); return false;"><strong>Sign out</strong></a></li>
+								</ul>
+							</div>		
+							<div class="dw-mast-close">
+								<ul>
+									<li><div class="dw-mast-close-sign"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+								</ul>
+							</div>							
+						</div>						
+					</div>                   
+                </div>
+                <!-- Language selector --> 
+				<div class="dw-mast-columns">
+					<div class="dw-mast-col-2-1">
+						<h2>Select a language:</h2>
+						<ul>
+							<li><a id="dw-mast-top-1-0" href="http://www.ibm.com/developerworks/">English</a></li>
+							<li><a href="http://www.ibm.com/developerworks/cn/">中文</a></li>
+							<li><a href="http://www.ibm.com/developerworks/jp/">日本語</a></li>
+							<li><a href="http://www.ibm.com/developerworks/ru/">Русский</a></li>
+						</ul>
+					</div>
+					<div class="dw-mast-col-2-2">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/br/">Português (Brasil)</a></li>
+							<li><a href="http://www.ibm.com/developerworks/ssa/">Español</a></li>
+							<li><a href="http://www.ibm.com/developerworks/vn/">Việt</a></li>
+						</ul>
+					</div>
+					<div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-lang"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+                </div>                
+                <div class="dw-mast-columns"><!-- Authenticated --></div>
+                <!-- IBM -->
+				<div class="dw-mast-columns">
+					<div class="dw-mast-col-2-1">
+						<ul>
+							<li><a id="dw-mast-top-3-0" href="http://www.ibm.com/">IBM home</a></li>
+							<li><a href="http://www.ibm.com/solutions/">Industries &amp; solutions</a></li>
+							<li><a href="http://www.ibm.com/technologyservices/">Services</a></li>
+							<li><a href="http://www.ibm.com/products/">Products</a></li>
+							<li><a href="http://www.ibm.com/support/">Support &amp; downloads</a></li>
+						</ul>
+					</div>
+					<div class="dw-mast-col-2-2 dw-mast-ibm">
+						<ul>
+							<li><a href="http://www.ibm.com/support/publications/us/library/index.shtml">Product information</a></li>
+							<li><a href="http://www.ibm.com/redbooks/">Redbooks</a></li>
+							<li><a href="http://www.ibm.com/software/">Software</a></li>
+							<li><a href="http://www.ibm.com/software/sw-services/">Software services</a></li>
+						</ul>
+					</div>
+					<div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-ibm"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+				</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div id="ibm-universal-nav-dw">
+        <ul id="ibm-unav-links-dw">
+            <li id="ibm-unav-home-dwlogo">
+				<a href="http://www.ibm.com/developerworks/"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/dwn-dw-wordmark.png" alt="developerWorks®" height="28" width="225"></a>
+            </li>
+        </ul>
+        <ul id="ibm-menu-links-dw">
+            <li id="dw-mast-nav-0"><a href="http://www.ibm.com/developerworks/topics/">Technical topics</a></li>
+            <li id="dw-mast-nav-1"><a href="http://www.ibm.com/developerworks/downloads/">Evaluation software</a></li>
+            <li id="dw-mast-nav-2"><a href="http://www.ibm.com/developerworks/community/index.html">Community</a></li>
+            <li id="dw-mast-nav-3"><a href="http://www.ibm.com/developerworks/events/">Events</a></li>
+        </ul>
+			<form id="ibm-search-form-dw" action="//www.ibm.com/search/csass/search/" method="get" name="form1">
+				<p>
+				<label for="q"><span class="ibm-access">Search developerWorks</span></label>
+				<input id="q" name="q" value="Search developerWorks" maxlength="100" type="text">
+				<input name="sn" value="dw" type="hidden">
+				<input name="lang" value="en" type="hidden">
+				<input name="cc" value="US" type="hidden">
+				<input name="en" value="utf" type="hidden">
+				<input name="hpp" value="20" type="hidden">
+				<input name="dws" value="dw" type="hidden">
+				<input id="ibm-search-dw" class="ibm-btn-search-dw" value="Search" type="submit">
+				</p>
+			</form>
+    </div>
+    
+    <!-- BOTTOM ROW SLIDER -->
+    <div id="ibm-common-menu-dw">
+        <div class="ibm-ribbon-pane-dw dw-ribbon-pane-en">
+            <div class="ibm-ribbon-section-dw">
+				<!-- Technical topics category -->
+                <div class="dw-mast-columns">
+					<div class="dw-mast-col-5-1">
+						<h2><a id="dw-mast-nav-0-0" href="http://www.ibm.com/developerworks/topics/">Technical topics</a></h2>
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/agile/">Agile transformation</a></li>
+							<li><a href="http://www.ibm.com/developerworks/aix/">AIX and UNIX</a></li>
+							<li><a href="http://www.ibm.com/developerworks/bigdata/">Big data</a></li>
+							<li><a href="http://www.ibm.com/developerworks/analytics/">Business analytics</a></li>
+							<li><a href="http://www.ibm.com/developerworks/bpm/">Business process management</a></li>
+						</ul>     
+                    </div>
+					<div class="dw-mast-col-5-2">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/cloud/">Cloud computing</a></li>
+							<li><a href="http://www.ibm.com/developerworks/commerce/">Commerce</a></li>
+							<li><a href="http://www.ibm.com/developerworks/ibmi/">IBM i</a></li>    
+							<li><a href="http://www.ibm.com/developerworks/industry/">Industries</a></li>
+							<li><a href="http://www.ibm.com/developerworks/data/">Information management</a></li>
+						</ul>
+                    </div>
+					<div class="dw-mast-col-5-3">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/java/">Java technology</a></li>
+							<li><a href="http://www.ibm.com/developerworks/linux/">Linux</a></li>
+							<li><a href="http://www.ibm.com/developerworks/lotus/">Lotus (collaboration)</a></li>
+							<li><a href="http://www.ibm.com/developerworks/mobile/">Mobile development</a></li>
+							<li><a href="http://www.ibm.com/developerworks/opensource/">Open source</a></li>
+						</ul>     
+                    </div>
+                    <div class="dw-mast-col-5-4">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/rational/">Rational</a></li>
+							<li><a href="http://www.ibm.com/developerworks/security/">Security</a></li>
+							<li><a href="http://www.ibm.com/developerworks/servicemanagement/">Tivoli (service management)</a></li>
+							<li><a href="http://www.ibm.com/developerworks/web/">Web development</a></li>
+							<li><a href="http://www.ibm.com/developerworks/websphere/">WebSphere</a></li>
+						</ul> 
+                    </div>
+                    <div class="dw-mast-col-5-5">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/library/"><strong>Technical library</strong></a></li>
+							<li><a href="http://www.ibm.com/developerworks/products/"><strong>Products A to Z</strong></a></li>
+						</ul>
+                    </div>
+                    <div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-tech"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+				</div>
+				<!-- Evaluation software category -->
+                <div class="dw-mast-columns">
+					<div class="dw-mast-col-2-1">
+						<h2><a id="dw-mast-nav-1-0" href="http://www.ibm.com/developerworks/downloads/">Evaluation software</a></h2>
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#ba">Business analytics</a></li>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#data">Information management</a></li>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#lotus">Lotus (collaboration)</a></li>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#rational">Rational</a></li>
+						</ul>            
+                    </div>
+					<div class="dw-mast-col-2-2">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#tivoli">Tivoli (service management)</a></li>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#websphere">WebSphere</a></li>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#more">More IBM products (Mobile, PureSystems, Security...)</a></li>
+						</ul>            
+                    </div>
+                    <div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-eval"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+				</div>
+				<!-- Community category -->
+                <div class="dw-mast-columns">
+					<div class="dw-mast-col-3-1">
+						<h2><a id="dw-mast-nav-2-0" href="http://www.ibm.com/developerworks/community/index.html">Community</a></h2>
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/community/homepage/?lang=en">My home</a></li>
+							<li><a href="http://www.ibm.com/developerworks/community/profiles/?lang=en">Profiles</a></li>
+							<li><a href="http://www.ibm.com/developerworks/community/groups/?lang=en">Communities</a></li>
+						</ul>     
+                    </div>
+					<div class="dw-mast-col-3-2">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/community/blogs/?lang=en">Blogs</a></li>
+							<li><a href="http://www.ibm.com/developerworks/community/forums/?lang=en">Forums</a></li>
+							<li><a href="http://www.ibm.com/developerworks/community/wikis/?lang=en">Wikis</a></li>
+						</ul>
+                    </div>
+					<div class="dw-mast-col-3-3 dw-mast-col-3-3-en">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/community/activities/?lang=en">Activities</a></li>
+							<li><a href="https://www.ibm.com/developerworks/community/podcasts/?lang=en">Podcasts</a></li>    
+							<li><a href="http://www.ibm.com/developerworks/champion/">IBM Champion program</a></li>
+						</ul>
+                    </div>
+                    <div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-comm"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+				</div>
+				<!-- Events category -->
+                <div class="dw-mast-columns">
+					<div class="dw-mast-col-1-1">
+						<h2><a id="dw-mast-nav-3-0" href="http://www.ibm.com/developerworks/events/">Events</a></h2>
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/find/webcasts/">Webcasts</a></li>
+							<li><a href="http://www.ibm.com/developerworks/find/events/">Find events (webcasts, conferences...)</a></li>
+						</ul>            
+                    </div>
+                    <div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-event"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+				</div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+<div id="fdiv" class="ibm-access"></div>
+<!-- MASTHEAD_END --><!-- MASTHEAD_END -->
+
+<div id="ibm-pcon">
+
+<!-- CONTENT_BEGIN -->
+<div id="ibm-content">
+
+<!-- Navigation_Trail_BEGIN -->
+<!-- &nbsp; -->
+      <div id="ibm-content-head"><ul id="ibm-navigation-trail"><li class="ibm-first"><a href="http://www.ibm.com/developerworks/">developerWorks</a></li><li><a href="http://www.ibm.com/developerworks/topics/">Technical topics</a></li><li><a href="http://www.ibm.com/developerworks/opensource/">Open source</a></li><li><a href="http://www.ibm.com/developerworks/views/opensource/library.jsp">Technical library</a></li></ul></div>
+<!-- Navigation_Trail_END -->
+
+<!-- dW_Summary Area_START -->
+<div id="dw-summary-article">
+
+<div class="dw-content-head">
+<h1>Data mining with WEKA, Part 3: Nearest Neighbor and server-side library</h1><p>
+</p></div>
+
+<div class="ibm-container-body ibm-two-column">
+
+<div class="ibm-column ibm-first">
+<div class="author"><a class="dwauthor" rel="#authortip1" href="#author1">Michael Abernethy</a>, Freelance Programmer, Freelancer</div><div style="display: none;" id="authortip1" class="dwauthor-onload-state ibm-no-print"><div class="position"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/p-miabernethy.jpg" alt="Mike Abernethy" height="80" width="64"></div>In
+ his 13 years in technology, Michael Abernethy has worked with a wide 
+variety of technologies and a wide variety of clients.  He currently 
+works as a freelance programmer specializing in Java high availability 
+and jQuery.  His focus nowadays is on Rich Internet Applications and 
+making them both more complex and simpler at the same time.  When he's 
+not working at his computer, he can be found on the golf course, or more
+ accurately in the bushes, looking for his ball.</div>
+<p></p>
+<p><strong>Summary:</strong>&nbsp; Data mining can be used to turn seemingly meaningless data into useful
+            information with rules, trends, and inferences that can be used to improve
+            your business and revenue. This article covers the last common data
+            mining technique, "Nearest Neighbor," and will show you how to use the WEKA
+            Java™ library in your server-side code to integrate data mining technology into
+            your Web applications.</p>
+<p class="ibm-no-print"><a href="http://www.ibm.com/developerworks/views/opensource/libraryview.jsp?search_by=data+mining+weka,">View more content in this series</a></p>
+</div>
+
+<div class="ibm-column ibm-second">
+<p class="leading"><strong>Date:</strong>&nbsp; 08 Jun 2010
+<br><strong>Level: </strong>&nbsp;Intermediate
+<br class="ibm-ind-link"><strong>PDF:</strong>&nbsp; <a href="http://public.dhe.ibm.com/software/dw/opensource/os-weka3/os-weka3-pdf.pdf">A4 and Letter</a><a class="ibm-external-link" href="http://www.adobe.com/products/acrobat/readstep2.html">Get Adobe® Reader®</a>
+<br><strong>Also available in:&nbsp;</strong>
+
+&nbsp;<a href="http://www.ibm.com/developerworks/kr/library/os-weka3/">Korean</a> 
+&nbsp;<a href="http://www.ibm.com/developerworks/ru/library/os-weka3/">Russian</a> 
+
+
+
+
+<br>
+<br><strong>Activity:</strong>&nbsp; 41440 views
+<br><strong>Comments:</strong> &nbsp; <span id="nCmts">8&nbsp;(<a class="dw-view-comment" href="#icomments">View</a>&nbsp;|&nbsp;<a onclick="showSignIn();return false;" href="#">Add comment</a> - Sign in)</span>
+<!-- Rating_Area_Begin -->
+</p><div id="art-rating-summary"><img alt="Average rating 5 stars based on 66 votes" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/stars120x20-5b.jpg" class="dw-avg-rating"> Average rating (66 votes)<br><a class="dw-view-comment" href="#iratings">Rate this article</a></div>
+<!-- Rating_Area_End -->
+<p></p>
+</div>
+
+</div>
+</div>
+<!-- dW_Summary_Area_END -->
+
+<!-- CONTENT_BODY -->
+<div id="ibm-content-body">
+
+<!-- MAIN_COLUMN_BEGIN -->
+<div id="ibm-content-main">
+
+<!-- Related_Searches_Area -->
+<!-- Related_Searches_Area_Begin -->
+<script type="text/javascript" language="javascript">
+	     capture_referrer();
+</script>
+
+<div id="dw-related-searches-article" style="display:none">
+<div class="ibm-container ibm-alternate-two">
+<div class="ibm-container-body">
+
+<!--  START : HTML FOR ARTICLE SEARCH -->
+  <div id="article_results" style="display:block"></div>
+<!--  END : HTML FOR ARTICLE SEARCH -->
+
+</div>
+</div>
+</div>
+<!-- Related_Searches_Area_End -->
+<!-- MAIN_COLUMN_CONTAINER_BEGIN -->
+<div class="ibm-container">
+
+<!-- MAIN_COLUMN_CONTENT_BEGIN -->
+<p><a name="N10078"><span class="atitle">Introduction</span></a></p>
+		    
+               <p>In the previous two articles in this "<a href="http://www.ibm.com/developerworks/views/opensource/libraryview.jsp?search_by=data+mining+weka">Data
+                mining with WEKA</a>" series, I introduced the concept of data
+                mining.  If you have not yet read <a href="http://www.ibm.com/developerworks/opensource/library/os-weka1/index.html">Part
+                    1</a> and <a href="http://www.ibm.com/developerworks/opensource/library/os-weka2/index.html">Part
+                        2</a>, please read them first because they cover key concepts you should know before moving forward. More
+                importantly, I talked about three  techniques used in data mining
+                that can turn your confusing and useless data into meaningful rules and
+                trends. The first of these was regression, which can be used to predict a
+                numerical output (like house value) based on other example data. The
+                second was classification (also known as classification tree or decision
+                tree), which can be used to create an actual branching tree to predict
+                the output value of an unknown data point. (In our example, we predicted
+                the response to a BMW promotion.)  Third, I introduced clustering, which
+                can be used to create groups (clusters) of data from which you can
+                identify trends and other rules (BMW sales in our example). These things
+                all were similar in that they could transform your data into useful
+                information, but each did it differently and with different data,
+                which is one of the important aspects of data mining: The right
+                model has to be used on the right data.</p>
+               
+		    <p>This last article will discuss the last of the four common data mining
+                techniques: Nearest Neighbor. You'll see that it is like
+                a combination of classification and clustering, and provides another
+                useful weapon for our mission to destroy data misinformation. </p>
+		    
+               <p>In our previous articles, we use WEKA as a stand-alone application.
+                How useful would that be in the real world? It's not ideal,
+                obviously.  Since WEKA is a Java-based application, it has a Java library
+                you can use in our own server-side code. This will likely be the more
+                common use for most people, as you can write code to constantly analyze
+                your data and make adjustments on the fly, rather than rely on someone to
+                extract the data, convert to a WEKA format, then run it through the
+                WEKA Explorer. </p>
+               
+		    <div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><a name="N10093"><span class="atitle">Nearest Neighbor</span></a></p>
+              
+		    <p>Nearest Neighbor (also known as Collaborative Filtering or
+                Instance-based Learning) is a useful data mining technique that
+                allows you to use your past data instances, with known output values, to
+                predict an unknown output value of a new data instance. So, at this point,
+                this description should sound similar to both regression and
+                classification. How is this different from those two? Well, first off,
+                remember that regression can only be used for numerical outputs. That
+                differentiates it from Nearest Neighbor immediately. Classification, as we
+                saw from the example in the previous article, uses <em>every data
+                    instance</em> to create a tree, which we would traverse to find our
+                answer. This can be a serious problem with some data. Think about a
+                company like Amazon and the common "Customers who purchased X also
+                purchased Y" feature. If Amazon were to create a classification tree, how
+                many branches and nodes could it have? There are maybe a few hundred
+                thousand products. How big would that tree be? How accurate do you think a
+                tree that big would be?  Even if you got to a single branch, you might be
+                shocked to learn that it only has three products. Amazon's page likes to have
+                12 products on it to recommend to you. It's a bad data mining model for
+                this data. </p>
+		    
+               <p>You'll find that Nearest Neighbor fixes all those problems in a very
+                efficient manner, especially in the example used above for Amazon. It's
+                not limited to any number of comparisons. It's as scalable for a
+                20-customer database as it is for a 20 million-customer database, and you can
+                define the number of results you want to find. Seems like a great
+                technique! It really is — and probably will be the most useful for anyone
+                reading this who has an e-commerce store. </p>
+		    
+               <p>Let's delve into the math a little bit, so you can 
+understand the process and also see some of the limitations of this 
+technique.  </p>
+
+		    <p><a name="Math behind Nearest Neighbor"><span class="smalltitle">Math behind Nearest Neighbor</span></a></p>
+               
+		    <p>You will see that the math behind the Nearest Neighbor technique is a
+                lot like the math involved with the clustering technique. Taking the
+                unknown data point, the distance between the unknown data point and every
+                known data point needs to be computed. Finding the distance is really
+                quite trivial with a spreadsheet, and a high-powered computer can zip
+                through these calculations nearly instantly. The easiest and most common
+                distance calculation is the "Normalized Euclidian Distance."  It sounds
+                much more complicated than it really is. Let's take a look at an example
+                in action and try to figure out what Customer No. 5 is likely to purchase. </p>
+		    
+              <br><a name="listing1"><strong>Listing 1. Nearest Neighbor math</strong></a><br><table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td class="code-outline"><pre class="displaycode">	
+Customer     Age     Income     Purchased Product
+1            45       46k       Book
+2            39       100k      TV
+3            35       38k       DVD
+4            69       150k      Car Cover
+5            58       51k       ???
+
+Step 1:  Determine Distance Formula
+Distance = SQRT( ((58 - Age)/(69-35))^2) + ((51000 - Income)/(150000-38000))^2 )
+
+Step 2:  Calculate the Score
+Customer     Score     Purchased Product
+1            .385         Book
+2            .710         TV
+3            .686         DVD
+4            .941         Car Cover
+5            0.0          ???</pre></td></tr></tbody></table><br>
+
+		    <p>To answer the question "What is Customer No. 5 most likely to buy?" based
+                on the Nearest Neighbor algorithm we ran through above, the answer would
+                be a book.  This is because the distance between Customer No. 5 and Customer
+                No. 1 is less (far less, actually) than the distance between Customer No. 5 and
+                any other customer. Based on this model, we say that the customer most
+                like Customer No. 5 can predict the behavior of Customer No. 5. </p>
+		    
+               <p>However, the positives of Nearest Neighbor don't end there. The Nearest
+                Neighbor algorithm can be expanded beyond the closest match to include
+                any number of closest matches. These are termed "N-Nearest Neighbors" (for
+                example, 3-Nearest Neighbors). Using the above example, if we want to know
+                the two most likely products to be purchased by Customer No. 5, we would
+                conclude that they are books <em>and</em> a DVD. Using the Amazon example
+                from above, if they wanted to know the 12 products most likely to be
+                purchased by a customer, they would want to run a 12-Nearest Neighbor
+                algorithm (though Amazon actually runs something more complicated than
+                just a simple 12-Nearest Neighbor algorithm). </p>
+		    
+               <p>Further, the algorithm shouldn't be constrained to predicting a product
+                to be purchased. It can also be used to predict a Yes/No output value.
+                Considering the above example, if we changed the last column to the
+                following (from customers 1-4), "Yes,No,Yes,No," a 1-Nearest
+                Neighbor model would predict Customer No. 5 to say "Yes" and a 2-Nearest
+                Neighbor would predict a "Yes" (both customer nos. 1 and 3 say "Yes"),
+                and a 3-Nearest Neighbor model would say "Yes." (Customer nos. 1 and 3 say
+                "Yes," customer No. 2 says "No," so the average value of these is "Yes.")</p>
+		    
+               <p>The final question to consider is "How many neighbors should we use in
+                our model?" Ah — not everything can be easy. You'll find that
+                experimentation will be needed to determine the best number of neighbors
+                to use. Also, if you are trying to predict the output of a column with a 0
+                or 1 value, you'd obviously want to select an odd number of neighbors, in
+                order to break ties. </p>
+		    
+                    <p><a name="Data set for WEKA"><span class="smalltitle">Data set for
+                        WEKA</span></a></p>
+                   
+		    <p>The data set we'll use for our Nearest Neighbor example should look
+                familiar — it's the same data set we used for  our classification
+                example in the previous article. It's about our fictional BMW dealership
+                and the promotional campaign to sell a two-year extended warranty to past
+                customers. To review the data set, here are the specifics I introduced in
+                the last article.</p>
+		    
+                    <p>There are 4,500 data points from past sales of extended warranties.
+                The attributes in the data set are Income Bracket [0=$0-$30k, 1=$31k-$40k,
+                2=$41k-$60k, 3=$61k-$75k, 4=$76k-$100k, 5=$101k-$150k, 6=$151k-$500k,
+                7=$501k+], the year/month their first BMW was bought, the year/month the
+                most recent BMW was bought, and whether they responded to the extended
+                warranty offer in the past. </p>
+
+		    <br><a name="listing1"><strong>Listing 2. Nearest Neighbor WEKA data</strong></a><br><table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td class="code-outline"><pre class="displaycode">		
+@attribute IncomeBracket {0,1,2,3,4,5,6,7}
+@attribute FirstPurchase numeric
+@attribute LastPurchase numeric
+@attribute responded {1,0}
+
+@data
+
+4,200210,200601,0
+5,200301,200601,1
+...</pre></td></tr></tbody></table><br>
+		    
+                    <p><a name="Classification in WEKA"><span class="smalltitle">Nearest Neighbor in WEKA</span></a></p>
+		    
+                    <p>Why are we using the same data set  we used in the
+                classification example? Because, if you remember the results of that
+                model, it was only 59-percent accurate, which wasn't acceptable at all (barely
+                better than guessing). We're going to improve it and give this fictional
+                dealership some useful information.</p>
+		    
+                    <p>Load the data file bmw-training.arff into WEKA using the same
+                steps we've used to this point in the Preprocess tab. Your screen should
+                look like Figure 1 after loading in the data. </p>
+		    
+               
+		<br><a name="fig1"><strong>Figure 1. BMW Nearest Neighbor data in
+		    WEKA</strong></a><br>
+		<img alt="Screenshot of the WEKA Preprocess tab after the sample data has been loaded" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/weka-data1.jpg" height="435" width="580">
+               <br>
+		    <br>
+		    
+              <p>Like we did with the regression and classification model in the previous
+                  articles, we should next select the Classify tab.  On this tab, we
+                  should select <strong>lazy</strong>, then
+              select <strong>IBk</strong> (the <em>IB</em> stands for Instance-Based, and
+                  the <em>k</em> allows us to specify the number of neighbors to examine).</p>
+		    
+               
+		<br><a name="fig2"><strong>Figure 2. BMW Nearest Neighbor algorithm</strong></a><br>
+		<img alt="Screenshot of the Classify tab in WEKA with the IBk classifier selected" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/weka-data2.jpg" height="435" width="580">
+               <br>
+		    <br>
+		    
+               <p>At this point, we are ready to create our model in WEKA. Ensure that
+                   <strong>Use training set</strong> is selected so we use the data set we just loaded to
+                create our model. Click <strong>Start</strong> and let WEKA run.
+                Figure 3 shows a screenshot, and Listing 3 contains the output from this
+                model.</p>
+		    
+               
+		<br><a name="fig3"><strong>Figure 3. BMW Nearest Neighbor model</strong></a><br>
+		<img alt="BMW Nearest Neighbor model" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/weka-data3.jpg" height="435" width="580">
+               <br>
+		    <br>
+		    
+	      <br><a name="listing3"><strong>Listing 3.  Output of IBk calculations</strong></a><br><table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td class="code-outline"><pre class="displaycode">
+=== Evaluation on training set ===
+=== Summary ===
+
+Correctly Classified Instances        2663               88.7667 %
+Incorrectly Classified Instances       337               11.2333 %
+Kappa statistic                          0.7748
+Mean absolute error                      0.1326
+Root mean squared error                  0.2573
+Relative absolute error                 26.522  %
+Root relative squared error             51.462  %
+Total Number of Instances             3000     
+
+=== Detailed Accuracy By Class ===
+
+               TP Rate   FP Rate   Precision   Recall  F-Measure   ROC Area  Class
+                 0.95      0.177      0.847     0.95      0.896      0.972    1
+                 0.823     0.05       0.941     0.823     0.878      0.972    0
+Weighted Avg.    0.888     0.114      0.893     0.888     0.887      0.972
+
+=== Confusion Matrix ===
+
+    a    b   &lt;-- classified as
+ 1449   76 |    a = 1
+ 261 1214 |    b = 0</pre></td></tr></tbody></table><br>
+		    
+            <p>How does this compare with our results when we used classification to
+                create a model? Well, this model using Nearest Neighbor has an 89-percent
+                accuracy rating, while the previous model only had a 59-percent accuracy rating,
+                so that's definitely a good start. Nearly a 90-percent accuracy rating would be
+                very acceptable. Let's take this a step further and interpret the
+                results in terms of false positives and false negatives, so you can see
+                how the results from WEKA apply in a real business sense. </p>
+		    
+            <p>The results of the model say we have 76 false positives (2.5 percent), and we have
+                261 false negatives (8.7 percent). Remember a false positive, in this example,
+                means that our model predicted the customer would buy an extended warranty and
+                actually didn't, and a false negative means that our model predicted they
+                wouldn't buy an extended warranty, and they actually did. Let's estimate
+                that the flier the dealership sends out cost $3 each and that the
+                extended warranty brings in $400 profit for the dealer. This model from a
+                cost/benefit perspective to the dealership would be $400 - (2.5% * $3) -
+                (8.7% * 400) = $365. So, the model looks rather profitable for the
+                dealership. Compare that to the classification model, which had a
+                cost/benefit of only $400 - (17.2% * $3) - (23.7% * $400) = $304, and you
+                can see that using the right model offered a 20-percent increase in potential
+                revenue for the dealership. </p>
+		    
+              <p>As an exercise for yourself, play with the number of 
+nearest neighbors in
+                  the model (you do this by right-clicking on the text 
+"IBk -K 1...." and you see a list of
+              parameters).  You can change the "KNN" (K-nearest 
+neighbors) to be anything you want.  You'll see in this example, that 
+the accuracy of the model actually decreases
+              with the inclusion of additional neighbors.</p>
+		    
+              <p>Some final take-aways from this model: The power of Nearest Neighbor
+                becomes obvious when we talk about data sets like Amazon.  With its 20
+                million users, the algorithm is very accurate, since there are likely many
+                potentail customers in Amazon's database with similar buying habits to
+                you. Thus, the nearest neighbor to yourself is likely very similar. This
+                creates an accurate and effective model. Contrarily, the model
+                breaks down quickly and becomes inaccurate when you have few data
+                points for comparison. In the early stages of an online e-commerce store
+                for example, when there are only 50 customers, a product recommendation
+                feature will likely not be accurate at all, as the nearest neighbor may in
+                fact be very distant from yourself. </p>
+		    
+              <p>The final challenge with the Nearest Neighbor technique is that it has
+                the potential to be a computing-expensive algorithm. In Amazon's case,
+                with 20 million customers, each customer must be calculated against the
+                other 20 million customers to find the nearest neighbors. First, if
+                your business has 20 million customers, that's not technically a
+                problem because you're likely rolling in money. Second, these types
+                of computations are ideal for the cloud in that they can offloaded to
+                dozens of computers to be run simultaneously, with a final comparison done
+                at the end.  (Google's MapReduce for example.) Third, in practice, it
+                wouldn't be necessary to compare <em>every</em> customer in Amazon's
+                database to myself if I'm only purchasing a book.  The assumption can be
+                made that I can be compared to only other bookbuyers to
+                find the best match, narrowing the potential neighbors to a fraction of
+                the entire database. </p>
+		    
+              <p>Remember: Data mining models aren't always simple input-output mechanisms
+                — the data must be examined to determine the right model to
+                choose, the input can be managed to reduce computing time, and the output
+                must be analyzed and accurate before you are ready to put a
+                stamp of approval on the entire thing. </p>
+		    
+             <p><strong>Further reading</strong>: If you're interested 
+in learning additional things about the Nearest Neighbor algorithm, read
+ up on the following terms: distance weighting, Hamming distance, 
+Mahalanobis distance.</p>
+		    
+              <div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><a name="N1015F"><span class="atitle">Using WEKA on the server</span></a></p>
+		    
+              <p>One of the coolest things about WEKA is that it is not only a stand-alone
+                application but it also is a self-contained Java JAR file that you can
+                throw into your server's lib folder and call from your own server-side
+                code. Think about how many interesting and important things this can bring
+                to your applications. You can add reports that take advantage of all the
+                data mining techniques we've learned so far. You can create a "Product
+                Recommendation" widget for your e-commerce stores similar to the one that
+                Amazon has on its site (because there's no way you'd be able to do this
+                on-demand for each customer, running it through the stand-alone
+                application). The WEKA stand-alone application itself just calls the
+                underlying WEKA Java API, so you've seen the API in action already. Now
+                it's time to see how to integrate it into your own code. </p>
+              
+		    <p>In fact, you've already downloaded the WEKA API JAR; it's the same JAR file
+		        you've been invoking to start the WEKA Explorer. To get access to the code,
+		        point your Java environment to include this JAR file in the classpath.  All the usual
+		        steps to using a third-party JAR file in your own code.</p>
+		    
+              <p>As you can imagine, the central building block in the WEKA API is going
+                  to be the data.  Data mining revolves around the data and, of course, all the algorithms that we've
+              learned about have revolved around the data. So let's see how to get our
+              data into a format that the WEKA API can use.  Let's start easy though, let's start with the
+              data from the first article in the series about house values. </p>
+		    
+              <p><strong>NOTE</strong>: I would warn you ahead of time that the WEKA API can be
+                difficult to navigate at times. First and foremost, double-check the
+                version of WEKA you're using and the version of the API you're browsing.
+                The API has changed enough between releases that the code can be totally
+                different. Also, while the API is complete, there aren't very many good
+                examples to get started (but that's why you're reading this of course). I
+                am using WEKA V3.6. </p>
+		    
+            <p>Listing 4 shows how the data is formatted to be consumed by WEKA.</p>
+		    
+               <br><a name="listing4"><strong>Listing 4. Loading data into WEKA</strong></a><br><table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td class="code-outline"><pre class="displaycode">	
+// Define each attribute (or column), and give it a numerical column number
+// Likely, a better design wouldn't require the column number, but
+// would instead get it from the index in the container
+Attribute a1 = new Attribute("houseSize", 0);
+Attribute a2 = new Attribute("lotSize", 1);
+Attribute a3 = new Attribute("bedrooms", 2);
+Attribute a4 = new Attribute("granite", 3);
+Attribute a5 = new Attribute("bathroom", 4);
+Attribute a6 = new Attribute("sellingPrice", 5);
+
+// Each element must be added to a FastVector, a custom
+// container used in this version of Weka.
+// Later versions of Weka corrected this mistake by only
+// using an ArrayList
+FastVector attrs = new FastVector();
+attrs.addElement(a1);
+attrs.addElement(a2);
+attrs.addElement(a3);
+attrs.addElement(a4);
+attrs.addElement(a5);
+attrs.addElement(a6);
+
+// Each data instance needs to create an Instance class
+// The constructor requires the number of columns that
+// will be defined.  In this case, this is a good design,
+// since you can pass in empty values where they exist.
+Instance i1 = new Instance(6);
+i1.setValue(a1, 3529);
+i1.setValue(a2, 9191);
+i1.setValue(a3, 6);
+i1.setValue(a4, 0);
+i1.setValue(a5, 0);
+i1.setValue(a6, 205000);
+
+....
+
+// Each Instance has to be added to a larger container, the
+// Instances class.  In the constructor for this class, you
+// must give it a name, pass along the Attributes that
+// are used in the data set, and the number of
+// Instance objects to be added.  Again, probably not ideal design
+// to require the number of objects to be added in the constructor,
+// especially since you can specify 0 here, and then add Instance
+// objects, and it will return the correct value later (so in
+// other words, you should just pass in '0' here)
+Instances dataset = new Instances("housePrices", attrs, 7);
+dataset.add(i1);
+dataset.add(i2);
+dataset.add(i3);
+dataset.add(i4);
+dataset.add(i5);
+dataset.add(i6);
+dataset.add(i7);
+
+// In the Instances class, we need to set the column that is
+// the output (aka the dependent variable).  You should remember
+// that some data mining methods are used to predict an output
+// variable, and regression is one of them.
+dataset.setClassIndex(dataset.numAttributes() - 1);</pre></td></tr></tbody></table><br>
+		    
+              <p>So now we have the data loaded into WEKA. That's probably a little harder
+                than it should be, but you can see that it would be trivial and very
+                beneficial to write your own wrapper classes to quickly extract data from
+                a database and place it into a WEKA instances class. In fact, I highly
+                recommend if you get involved in using WEKA on your server, you spend some
+                time doing that, since working with data in this way is tedious. Once you
+                get your data in the instances object, you are free to use whatever data
+                mining you want on the data, so you want this step to be as easy as
+                possible. </p>
+		    
+              <p>Let's put our data through the regression model and 
+make sure the output
+                  matches the output we computed using the Weka 
+Explorer.  It's actually
+                  quite easy to put our data through the regression 
+model using the WEKA API, far easier than actually loading the data.  </p>
+		    
+               <br><a name="listing5"><strong>Listing 5. Creating a regression model in WEKA</strong></a><br><table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td class="code-outline"><pre class="displaycode">	
+// Create the LinearRegression model, which is the data mining
+// model we're using in this example
+LinearRegression linearRegression = new LinearRegression();
+
+// This method does the "magic", and will compute the regression
+// model.  It takes the entire dataset we've defined to this point
+// When this method completes, all our "data mining" will be complete
+// and it is up to you to get information from the results
+linearRegression.buildClassifier(dataset);
+
+// We are most interested in the computed coefficients in our model,
+// since those will be used to compute the output values from an
+// unknown data instance.
+double[] coef = linearRegression.coefficients();
+
+// Using the values from my house (from the first article), we
+// plug in the values and multiply them by the coefficients
+// that the regression model created.  Note that we skipped
+// coefficient[5] as that is 0, because it was the output
+// variable from our training data
+double myHouseValue = (coef[0] * 3198) +
+                      (coef[1] * 9669) +
+                      (coef[2] * 5) +
+                      (coef[3] * 3) +
+                      (coef[4] * 1) +
+                      coef[6];
+
+System.out.println(myHouseValue);
+// outputs 219328.35717359098
+// which matches the output from the earlier article</pre></td></tr></tbody></table><br>
+		    
+              <p>And that's it! Running a classification, clustering, or Nearest Neighbor
+                  isn't quite as easy as a regression model, but they aren't much harder. It's much easier
+                  to run the data mining model than to load the data into it.    </p>
+		    
+              <p>Ideally, this little section should greatly interest 
+you into looking how
+                  to integrate WEKA into your own server-side code.  
+Whether you run an e-commerce shop and want
+              to better recommend products to them, or you have a coupon
+ promotion you
+              want to improve, or you want to optimize your AdWords 
+campaign, or you want
+              to optimize your landing page, these data mining 
+techniques can all improve
+              your results in those areas. Taking advantage of the 
+built-in nature of the
+              WEKA API, you can go so far as to write server-side code 
+to rotate your landing page and constantly analyze the results using 
+data mining to find the most effective landing page.  Combine that
+              with data mining analysis on your AdWords, and you can 
+quickly find the best route for getting customers to your site, and 
+converting them into sales.  </p>
+		    
+              <div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><a name="N10196"><span class="atitle">Conclusion</span></a></p>
+		    
+                <p>This article wraps up the three-article series introducing you to the
+                concepts of data mining and especially to the WEKA software. As you've
+                seen, WEKA can do many of the data mining tasks that were previously
+                available only in commercial software packages.  WEKA is powerful and
+                100-percent  free to use. You can't beat a deal like that, since you can quickly get
+                WEKA up and running and crunching your data in no time. </p>
+		    
+                <p>This article went over the fourth-common data mining
+                algorithm, "Nearest Neighbor." This algorithm is ideal for finding data
+                points that are close to an unknown data point and using the known output
+                from those values to predict the output for the unknown. I showed how this
+                situation is ideal for a situation you see every time you shop online,
+                the Recommend Products section. Through some data mining, sites like
+                Amazon can quickly (for them at least, with its thousands of computers)
+                tell you what customers like you purchased. </p>
+		    
+                <p>The final section of the article showed that you shouldn't be
+                constrained to using WEKA with the Explorer window as a stand-alone
+                application. WEKA can be used as a stand-alone Java library, which you can
+                drop into your server-side environment and call its API like any other
+                Java library. I showed you how you can load data into the WEKA API (and
+                recommended you spend some time to write a nice wrapper around your
+                database, to make this overly complex process easier). Finally, I showed
+                you how easy it was to create a regression model and get the same results
+                from the API that we got from the stand-alone application. </p>
+		    
+                <p>My final recommendation when working with the API is to read through
+                the documentation and spend some time reading all the available functions
+                offered. I find the API somewhat difficult to work with, so
+                reading it thoroughly can be the difference from using it successfully to
+                throwing into the recycle bin. </p>
+		    
+                <p>Hopefully, after reading this series, you will be inspired to download
+                WEKA and try to find patterns and rules from your own data.</p>
+		    
+		<!-- CMA ID: 494038 --> <!-- Site ID: 1 --> <!-- XSLT stylesheet used to transform this file: dw-document-html-6.0.xsl -->
+<br><div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><span class="atitle"><a name="download">Download</a></span></p><table class="ibm-data-table" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><th scope="col">Description</th><th scope="col">Name</th><th scope="col">Size</th><th scope="col">Download method</th></tr><tr><td class="tb-row" scope="row">Dealer information and Java code</td><td nowrap="nowrap">os-weka3-Example.zip</td><td nowrap="nowrap">17KB</td><td nowrap="nowrap"><a class="fbox" href="http://www.ibm.com/developerworks/apps/download/index.jsp?contentid=494038&amp;filename=os-weka3-Example.zip&amp;method=http&amp;locale=">HTTP</a></td></tr></tbody></table><p><a href="http://www.ibm.com/developerworks/library/whichmethod.html" class="ibm-forward-link">Information about download methods</a></p><br>
+<p><a name="resources"><span class="atitle">Resources</span></a></p><p><strong>Learn</strong></p><ul><li>
+                WEKA requests that all publications about
+                it cite the paper titled "<a href="http://www.kdd.org/explorations/issues/11-1-2009-07/p2V11n1.pdf">The WEKA Data Mining Software: An Update</a>," by Mark Hall, Eibe Frank, Geoffrey Holmes, Bernhard Pfahringer
+Peter Reutemann, and Ian H. Witten. <br><br></li><li>
+                Check out the <a href="http://www.cs.waikato.ac.nz/ml/weka/">WEKA Web site</a> for
+                    all the documentation and an FAQ about the software.<br><br></li><li>
+                            Check out the <a href="http://weka.sourceforge.net/doc.stable/">WEKA Java API</a>.<br><br></li><li>
+                Read the details about <a href="http://weka.wikispaces.com/ARFF+%28book+version%29">ARFF</a>, so you can get load your data into WEKA.<br><br></li><li>
+                IBM has its own data mining software, and
+                "<a href="http://www.ibm.com/developerworks/data/library/techarticle/dm-0810wurst/">Integrate InfoSphere Warehouse data mining with IBM Cognos reporting,
+                Part 1</a>" is a good starting point.<br><br></li><li>
+To listen to interesting interviews and discussions for software developers, check out <a href="http://www.ibm.com/developerworks/podcast/" onmouseover="linkQueryAppend(this)">developerWorks  podcasts</a>.<br><br></li><li>
+Stay current with developerWorks' <a href="http://www.ibm.com/developerworks/offers/techbriefings/" onmouseover="linkQueryAppend(this)">Technical events and webcasts</a>.<br><br></li><li> 
+     Follow <a href="http://twitter.com/developerworks">developerWorks on Twitter</a>.<br><br></li><li>
+Check out upcoming conferences, trade shows, webcasts, and other <a href="http://www.ibm.com/developerworks/views/opensource/events.jsp" onmouseover="linkQueryAppend(this)">Events</a> around the world that are of interest to IBM open source developers.<br><br></li><li>
+Visit the developerWorks <a href="http://www.ibm.com/developerworks/opensource" onmouseover="linkQueryAppend(this)">Open source zone</a>
+ for extensive how-to information, tools, and project updates to help 
+you develop with open source technologies and use them with IBM's 
+products, as well as our <a href="http://www.ibm.com/developerworks/opensource/library/os-top10.html">most popular articles and tutorials</a>.<br><br></li><li>
+The <a href="http://www.ibm.com/developerworks/community">My developerWorks</a> community is an example of a successful general community that covers a wide variety of topics.<br><br></li><li>
+Watch and learn about IBM and open source technologies and product functions with the no-cost <a href="http://www.ibm.com/developerworks/offers/lp/demos/" onmouseover="linkQueryAppend(this)">developerWorks On demand demos</a>.<br><br></li></ul><p><strong>Get products and technologies</strong></p><ul><li>
+                <a href="http://www.cs.waikato.ac.nz/%7Eml/weka/index_downloading.html">Download WEKA</a> to run it on your own system.<br><br></li><li>
+Innovate your next open source development project with <a href="http://www.ibm.com/developerworks/downloads/" onmouseover="linkQueryAppend(this)">IBM trial software</a>, available for download or on DVD.<br><br></li><li> Download
+       <a href="http://www.ibm.com/developerworks/downloads/" onmouseover="linkQueryAppend(this)">IBM product evaluation versions</a>
+      or <a href="http://www.ibm.com/developerworks/downloads/soasandbox/" onmouseover="linkQueryAppend(this)">explore 
+      the online trials in the IBM SOA Sandbox</a> and get your hands on application development tools and middleware products from
+      DB2®, Lotus®, Rational®, Tivoli®, and WebSphere®.<br><br></li></ul><p><strong>Discuss</strong></p><ul><li>Also, check out the new <a href="https://www.ibm.com/developerworks/mydeveloperworks/groups/service/html/communityview?communityUuid=8c11dc9f-dab3-46f1-83ba-1430256bc332">Data Mining</a> group in My developerWorks.<br><br></li><li>
+Participate in <a href="http://www.ibm.com/developerworks/blogs" onmouseover="linkQueryAppend(this)">developerWorks blogs</a> and get involved in the developerWorks community.<br><br></li></ul>
+<p><a name="author"><span class="atitle">About the author</span></a></p><div class="ibm-container ibm-portrait-module ibm-alternate-two"><div class="ibm-container-body"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/p-miabernethy.jpg" class="dw-author-img" alt="Mike Abernethy" height="80" width="64"><p><a name="author1"> </a>In
+ his 13 years in technology, Michael Abernethy has worked with a wide 
+variety of technologies and a wide variety of clients.  He currently 
+works as a freelance programmer specializing in Java high availability 
+and jQuery.  His focus nowadays is on Rich Internet Applications and 
+making them both more complex and simpler at the same time.  When he's 
+not working at his computer, he can be found on the golf course, or more
+ accurately in the bushes, looking for his ball.</p></div></div>
+<!-- MAIN_COLUMN_CONTENT_END -->
+
+<!-- OVERLAYS_START -->
+<!-- Report_Abuse_Start -->
+<div class="ibm-common-overlay ibm-no-print" id="reportabuseoverlay">
+   <div class="ibm-head"><p><a class="ibm-common-overlay-close" href="#">Close [x]</a></p></div>
+   <div class="ibm-body">
+      <div class="ibm-main">
+         <a class="ibm-access" name="reportabuseoverlay">Report abuse help</a>   
+         <div class="ibm-title"><h1>Report abuse</h1></div>
+         <div class="ibm-container ibm-alternate">
+            <p><strong>Thank you.</strong>  This entry has been flagged for moderator attention.</p>
+            <div class="ibm-overlay-rule"><hr></div>
+            <div class="ibm-buttons-row">
+               <input onclick="ibmCommon.Overlays.hide('reportabuseoverlay');return false;" class="ibm-btn-cancel-sec dw-btn-cancel-sec" name="ibm-cancel" value="Close" type="button">
+            </div>
+         </div>
+      </div> 
+   </div>
+<div class="ibm-footer"></div>
+</div>
+<!-- Report_Abuse_Error_Start -->
+<div class="ibm-common-overlay ibm-no-print" id="reportabuseoverlayerror">
+   <div class="ibm-head"><p><a class="ibm-common-overlay-close" href="#">Close [x]</a></p></div>
+   <div class="ibm-body">
+      <div class="ibm-main">
+         <a class="ibm-access" name="reportabuseoverlayerror">Report abuse help</a>   
+         <div class="ibm-title"><h1>Report abuse</h1></div>
+         <div class="ibm-container ibm-alternate">
+            <p class="ibm-ind-error"><strong>Report abuse submission failed.  Please try again later.</strong></p>
+            <div class="ibm-overlay-rule"><hr></div>
+            <div class="ibm-buttons-row">
+               <input onclick="ibmCommon.Overlays.hide('reportabuseoverlayerror');return false;" class="ibm-btn-cancel-sec dw-btn-cancel-sec" name="ibm-cancel" value="Close" type="button">
+            </div>
+         </div>
+      </div> 
+   </div>
+<div class="ibm-footer"></div>
+</div>
+<!-- Sign in OVERLAY STARTS HERE --> 
+<div class="ibm-common-overlay" id="signin_overlay">
+<div class="ibm-head">
+<p><a class="ibm-common-overlay-close" href="#" onclick="clearForm();">Close [x]</a></p>
+</div>
+<div class="ibm-body">
+<div class="ibm-main">
+<div class="ibm-title ibm-subtitle">
+<h1>developerWorks: Sign in</h1>
+<div id="ibm-overlay-error-signin" class="no-display"></div>
+</div>
+
+<div class="ibm-container ibm-alternate ibm-buttons-last">
+<div class="ibm-container-body">
+<form class="ibm-column-form" id="sFormId" action="" method="post" name="sForm" onsubmit="return false;">
+<p><label for="ibmid">IBM ID:</label><span><input name="ibm-id" id="ibmid" size="25" class="required" onkeypress="handleEP(event,this.form);" type="text"><br><a class="ibm-forward-link" href="#" onclick="(function () {window.location='/developerworks/dwwi/DWAuthRouter?m=reg&amp;d='+encodeURIComponent(location.href);})();">Need an IBM ID?</a><br><a class="ibm-forward-link" href="http://www.ibm.com/developerworks/dwwi/jsp/WSHelp.jsp?lang=en_US">Forgot your IBM ID?</a>   
+</span></p> 
+<p><label for="password">Password:</label><span><input name="password" id="password" size="25" value="" class="required" onkeypress="handleEP(event,this.form);" type="password"><br><a class="ibm-forward-link" href="#" onclick="(function () {window.location='https://www.ibm.com/account/profile?page=forgot&amp;lang=en_US&amp;appname=ibm&amp;required=null&amp;d='+encodeURIComponent(getAuthUrl())+'%3Fm%3Dloginpage%26lang%3Den_US%26d%3D'+encodeURIComponent(location.href);})();">Forgot your password?</a><br><a class="ibm-forward-link" href="#" onclick="(function () {window.location='https://www.ibm.com/account/profile?page=chpw&amp;lang=en_US&amp;appname=ibm&amp;required=null&amp;d='+encodeURIComponent(location.href);})();">Change your password</a></span></p>
+ 
+<p class="dw-perm-box">
+	<span><input id="perm" name="perm_name" type="checkbox"><label for="perm"> Keep me signed in.</label></span>
+</p>
+<p>By clicking <strong>Submit</strong>, you agree to the <a href="https://www.ibm.com/developerworks/community/terms/">developerWorks terms of use</a>.</p>
+<div class="ibm-buttons-row">
+   <p><input class="ibm-btn-arrow-pri" name="ibm-submit" value="Submit" onclick="signin();return false;" type="submit"><span class="ibm-sep">&nbsp;</span>
+<input value="Cancel" name="ibm-cancel" class="ibm-btn-cancel-sec" onclick="clearForm();ibmCommon.Overlays.hide('signin_overlay');return false;" type="button"></p>
+</div>
+</form>
+<div class="ibm-overlay-rule"><hr></div>
+<p>The first time you sign into developerWorks, a profile is created for you.  <strong>Select
+ information in your profile (name, country/region, and company) is 
+displayed to the public and will accompany any content you post</strong>.  You may update your IBM account at any time.</p>
+<div class="dw-overlay-legal"><p>All information submitted is secure.</p></div>
+</div>
+</div>
+</div>
+</div>
+<div class="ibm-footer"></div>
+</div>
+<!-- Sign in OVERLAY ENDS HERE --> 
+ 
+
+<!-- Display name OVERLAY STARTS HERE --> 
+<div class="ibm-common-overlay" id="displayname_overlay">
+<div class="ibm-head">
+<p><a class="ibm-common-overlay-close" href="#" onclick="clearForm();">Close [x]</a></p>
+</div>
+<div class="ibm-body">
+<div class="ibm-main">
+<div class="ibm-title ibm-subtitle">
+<h1>Choose your display name</h1>
+<div id="ibm-overlay-error-dname" class="no-display"></div>
+</div>
+<div class="ibm-container ibm-alternate ibm-buttons-last">
+<div class="ibm-container-body">
+<p class="ibm-overlay-intro">The first time you sign in to 
+developerWorks, a profile is created for you, so you need to choose a 
+display name.  Your display name accompanies the content you post on 
+developerWorks.</p>
+<p><strong>Please choose a display name between 3-31 characters</strong>. Your display name must be unique in the developerWorks community and should not be your email address for privacy reasons.</p>
+<form id="dFormId" method="post" action="" name="dForm" onsubmit="return false;" class="ibm-column-form">
+<p><label for="displayname">Display name:</label><span><input name="displayname" id="displayname" size="25" onkeypress="handleEP(event,this.form);" type="text"></span><span class="ibm-form-note">(Must be between 3 – 31 characters.)</span>
+</p>
+<p>By clicking <strong>Submit</strong>, you agree to the <a href="https://www.ibm.com/developerworks/community/terms/">developerWorks terms of use</a>.</p>
+<div class="ibm-buttons-row">
+   <p><input class="ibm-btn-arrow-pri" name="ibm-submit" value="Submit" onclick="signin();return false;" type="submit"><span class="ibm-sep">&nbsp;</span>
+<input value="Cancel" name="ibm-cancel" class="ibm-btn-cancel-sec" onclick="clearForm();ibmCommon.Overlays.hide('displayname_overlay');return false;" type="button"></p>
+</div>
+</form>
+<div class="ibm-overlay-rule"><hr></div>
+<div class="dw-overlay-legal"><p>All information submitted is secure.</p></div>
+</div>
+</div>
+</div>
+</div>
+<div class="ibm-footer"></div>
+</div>
+<!-- Display name OVERLAY ENDS HERE -->
+<!-- OVERLAYS_END -->
+
+<!-- RATINGS START -->
+<p class="ibm-no-print"><span class="atitle"><a name="iratings">Rate this article</a></span></p>
+<input id="art-rating" name="ratinga" value="5" type="hidden"><div id="art-rating-module"><p id="submitErr" class="ibm-ind-error" style="display: none;"><strong>Error: Submission failed. Please try again.</strong></p><p><span id="ratingSectUI"><img alt="Average rating 5 stars based on 66 votes" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/stars120x20-5gw.jpg" class="dw-avg-rating"> Average rating (66 votes)</span></p><div class="ibm-container" id="ratingForm"><div class="ibm-container-body dw-container-ratings"><form class="dw-ratings-form" onsubmit="artRating.submitRating(); return false;"><input name="ratingstars" id="rat-1" value="1" type="radio"><label class="rating-label" id="star1" for="rat-1">1 star</label><img id="rat-1-img" alt="1 star" title="1 star" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/stars120x20-1w.jpg" class="rating-image"><span class="dw-rating-text">1 star</span><br><input name="ratingstars" id="rat-2" value="2" type="radio"><label class="rating-label" id="star2" for="rat-2">2 stars</label><img id="rat-2-img" alt="2 stars" title="2 stars" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/stars120x20-2w.jpg" class="rating-image2"><span class="dw-rating-text">2 stars</span><br><input name="ratingstars" id="rat-3" value="3" type="radio"><label class="rating-label" id="star3" for="rat-3">3 stars</label><img id="rat-3-img" alt="3 stars" title="3 stars" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/stars120x20-3w.jpg" class="rating-image2"><span class="dw-rating-text">3 stars</span><br><input name="ratingstars" id="rat-4" value="4" type="radio"><label class="rating-label" id="star4" for="rat-4">4 stars</label><img id="rat-4-img" alt="4 stars" title="4 stars" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/stars120x20-4w.jpg" class="rating-image2"><span class="dw-rating-text">4 stars</span><br><input name="ratingstars" id="rat-5" value="5" type="radio"><label class="rating-label" id="star5" for="rat-5">5 stars</label><img id="rat-5-img" alt="5 stars" title="5 stars" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/stars120x20-5w.jpg" class="rating-image2"><span class="dw-rating-text">5 stars</span><div class="ibm-buttons-row"><p class="ibm-first"><input value="Submit" name="ibm-submit" class="ibm-btn-arrow-pri dw-ratings-submit" type="submit"></p></div></form></div></div></div>
+<script language="JavaScript" type="text/javascript">
+// <![CDATA[
+   // widget div id and article id as args
+   window.artRating.init('art-rating-module','art-rating-summary');
+// ]]>
+</script>
+<!-- RATINGS END -->
+
+<!-- INLINE_COMMENTS_START -->
+<p class="ibm-no-print"><span class="atitle"><a name="icomments">Comments</a></span></p>
+<div id="threadShow"><div id="cmtTog" style=""><div class="ibm-container ibm-alternate-two dw-commentbox dw-noborder"><p id="cmtHead"><label for="newCmt"><strong>Add comment:</strong></label></p><div class="ibm-container-body dw-commentbox dw-noborder"><p id="signInSect"> <a onclick="showSignIn();return false;" href="#">Sign in</a> or <a href="http://www.ibm.com/developerworks/dwwi/DWAuthRouter?m=register&amp;lang=en&amp;d=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka3%2Findex.html%23icomments">register</a>  to leave a comment.</p><p>Note: HTML elements are not supported within comments.</p><span id="infoCmt"></span><form focus="name" enctype="multipart/form-data" method="post" action="" name="form" class="ibm-column-form"><p><textarea disabled="disabled" cols="120" rows="5" name="newCmt" id="newCmt" class="dw-inoperable"></textarea><br></p><span class="ibm-input-group"><input value="1" name="comment_notification" id="comment_notification" disabled="disabled" type="checkbox"><label id="notifyText" class="ibm-form-note dw-btn-cancel-sec" for="comment_notification">Notify me when a comment is added</label></span><span class="ibm-form-note dw-btn-cancel-sec notifySection" id="maxCharsCount"><span id="charCount">1000</span> characters left</span><br><br><p></p><p class="ibm-buttons-row"><input disabled="disabled" value="Post" jquery1275054459750="11" name="postCmt" id="postCmt" class="ibm-btn-arrow-sec dw-btn-arrow-sec" alt="Post your comment" type="button"><br><br></p></form></div></div><div id="topControl" class="ibm-container ibm-alternate-two dw-comment-totals" style=""><div class="ibm-container-body"><form id="selectComments" method="get" action=""><p><span class="dw-comment-totals-label"><strong>Total comments (<span id="numCmts">8</span>)</strong></span><span><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="" height="10" width="100"></span><span class="dw-how-many-comments-label" style="" id="dropdownCmts"><label for="howManyComments">Show:</label>&nbsp;<select name="comments" id="howManyComments" class="dw-how-many-comments"><option selected="selected" value="recent">Most recent comments   </option><option value="all">All comments</option></select><input class="ibm-btn-go" name="ibm-go" value="Go" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/short-btn.gif" alt="Go" type="image"><br></span></p></form></div></div><div id="cmtSect"><div class="comment"><div class="dw-icomment-container"><div class="dw-icomment-body dw-noborder"><div class="dw-icomment-body dw-noborder"><p>Hiii,
+ Thanks for this interesting post, presently i am working in 
+Bioinformatics and doing PhD and i am not quite familiar with JAVA and 
+server site application development, although i have good experience in 
+PYTHON (not in server-site application development or web development 
+but in stand alone scripts) and i want to develop a server site 
+application with the help of WEKA, Kindly suggest me the way, like from 
+where i should start .. is there any helpful book ...? or tutorial 
+specifically dedicated to WEKA. ?<br><br>Regards <br><br>Jai<br><br> its really very helpfull post about weka,</p><p class="ibm-item-note-alternate dw-item-note-alternate-left">Posted by <strong><a href="https://www.ibm.com/developerworks/community/profiles/user/delhi">delhi</a></strong> on 11 July 2013</p><p class="ibm-ind-link ibm-item-note-alternate dw-item-note-alternate-right"><a class="ibm-caution-link dw-report-abuse" href="http://www.ibm.com/developerworks/community/report?lang=en&amp;referingURL=http://www.ibm.com/developerworks/opensource/library/os-weka3/index.html&amp;mymessage=Comment:%20Hiii%2C%20Thanks%20for%20this%20interesting%20post%2C%20presently%20i%20am%20working%20in%20Bioinformatics%20and%20doing%20PhD%20and%20i%20am%20not%20quite%20familiar%20with%20JAVA%20and%20server%20site%20application%20development%2C%20although%20i%20have%20good%20experience%20in%20PYTHON%20%28not%20in%20server-site%20application%20development%20or%20web%20development%20but%20in%20stand%20alone%20scripts%29%20and%20i%20want%20to%20develop%20a%20server%20site%20application%20with%20the%20help%20of%20WEKA%2C%20Kindly%20suggest%20me%20the%20way%2C%20like%20from%20where%20i%20should%20start%20..%20is%20there%20any%20helpful%20book%20...%3F%20or%20tutorial%20specifically%20dedicated%20to%20WEKA.%20%3FRegards%20Jai%20its%20really%20very%20helpfull%20post%20about%20weka%2C%0DPosted%20by%20delhi%20on%2011%20July%202013%0D%0D---%20Add%20any%20comments%20below%20this%20line%20---" target="_newtab">Report abuse</a></p><div class="dw-clear-both"></div></div></div></div></div><div class="comment"><div class="dw-icomment-container"><div class="dw-icomment-body dw-noborder"><div class="dw-icomment-body dw-noborder"><p>Hello, Michael Abernethy , I donot how to use this example to my situation.<br>&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;<br>If I have matric data[row, col] , <br>row stand for users,<br>col stand for movies, <br>rate(i,j) stand for user i rate movie j, <br>rate only just 0, 1 , 2, 3, 4, 5 --- 0 stand for unknow in this matric<br>how to use weka to complete this matric<br>example :<br>[1,1,0,2,5]<br>[0,0,2,4,3]<br>[0,0,0,0,0]<br>[2,5,4,1,2]<br>[1,1,0,0,2]<br>predict actual value where rate(i,j) == 0 <br>Thank you for your help.</p><p class="ibm-item-note-alternate dw-item-note-alternate-left">Posted by <strong><a href="https://www.ibm.com/developerworks/community/profiles/user/JinnTao">JinnTao</a></strong> on 14 May 2013</p><p class="ibm-ind-link ibm-item-note-alternate dw-item-note-alternate-right"><a class="ibm-caution-link dw-report-abuse" href="http://www.ibm.com/developerworks/community/report?lang=en&amp;referingURL=http://www.ibm.com/developerworks/opensource/library/os-weka3/index.html&amp;mymessage=Comment:%20Hello%2C%20Michael%20Abernethy%20%2C%20I%20donot%20how%20to%20use%20this%20example%20to%20my%20situation.%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3BIf%20I%20have%20matric%20data%5Brow%2C%20col%5D%20%2C%20row%20stand%20for%20users%2Ccol%20stand%20for%20movies%2C%20rate%28i%2Cj%29%20stand%20for%20user%20i%20rate%20movie%20j%2C%20rate%20only%20just%200%2C%201%20%2C%202%2C%203%2C%204%2C%205%20---%200%20stand%20for%20unknow%20in%20this%20matrichow%20to%20use%20weka%20to%20complete%20this%20matricexample%20%3A%5B1%2C1%2C0%2C2%2C5%5D%5B0%2C0%2C2%2C4%2C3%5D%5B0%2C0%2C0%2C0%2C0%5D%5B2%2C5%2C4%2C1%2C2%5D%5B1%2C1%2C0%2C0%2C2%5Dpredict%20actual%20value%20where%20rate%28i%2Cj%29%20%3D%3D%200%20Thank%20you%20for%20your%20help.%0DPosted%20by%20JinnTao%20on%2014%20May%202013%0D%0D---%20Add%20any%20comments%20below%20this%20line%20---" target="_newtab">Report abuse</a></p><div class="dw-clear-both"></div></div></div></div></div><div class="comment"><div class="dw-icomment-container"><div class="dw-icomment-body dw-noborder"><div class="dw-icomment-body dw-noborder"><p>Hello, Michael Abernethy , I donot how to use this example to my situation.<br>&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;<br>If I have matric data[row, col] , <br>row stand for users,<br>col stand for movies, <br>rate(i,j) stand for user i rate movie j, <br>rate only just 0, 1 , 2, 3, 4, 5 --- 0 stand for unknow in this matric<br>how to use weka to complete this matric<br>example :<br>[1,1,0,2,5]<br>[0,0,2,4,3]<br>[0,0,0,0,0]<br>[2,5,4,1,2]<br>[1,1,0,0,2]<br>predict actual value where rate(i,j) == 0 <br>Thank you for your help.</p><p class="ibm-item-note-alternate dw-item-note-alternate-left">Posted by <strong><a href="https://www.ibm.com/developerworks/community/profiles/user/JinnTao">JinnTao</a></strong> on 14 May 2013</p><p class="ibm-ind-link ibm-item-note-alternate dw-item-note-alternate-right"><a class="ibm-caution-link dw-report-abuse" href="http://www.ibm.com/developerworks/community/report?lang=en&amp;referingURL=http://www.ibm.com/developerworks/opensource/library/os-weka3/index.html&amp;mymessage=Comment:%20Hello%2C%20Michael%20Abernethy%20%2C%20I%20donot%20how%20to%20use%20this%20example%20to%20my%20situation.%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3BIf%20I%20have%20matric%20data%5Brow%2C%20col%5D%20%2C%20row%20stand%20for%20users%2Ccol%20stand%20for%20movies%2C%20rate%28i%2Cj%29%20stand%20for%20user%20i%20rate%20movie%20j%2C%20rate%20only%20just%200%2C%201%20%2C%202%2C%203%2C%204%2C%205%20---%200%20stand%20for%20unknow%20in%20this%20matrichow%20to%20use%20weka%20to%20complete%20this%20matricexample%20%3A%5B1%2C1%2C0%2C2%2C5%5D%5B0%2C0%2C2%2C4%2C3%5D%5B0%2C0%2C0%2C0%2C0%5D%5B2%2C5%2C4%2C1%2C2%5D%5B1%2C1%2C0%2C0%2C2%5Dpredict%20actual%20value%20where%20rate%28i%2Cj%29%20%3D%3D%200%20Thank%20you%20for%20your%20help.%0DPosted%20by%20JinnTao%20on%2014%20May%202013%0D%0D---%20Add%20any%20comments%20below%20this%20line%20---" target="_newtab">Report abuse</a></p><div class="dw-clear-both"></div></div></div></div></div><div class="comment"><div class="dw-icomment-container"><div class="dw-icomment-body dw-noborder"><div class="dw-icomment-body dw-noborder"><p>Hello, Michael Abernethy , I donot how to use this example to my situation.<br>&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;<br>If I have matric data[row, col] , <br>row stand for users,<br>col stand for movies, <br>rate(i,j) stand for user i rate movie j, <br>rate only just 0, 1 , 2, 3, 4, 5 --- 0 stand for unknow in this matric<br>how to use weka to complete this matric<br>example :<br>[1,1,0,2,5]<br>[0,0,2,4,3]<br>[0,0,0,0,0]<br>[2,5,4,1,2]<br>[1,1,0,0,2]<br>predict actual value where rate(i,j) == 0 <br>Thank you for your help.</p><p class="ibm-item-note-alternate dw-item-note-alternate-left">Posted by <strong><a href="https://www.ibm.com/developerworks/community/profiles/user/JinnTao">JinnTao</a></strong> on 14 May 2013</p><p class="ibm-ind-link ibm-item-note-alternate dw-item-note-alternate-right"><a class="ibm-caution-link dw-report-abuse" href="http://www.ibm.com/developerworks/community/report?lang=en&amp;referingURL=http://www.ibm.com/developerworks/opensource/library/os-weka3/index.html&amp;mymessage=Comment:%20Hello%2C%20Michael%20Abernethy%20%2C%20I%20donot%20how%20to%20use%20this%20example%20to%20my%20situation.%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3BIf%20I%20have%20matric%20data%5Brow%2C%20col%5D%20%2C%20row%20stand%20for%20users%2Ccol%20stand%20for%20movies%2C%20rate%28i%2Cj%29%20stand%20for%20user%20i%20rate%20movie%20j%2C%20rate%20only%20just%200%2C%201%20%2C%202%2C%203%2C%204%2C%205%20---%200%20stand%20for%20unknow%20in%20this%20matrichow%20to%20use%20weka%20to%20complete%20this%20matricexample%20%3A%5B1%2C1%2C0%2C2%2C5%5D%5B0%2C0%2C2%2C4%2C3%5D%5B0%2C0%2C0%2C0%2C0%5D%5B2%2C5%2C4%2C1%2C2%5D%5B1%2C1%2C0%2C0%2C2%5Dpredict%20actual%20value%20where%20rate%28i%2Cj%29%20%3D%3D%200%20Thank%20you%20for%20your%20help.%0DPosted%20by%20JinnTao%20on%2014%20May%202013%0D%0D---%20Add%20any%20comments%20below%20this%20line%20---" target="_newtab">Report abuse</a></p><div class="dw-clear-both"></div></div></div></div></div><div class="comment"><div class="dw-icomment-container"><div class="dw-icomment-body dw-noborder"><div class="dw-icomment-body dw-noborder"><p>Hello, Michael Abernethy , I donot how to use this example to my situation.<br>&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;<br>If I have matric data[row, col] , <br>row stand for users,<br>col stand for movies, <br>rate(i,j) stand for user i rate movie j, <br>rate only just 0, 1 , 2, 3, 4, 5 --- 0 stand for unknow in this matric<br>how to use weka to complete this matric<br>example :<br>[1,1,0,2,5]<br>[0,0,2,4,3]<br>[0,0,0,0,0]<br>[2,5,4,1,2]<br>[1,1,0,0,2]<br>predict actual value where rate(i,j) == 0 <br>Thank you for your help.</p><p class="ibm-item-note-alternate dw-item-note-alternate-left">Posted by <strong><a href="https://www.ibm.com/developerworks/community/profiles/user/JinnTao">JinnTao</a></strong> on 14 May 2013</p><p class="ibm-ind-link ibm-item-note-alternate dw-item-note-alternate-right"><a class="ibm-caution-link dw-report-abuse" href="http://www.ibm.com/developerworks/community/report?lang=en&amp;referingURL=http://www.ibm.com/developerworks/opensource/library/os-weka3/index.html&amp;mymessage=Comment:%20Hello%2C%20Michael%20Abernethy%20%2C%20I%20donot%20how%20to%20use%20this%20example%20to%20my%20situation.%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3B%26gt%3BIf%20I%20have%20matric%20data%5Brow%2C%20col%5D%20%2C%20row%20stand%20for%20users%2Ccol%20stand%20for%20movies%2C%20rate%28i%2Cj%29%20stand%20for%20user%20i%20rate%20movie%20j%2C%20rate%20only%20just%200%2C%201%20%2C%202%2C%203%2C%204%2C%205%20---%200%20stand%20for%20unknow%20in%20this%20matrichow%20to%20use%20weka%20to%20complete%20this%20matricexample%20%3A%5B1%2C1%2C0%2C2%2C5%5D%5B0%2C0%2C2%2C4%2C3%5D%5B0%2C0%2C0%2C0%2C0%5D%5B2%2C5%2C4%2C1%2C2%5D%5B1%2C1%2C0%2C0%2C2%5Dpredict%20actual%20value%20where%20rate%28i%2Cj%29%20%3D%3D%200%20Thank%20you%20for%20your%20help.%0DPosted%20by%20JinnTao%20on%2014%20May%202013%0D%0D---%20Add%20any%20comments%20below%20this%20line%20---" target="_newtab">Report abuse</a></p><div class="dw-clear-both"></div></div></div></div></div></div></div><div id="bottomControl" class="ibm-container ibm-alternate-two dw-comment-totals" style="display:none"><div class="ibm-container-body"><form id="selectComments2" method="get" action=""><p><span class="dw-comment-totals-label"><strong>Total comments (<span id="numCmts2">8</span>)</strong></span><span><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="" height="10" width="100"></span><span class="dw-how-many-comments-label" style="" id="dropdownCmts2"><label for="howManyComments2">Show:</label>&nbsp;<select name="comments" id="howManyComments2" class="dw-how-many-comments"><option selected="selected" value="recent">Most recent comments   </option><option value="all">All comments</option></select><input class="ibm-btn-go" name="ibm-go" value="Go" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/short-btn.gif" alt="Go" type="image"><br></span></p></form></div></div></div>
+<!-- INLINE_COMMENTS_END -->
+
+<p class="ibm-ind-link ibm-back-to-top"><a class="ibm-anchor-up-link" href="#ibm-pcon">Back to top</a></p>
+
+<!-- Overlays -->
+
+</div>
+<!-- MAIN_COLUMN_CONTAINER_END -->
+
+<!-- Rating_Meta_BEGIN -->
+<!--Rating_Meta_BEGIN--><div class="metavalue">static.content.url=http://www.ibm.com/developerworks/js/artrating/</div><div class="metavalue">SITE_ID=1</div><div class="metavalue">Zone=Open source</div><div class="metavalue">ArticleID=494038</div><div class="metavalue">ArticleTitle=Data mining with WEKA, Part 3: Nearest Neighbor and server-side library</div><div class="metavalue">publish-date=06082010</div><div class="metavalue">author1-email=mabernethy@yahoo.com</div><div class="metavalue">author1-email-cc=</div><script language="javascript" type="text/javascript">document.write('<div class="metavalue">url='+location.href.replace(/</g,  '%3C')+'</div>');</script><div class="metavalue">url=http://www.ibm.com/developerworks/opensource/library/os-weka3/index.html</div><!--Rating_Meta_END-->
+<!-- Rating_Meta_END -->
+
+</div>
+<!-- MAIN_COLUMN_END-->
+
+<!-- RIGHT_COLUMN_BEGIN -->
+<div id="ibm-content-sidebar">
+
+<!-- RIGHT_COLUMN_CONTENT_BEGIN --> 
+<div class="ibm-container"><h2>Table of contents</h2><div class="ibm-container-body"><img alt="" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c_002.gif" height="1" width="1"><ul class="ibm-bullet-list"><li><a class="ibm-feature-link" href="#N10078">Introduction</a></li><li><a class="ibm-feature-link" href="#N10093">Nearest Neighbor</a></li><li><a class="ibm-feature-link" href="#N1015F">Using WEKA on the server</a></li><li><a class="ibm-feature-link" href="#N10196">Conclusion</a></li><li><a class="ibm-feature-link" href="#download">Download</a></li><li><a class="ibm-feature-link" href="#resources">Resources</a></li><li><a class="ibm-feature-link" href="#author">About the author</a></li><li><a class="ibm-feature-link" href="#icomments">Comments</a></li></ul></div></div>
+
+
+<!-- Dig_Deeper -->
+<div class="ibm-container"><h2>Dig deeper into Open source on developerWorks</h2><div class="ibm-container-body"><ul class="ibm-link-list"><li class="ibm-first"><a href="http://www.ibm.com/developerworks/opensource/" class="ibm-forward-link">Overview</a></li><li><a href="http://www.ibm.com/developerworks/opensource/newto/" class="ibm-forward-link">New to Open source</a></li><li><a href="http://www.ibm.com/developerworks/opensource/find/projects/" class="ibm-forward-link">Projects</a></li><li><a href="http://www.ibm.com/developerworks/opensource/library/" class="ibm-forward-link">Technical library (articles, tutorials, and more)</a></li><li><a href="http://www.ibm.com/developerworks/forums/dw_osforums.jsp" class="ibm-forward-link">Forums</a></li><li><a href="http://www.ibm.com/developerworks/opensource/find/events/" class="ibm-forward-link">Events</a></li></ul></div></div>
+<!-- High_Visibility_Offer -->
+<!--XSLT stylesheet used to transform this content: s-highvisibilityoffer.xsl--><div class="ibm-container"><h2>Try IBM PureSystems. No charge.</h2><div class="ibm-container-body"><img alt="IBM PureSystems on a kaleideoscope background" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/hiviz-168x64-troy.jpg" border="0" height="70" width="188"><p>Experience today!</p><div class="ibm-rule"><hr></div><p class="ibm-ind-link"><a href="https://www.ibm.com/developerworks/puresystems/try/?ca=dti-hivis-troy" class="ibm-forward-link">Get started with the cloud-based trial and pattern development kit.</a></p></div></div>
+<!-- Special_Offers -->
+<div class="ibm-container"><h2>Special offers</h2><div class="ibm-container-body"><p class="dw-special-offers"><a href="http://www.ibm.com/developerworks/demos/"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/tile_v16_ondemanddemos.gif" alt="On demand demos: An easy way to watch and learn" border="0" height="50" width="158"></a></p><p class="dw-special-offers"><a href="http://www.ibm.com/developerworks/aboutdw/dwa/?ca=dti-dwarp"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/tile_v16_dwaarp.gif" alt="Get recognized! W Author Program" border="0" height="50" width="158"></a></p><p class="dw-special-offers"><a href="https://www.ibm.com/developerworks/cloud/index.html?ca=dti-cloudzone"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/tile_v16_cloudzoneA.gif" alt="Cloud Computing resources for IT professionals" border="0" height="50" width="158"></a></p><div class="ibm-rule"><hr></div><p class="ibm-ind-link"><a class="ibm-forward-link" href="http://www.ibm.com/developerworks/downloads/?ca=dti-tilemoreoffers">Trial software offers</a></p></div></div>
+<!-- RIGHT_COLUMN_CONTENT_END -->
+
+</div>
+<!-- RIGHT_COLUMN_END -->
+
+<!-- CONTENT_BODY_END -->
+</div>
+
+</div>
+<!-- CONTENT_END -->
+
+ <!-- END_IBM-PCON -->
+</div>
+
+<!-- FOOTER_BEGIN -->
+<div id="ibm-footer">
+<!-- IBM footer container; disabled -->
+</div>
+
+<div id="ibm-page-tools-dw">
+	<div id="dw-footer-top-row">
+		<ul id="dw-foot-options">
+			<li id="dw-print"><a class="ibm-print-link" href="#">Print this page</a></li>
+		</ul>
+		<ul id="ibm-foot-options-dw">
+			<li id="dw-foot-0"><a href="#">Share this page</a></li>
+			<li id="dw-foot-1"><a href="#">Follow developerWorks</a></li>
+		</ul>
+	</div>
+
+	<!-- TOP ROW SLIDER -->
+    <div id="dw-page-tools-menu">    
+        <div class="ibm-ribbon-pane-dw">
+            <div class="ibm-ribbon-section-dw">
+				<!-- Share this page -->			
+                <div class="dw-footer-columns">
+                    <div class="dw-footer-col-3-1">
+                        <h2>Share this page:</h2>                       
+						<ul class="ibm-link-list">
+							<li><a id="dw-foot-0-0" class="ibm-facebook-link" href="http://www.facebook.com/sharer.php?u=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka3%2Findex.html&amp;t=Data%20mining%20with%20WEKA%2C%20Part%203%3A%20Nearest%20Neighbor%20and%20server-side%20library">Facebook</a></li>
+							<li><a class="ibm-linkedin-link" href="http://www.linkedin.com/shareArticle?mini=true&amp;url=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka3%2Findex.html&amp;title=Data%20mining%20with%20WEKA%2C%20Part%203%3A%20Nearest%20Neighbor%20and%20server-side%20library">LinkedIn</a></li>
+							<li><a class="ibm-twitter-link" href="http://twitter.com/home?status=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka3%2Findex.html%20-%20Data%20mining%20with%20WEKA%2C%20Part%203%3A%20Nearest%20Neighbor%20and%20server-side%20library">Twitter</a></li>
+						</ul>
+                    </div>
+                    <div class="dw-footer-col-3-2">
+						<ul class="ibm-link-list">
+							<li><a class="ibm-delicious-link" href="http://delicious.com/post?url=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka3%2Findex.html&amp;title=Data%20mining%20with%20WEKA%2C%20Part%203%3A%20Nearest%20Neighbor%20and%20server-side%20library">Delicious</a></li>
+							<li><a class="ibm-digg-link" href="http://digg.com/submit?phase=2&amp;url=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka3%2Findex.html&amp;title=Data%20mining%20with%20WEKA%2C%20Part%203%3A%20Nearest%20Neighbor%20and%20server-side%20library">Digg</a></li>
+							<li><a class="ibm-stumbleupon" href="http://www.stumbleupon.com/submit?url=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka3%2Findex.html&amp;title=Data%20mining%20with%20WEKA%2C%20Part%203%3A%20Nearest%20Neighbor%20and%20server-side%20library">StumbleUpon</a></li>
+						</ul>
+                    </div>
+                    <div class="dw-footer-col-3-3">
+						<ul class="ibm-link-list">
+							<li><a class="ibm-email-link" href="#">Email this page</a></li>
+						</ul>
+                    </div>
+                    <div class="dw-footer-close">
+						<ul>
+							<li><div class="dw-footer-close-share"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+                </div>
+                <!-- Follow developerWorks -->
+                <div class="dw-footer-columns">
+                    <div class="dw-footer-col-1-1">
+                        <h2>Follow developerWorks:</h2>
+						<ul class="ibm-link-list">
+							<li><a id="dw-foot-1-0" class="ibm-facebook-link" href="http://www.facebook.com/sharer.php?u=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka3%2Findex.html&amp;t=Data%20mining%20with%20WEKA%2C%20Part%203%3A%20Nearest%20Neighbor%20and%20server-side%20library">Facebook</a></li>
+							<li><a class="ibm-twitter-link" href="http://twitter.com/home?status=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka3%2Findex.html%20-%20Data%20mining%20with%20WEKA%2C%20Part%203%3A%20Nearest%20Neighbor%20and%20server-side%20library">Twitter</a></li>
+						</ul>
+                    </div>
+                    <div class="dw-footer-close">
+						<ul>
+							<li><div class="dw-footer-close-follow"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="ibm-footer-module-dw">
+	<div class="dw-footer-columns">
+		<div class="dw-footer-col-6-1">
+			<ul>
+				<li><a href="http://www.ibm.com/developerworks/aboutdw/">About</a></li>
+				<li><a href="https://www.ibm.com/developerworks/feedback">Help</a></li>
+				<li><a href="http://www.ibm.com/developerworks/aboutdw/contacts.html">Contact us</a></li>
+				<li><a href="https://www.ibm.com/developerworks/ideas">Submit content</a></li>
+			</ul>
+		</div>
+		<div class="dw-footer-col-6-2">
+			<ul>
+				<li><a href="http://www.ibm.com/developerworks/feeds/">Feeds</a></li>
+			</ul>
+		</div>
+		<div class="dw-footer-col-6-3">
+			<ul>
+				<li><a href="https://www.ibm.com/developerworks/community/report/">Report abuse</a></li>
+				<li><a href="https://www.ibm.com/developerworks/community/terms/">Terms of use</a></li>
+				<li><a href="http://www.ibm.com/privacy/">IBM privacy</a></li>
+				<li><a href="http://www.ibm.com/accessibility/">IBM accessibility</a></li>
+			</ul>
+		</div>
+		<div class="dw-footer-col-6-4">
+			<ul>
+				<li><a href="http://www.ibm.com/developerworks/university/academicinitiative/">Faculty</a></li>
+				<li><a href="http://www.ibm.com/developerworks/university/students/">Students</a></li>
+				<li><a href="http://www.ibm.com/isv/">Business Partners</a></li>
+			</ul>
+		</div>
+		<div class="dw-footer-col-6-5">
+		</div>
+		<div class="dw-footer-col-6-6">
+			<img src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/dwn-ibm-logo-v16.png" alt="IBM®" height="46" width="100">
+			<img class="dw-preload" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/arrow-down-active.gif" alt="" height="1" width="1">
+		</div>
+	</div>
+	<!-- Language selector no-script -->
+	<noscript>
+	<div id="dw-footer-selectlang">
+		<h2><a name="SELECTLANG">Select a language:</a></h2>
+		<ul>
+			<li><a href="http://www.ibm.com/developerworks/">English</a></li>
+			<li><a href="http://www.ibm.com/developerworks/cn/">中文</a></li>
+			<li><a href="http://www.ibm.com/developerworks/jp/">日本語</a></li>
+			<li><a href="http://www.ibm.com/developerworks/ru/">Русский</a></li>
+			<li><a href="http://www.ibm.com/developerworks/br/">Português (Brasil)</a></li>
+			<li><a href="http://www.ibm.com/developerworks/ssa/">Español</a></li>
+			<li><a href="http://www.ibm.com/developerworks/vn/">Việt</a></li>
+		</ul>
+	</div>
+	</noscript>
+</div><!-- FOOTER_END -->
+
+ <!-- END_IBM-TOP -->
+<div id="ibm-overlay-top"></div></div>
+ 
+ <!-- SCRIPTS_INCLUDE_BEGIN -->
+<!-- JQuery start -->
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/jquery_004.js"></script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/jquery_002.js"></script>
+<!-- xM Masthead/Footer -->
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/jquery_003.js">//</script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/jquery.js">//</script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/dw_v16.js">//</script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/flash-detect.js">//</script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/dwsi.js">//</script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/showcomments.js">//</script>
+<script language="JavaScript" type="text/javascript">
+// <![CDATA[
+ jQuery('threadShow').showComments('95%',5,'nCmts','icomments');
+// ]]>
+</script>
+
+<script type="text/javascript" language="JavaScript">
+	jQuery.noConflict();     
+	// Put all your code in your document ready area
+	jQuery(document).ready(function(jQuery) {
+	// Do jQuery stuff using jQuery 
+	jQuery('a.dwauthor').cluetip({
+		local: true,
+		showTitle: false,
+		positionBy: 'bottomTop',
+		sticky: true,	
+		mouseOutClose: true,
+		closeText: '<img src="//dw1.s81c.com/developerworks/js/jquery/cluetip98/i/x.gif" alt="Close" />',
+		arrows: false,
+		dropShadow: true,
+		cluetipClass: 'dwbasic'
+		});
+
+		rBHash = {};
+		rBHash['viperLang'] = 'en';
+		rBHash['urlLang'] = 'en';
+
+		// si
+		initSI();
+	});
+ </script>
+ <!-- JQuery end -->
+ <!-- Overlay js -->
+<script language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/overlay.js" type="text/javascript"></script><!-- BEGIN: Use this section to set page specific variables for the Unica Page Tag -->
+<script language="JavaScript">var NTPT_PGEXTRA="ibmSkillLevel=3&ibmAdoptPhase=651&ibmRole=31&ibmCmaId=494038&ibmContentAreas=opensource";</script>
+<!--END --><!-- SCRIPTS_INCLUDE_END -->
+
+<div id="ibm-metrics">
+<script src="Data%20mining%20with%20WEKA,%20Part%203_%20Nearest%20Neighbor%20and%20server-side%20library_files/stats.js" type="text/javascript">//</script>
+</div>
+
+
+<div style="position: absolute; z-index: 95; display: none;" id="cluetip-waitimage"></div><div style="z-index: 96; display: none; position: absolute;" id="cluetip"><div style="z-index: 95; opacity: 0.1; top: 1px; left: 1px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="z-index: 94; opacity: 0.1; top: 2px; left: 2px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="z-index: 93; opacity: 0.1; top: 3px; left: 3px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="z-index: 92; opacity: 0.1; top: 4px; left: 4px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="z-index: 91; opacity: 0.1; top: 5px; left: 5px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="z-index: 90; opacity: 0.1; top: 6px; left: 6px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="position: relative; z-index: 97;" id="cluetip-outer"><div id="cluetip-title"></div><div id="cluetip-inner"></div></div><div id="cluetip-extra"></div><div style="z-index: 97;" id="cluetip-arrows" class="cluetip-arrows"></div></div></body></html>

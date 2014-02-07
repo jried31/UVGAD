@@ -1,0 +1,1407 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Cache-control" content="no-cache">
+<title>Data mining with WEKA, Part 1: Introduction and regression</title>
+<meta http-equiv="PICS-Label" content="(PICS-1.1 &quot;http://www.icra.org/ratingsv02.html&quot; l gen true r (cz 1 lz 1 nz 1 oz 1 vz 1) &quot;http://www.rsac.org/ratingsv01.html&quot; l gen true r (n 0 s 0 v 0 l 0) &quot;http://www.classify.org/safesurf/&quot; l gen true r (SS~~000 1))">
+<link rel="schema.DC" href="http://purl.org/DC/elements/1.0/">
+<link rel="SHORTCUT ICON" href="http://www.ibm.com/favicon.ico">
+<meta name="Owner" content="developerWorks Content/Raleigh/IBM">
+<meta name="DC.Language" scheme="rfc1766" content="en">
+<meta name="IBM.Country" content="ZZ">
+<meta name="Security" content="Public">
+<meta name="IBM.SpecialPurpose" content="SP001">
+<meta name="IBM.PageAttributes" content="sid=1003,1004">
+<meta name="Source" content="v16 Template Generator">
+<meta name="Robots" content="index,follow">
+<meta name="Abstract" content="Data mining is the talk of the tech industry, as companies are generating millions of data points about their users and looking for a way to turn that information into increased revenue. Data mining is a collective term for dozens of techniques to glean information from data and turn it into something meaningful. This article will introduce you to open source data-mining software and some of the most common techniques to interpret data.">
+<meta name="Description" content="Data mining is the talk of the tech industry, as companies are generating millions of data points about their users and looking for a way to turn that information into increased revenue. Data mining is a collective term for dozens of techniques to glean information from data and turn it into something meaningful. This article will introduce you to open source data-mining software and some of the most common techniques to interpret data.">
+<meta name="Keywords" content="data mining, data mine, WEKA, regression, nearest neighbor, clustering, classification tree, open source, foss, tttosca">
+<meta name="DC.Date" scheme="iso8601" content="2010-04-27">
+<meta name="DC.Type" scheme="IBM_ContentClassTaxonomy" content="CT316">
+<meta name="DC.Subject" scheme="IBM_SubjectTaxonomy" content="TT400">
+<meta scheme="IBM_WTMCategory" name="IBM.WTMCategory" content="SOFDCOSRZZ">
+<meta name="DC.Rights" content="© Copyright&nbsp;IBM Corporation&nbsp;2010">
+<meta name="IBM.Effective" scheme="W3CDTF" content="2010-04-27">
+<meta name="title" content="Data mining with WEKA, Part 1: Introduction and regression">
+
+<!-- HEADER_SCRIPTS_AND_CSS_INCLUDE -->
+<link href="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/all.css" media="all" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/screen.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/screen-uas.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/screen-fonts.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/handheld.css" media="handheld" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/print.css" media="print" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/overlay.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<!-- dW-specific CSS -->
+<link href="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/dw-screen.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/dw-screen-comments-ratings-signin.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<link href="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/jquery.css" media="screen,projection" rel="stylesheet" title="www" type="text/css">
+<!-- xM Masthead/Footer -->
+<link href="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/dw-mf2013-N.css" rel="stylesheet" title="www" type="text/css">
+<script src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/ibmcommon.js" type="text/javascript">//</script><link title="IBM Search" href="http://www.ibm.com/search/opensearch/description.xml" type="application/opensearchdescription+xml" rel="search">
+<script src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/dynamicnav.js" type="text/javascript">//</script>
+<!-- dW functional JS -->
+<script language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/urltactic.js" type="text/javascript"></script>
+<!-- Rating_START -->
+<script language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/showrating.js" type="text/javascript"></script>
+<style type="text/css">
+.metavalue {
+  display: none;
+}
+</style>
+<!-- Rating_END --><!-- RESERVED_HEADER_INCLUDE -->
+<script language="javascript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/ajax1.js" type="text/javascript"></script>
+<script language="javascript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/search_counter-maverick.js" type="text/javascript"></script>
+<script language="javascript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/request_referer_capture-maverick.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript">
+ <!--
+ setDefaultQuery('opensourceart');
+ //-->
+</script>
+<script language="JavaScript" type="text/javascript">
+ <!--
+ function openNewWindow(url,tar,arg){window.open(url,tar,arg);}
+ //-->
+</script>
+<!-- Include file support -->
+<script language="JavaScript" type="text/javascript">
+(function($) {
+	jQuery.extend({
+		getInc: function(u,d){
+			if(u==null)return;
+			jQuery.ajax({
+	    		type: "GET",
+			url: u,
+			dataType: "text",
+	        	success: function(t) {
+				jQuery(d).html(t);
+				ibmCommon.initShowHide(jQuery(d).children()[0]);			
+			},
+			async: true
+			});
+		}
+	});
+})(jQuery);
+</script>
+<script charset="UTF-8" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/usen-utf8.js" type="text/javascript" id="mhMenu"></script><script charset="UTF-8" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/Controller.js" type="text/javascript" id="wiBundle"></script></head>
+
+<body id="ibm-com">
+<div id="ibm-top" class="ibm-landing-page">
+
+<!-- MASTHEAD_BEGIN -->
+<!-- MASTHEAD_BEGIN -->
+<div class="ibm-access"><a href="#ibm-content">Skip to main content</a></div>
+<div id="ibm-masthead-dw">
+  
+    <!-- TOP ROW -->    
+    <div id="dw-masthead-top-row">
+        <ul id="ibm-mast-options-dw">
+			<li id="dw-mast-top-4">
+				<a href="http://www.ibm.com/developerworks/"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/dwn-dw-badge.png" alt="dW" aria-label="dW" height="22" width="43"></a>
+			</li>
+		    <li id="dw-mast-top-0" class="navtab">
+				<a class="" href="http://www.ibm.com/developerworks/dwwi/DWAuthRouter?m=loginpage&amp;lang=en&amp;d=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka1%2Findex.html" title="">Sign in (or register)</a>
+			</li>
+		    <li id="dw-mast-top-1" class="navtab">
+				<a href="#SELECTLANG">English</a>
+			</li>
+			<li id="dw-mast-top-2" class="navtab dw-mf-hide">
+				<a href="#">[userid]</a>
+			</li>
+			<li id="dw-mast-top-3" class="navtab">
+				<a href="#">IBM</a>
+			</li>
+		</ul>
+	</div>
+    
+    <!-- TOP ROW SLIDER -->
+    <div id="ibm-my-menu-dw">    
+        <div class="ibm-ribbon-pane-dw">
+            <div class="ibm-ribbon-section-dw">
+                <!-- Sign-in -->
+				<div class="dw-mast-columns">                
+					<div class="dw-mast-col-1-1">
+						<div id="dw-mast-sso">
+							<div id="signin_error_mf" class="no-display"></div>
+							<div id="dw-mast-sso-form">
+								<form id="sForm_mf" action="" method="post" name="sForm_name_mf" onsubmit="return false;">
+									<div id="dw-mast-sso-id" class="dw-mast-sso-id-en">
+										<label for="ibmid_mf">IBM ID:</label>
+										<input class="" id="ibmid_mf" name="ibmid_name_mf" maxlength="100" onkeypress="handleEP(event,this.form,'mf');" type="text">
+									</div>
+									<div id="dw-mast-sso-pw" class="dw-mast-sso-pw-en">
+										<label for="pw_mf">Password:</label>
+										<input class="" id="pw_mf" value="" name="pw_name_mf" maxlength="100" onkeypress="handleEP(event,this.form,'mf');" type="password">
+									</div>
+									<div id="dw-mast-sso-target" class="dw-mast-sso-target-en">
+										<p class="dw-mf-perm-box">
+											<input id="perm_mf" name="perm_name_mf" type="checkbox"><label for="perm_mf"> Keep me signed in.</label>
+										</p>
+									</div>					
+									<div id="dw-mast-sso-terms">
+										<p class="dw-mast-sso-terms-en">By clicking <strong>Submit</strong>, you agree to the <a href="https://www.ibm.com/developerworks/community/terms/">developerWorks terms of use</a>.</p>
+									</div>
+									<div>
+										<input class="dw-mf-submit-btn" name="ibm_submit_name_mf" value="Submit" onclick="signin('mf');return false;" type="submit">
+									</div>
+								</form>
+							</div>
+							<div id="dw-mast-sso-update">
+								<div id="dw-mast-sso-update-id">
+									<ul>
+										<li><a class="ibm-forward-link" href="#" onclick="(function () {window.location='/developerworks/dwwi/DWAuthRouter?m=reg&amp;lang=en&amp;d='+encodeURIComponent(location.href);})();">Need an IBM ID?</a></li>
+										<li><a class="ibm-forward-link" href="http://www.ibm.com/developerworks/dwwi/jsp/WSHelp.jsp?lang=en_US">Forgot your IBM ID?</a></li>
+									</ul>
+								</div>
+								<div id="dw-mast-sso-update-pw">
+									<ul class="dw-mf-pwupdate">
+										<li><a class="ibm-forward-link" href="#" onclick="(function () {window.location='https://www.ibm.com/account/profile?page=forgot&amp;lang=en_US&amp;appname=ibm&amp;required=null&amp;d='+encodeURIComponent(getAuthUrl())+'%3Fm%3Dloginpage%26lang%3Den_US%26d%3D'+encodeURIComponent(location.href);})();">Forgot your password?</a></li>
+										<li><a class="ibm-forward-link" href="#" onclick="(function () {window.location='https://www.ibm.com/account/profile?page=chpw&amp;lang=en_US&amp;appname=ibm&amp;required=null&amp;d='+encodeURIComponent(location.href);})();">Change your password</a></li>
+									</ul>
+								</div>
+							</div>
+							<div id="dw-mast-sso-text">
+						<p>The first time you sign into developerWorks, a profile is created for you.  <strong>Select
+ information in your profile (name, country/region, and company) is 
+displayed to the public and will accompany any content you post</strong>.  You may update your IBM account at any time.</p>
+								<p class="dw-mf-secure">All information submitted is secure.</p>
+							</div>
+							<div class="dw-mast-close">
+								<ul>
+									<li><div class="dw-mast-close-sign"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+								</ul>
+							</div>							
+						</div>                    
+						<div id="dw-mast-dname" class="dw-mf-hide">
+							<p>The first time you sign in to developerWorks, a profile is 
+created for you, so you need to choose a display name.  Your display 
+name accompanies the content you post on developerworks.</p><p><strong>Please choose a display name between 3-31 characters</strong>.  Your display name must be unique in the developerWorks community and should not be your email address for privacy reasons.</p>
+							<div id="signin_dname_error_mf" class="no-display"></div>
+							<div id="dw-mast-dname-form">
+								<form id="dForm_mf" action="" method="post" name="dForm_name_mf" onsubmit="return false;">
+									<div id="dw-mast-dname-mf">
+										<label for="dname_mf">Display name:</label>
+										<input id="dname_mf" name="dname_name_mf" maxlength="31" size="25" onkeypress="handleEP(event,this.form,'mf');" type="text">
+									</div>
+									<div id="dw-mast-dname-terms">
+										<p>By clicking <strong>Submit</strong>, you agree to the <a href="https://www.ibm.com/developerworks/community/terms/">developerWorks terms of use</a>.</p>
+									</div>
+									<div>
+										<input class="dw-mf-submit-btn" name="dname_submit_name_mf" value="Submit" onclick="signin('mf');return false;" type="submit">
+									</div>
+								</form>								
+							</div>
+							<div id="dw-mast-dname-secure">
+								<p class="dw-mf-secure">All information submitted is secure.</p>
+							</div>
+							<div class="dw-mast-close">
+								<ul>
+									<li><div class="dw-mast-close-sign"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+								</ul>
+							</div>							
+						</div>
+						<div id="dw-mast-auth" class="dw-mf-hide">
+							<div>
+								<h2>My developerWorks:</h2>
+								<ul>
+									<li><a id="dw-mast-top-0-0" href="http://www.ibm.com/developerworks/community/homepage/web/updates/?lang=en">My home</a></li>
+									<li><a href="http://www.ibm.com/developerworks/community/profiles/html/myProfileView.do?lang=en">My profile</a></li>
+									<li><a href="http://www.ibm.com/developerworks/community/groups/service/html/mycommunities?lang=en">My communities</a></li>
+									<li><a href="http://www.ibm.com/developerworks/community/news">Settings</a></li>
+								</ul>     
+							</div>
+							<div id="dw-mast-notify" class="dw-mf-hide">
+								<h2>My notifications:</h2>
+								<ul>
+									<li><a id="new_notify" href="http://www.ibm.com/developerworks/community/homepage?lang=en">{[num_notify] new notifications}([num_notify] new notification)</a></li>
+									<li><a id="new_invite" href="http://www.ibm.com/developerworks/community/profiles/html/wc.do?action=in&amp;requireAuth=true&amp;widgetId=friends&amp;lang=[lang]">{[num_invite] network requests}([num_invite] network request)</a></li>  
+								</ul>
+							</div>
+							<div class="dw-mast-more">
+								<ul class="ibm-link-list">
+									<li><a class="dw-more-link" href="#" onclick="signOut(); return false;"><strong>Sign out</strong></a></li>
+								</ul>
+							</div>		
+							<div class="dw-mast-close">
+								<ul>
+									<li><div class="dw-mast-close-sign"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+								</ul>
+							</div>							
+						</div>						
+					</div>                   
+                </div>
+                <!-- Language selector --> 
+				<div class="dw-mast-columns">
+					<div class="dw-mast-col-2-1">
+						<h2>Select a language:</h2>
+						<ul>
+							<li><a id="dw-mast-top-1-0" href="http://www.ibm.com/developerworks/">English</a></li>
+							<li><a href="http://www.ibm.com/developerworks/cn/">中文</a></li>
+							<li><a href="http://www.ibm.com/developerworks/jp/">日本語</a></li>
+							<li><a href="http://www.ibm.com/developerworks/ru/">Русский</a></li>
+						</ul>
+					</div>
+					<div class="dw-mast-col-2-2">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/br/">Português (Brasil)</a></li>
+							<li><a href="http://www.ibm.com/developerworks/ssa/">Español</a></li>
+							<li><a href="http://www.ibm.com/developerworks/vn/">Việt</a></li>
+						</ul>
+					</div>
+					<div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-lang"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+                </div>                
+                <div class="dw-mast-columns"><!-- Authenticated --></div>
+                <!-- IBM -->
+				<div class="dw-mast-columns">
+					<div class="dw-mast-col-2-1">
+						<ul>
+							<li><a id="dw-mast-top-3-0" href="http://www.ibm.com/">IBM home</a></li>
+							<li><a href="http://www.ibm.com/solutions/">Industries &amp; solutions</a></li>
+							<li><a href="http://www.ibm.com/technologyservices/">Services</a></li>
+							<li><a href="http://www.ibm.com/products/">Products</a></li>
+							<li><a href="http://www.ibm.com/support/">Support &amp; downloads</a></li>
+						</ul>
+					</div>
+					<div class="dw-mast-col-2-2 dw-mast-ibm">
+						<ul>
+							<li><a href="http://www.ibm.com/support/publications/us/library/index.shtml">Product information</a></li>
+							<li><a href="http://www.ibm.com/redbooks/">Redbooks</a></li>
+							<li><a href="http://www.ibm.com/software/">Software</a></li>
+							<li><a href="http://www.ibm.com/software/sw-services/">Software services</a></li>
+						</ul>
+					</div>
+					<div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-ibm"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+				</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div id="ibm-universal-nav-dw">
+        <ul id="ibm-unav-links-dw">
+            <li id="ibm-unav-home-dwlogo">
+				<a href="http://www.ibm.com/developerworks/"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/dwn-dw-wordmark.png" alt="developerWorks®" height="28" width="225"></a>
+            </li>
+        </ul>
+        <ul id="ibm-menu-links-dw">
+            <li id="dw-mast-nav-0"><a href="http://www.ibm.com/developerworks/topics/">Technical topics</a></li>
+            <li id="dw-mast-nav-1"><a href="http://www.ibm.com/developerworks/downloads/">Evaluation software</a></li>
+            <li id="dw-mast-nav-2"><a href="http://www.ibm.com/developerworks/community/index.html">Community</a></li>
+            <li id="dw-mast-nav-3"><a href="http://www.ibm.com/developerworks/events/">Events</a></li>
+        </ul>
+			<form id="ibm-search-form-dw" action="//www.ibm.com/search/csass/search/" method="get" name="form1">
+				<p>
+				<label for="q"><span class="ibm-access">Search developerWorks</span></label>
+				<input id="q" name="q" value="Search developerWorks" maxlength="100" type="text">
+				<input name="sn" value="dw" type="hidden">
+				<input name="lang" value="en" type="hidden">
+				<input name="cc" value="US" type="hidden">
+				<input name="en" value="utf" type="hidden">
+				<input name="hpp" value="20" type="hidden">
+				<input name="dws" value="dw" type="hidden">
+				<input id="ibm-search-dw" class="ibm-btn-search-dw" value="Search" type="submit">
+				</p>
+			</form>
+    </div>
+    
+    <!-- BOTTOM ROW SLIDER -->
+    <div id="ibm-common-menu-dw">
+        <div class="ibm-ribbon-pane-dw dw-ribbon-pane-en">
+            <div class="ibm-ribbon-section-dw">
+				<!-- Technical topics category -->
+                <div class="dw-mast-columns">
+					<div class="dw-mast-col-5-1">
+						<h2><a id="dw-mast-nav-0-0" href="http://www.ibm.com/developerworks/topics/">Technical topics</a></h2>
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/agile/">Agile transformation</a></li>
+							<li><a href="http://www.ibm.com/developerworks/aix/">AIX and UNIX</a></li>
+							<li><a href="http://www.ibm.com/developerworks/bigdata/">Big data</a></li>
+							<li><a href="http://www.ibm.com/developerworks/analytics/">Business analytics</a></li>
+							<li><a href="http://www.ibm.com/developerworks/bpm/">Business process management</a></li>
+						</ul>     
+                    </div>
+					<div class="dw-mast-col-5-2">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/cloud/">Cloud computing</a></li>
+							<li><a href="http://www.ibm.com/developerworks/commerce/">Commerce</a></li>
+							<li><a href="http://www.ibm.com/developerworks/ibmi/">IBM i</a></li>    
+							<li><a href="http://www.ibm.com/developerworks/industry/">Industries</a></li>
+							<li><a href="http://www.ibm.com/developerworks/data/">Information management</a></li>
+						</ul>
+                    </div>
+					<div class="dw-mast-col-5-3">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/java/">Java technology</a></li>
+							<li><a href="http://www.ibm.com/developerworks/linux/">Linux</a></li>
+							<li><a href="http://www.ibm.com/developerworks/lotus/">Lotus (collaboration)</a></li>
+							<li><a href="http://www.ibm.com/developerworks/mobile/">Mobile development</a></li>
+							<li><a href="http://www.ibm.com/developerworks/opensource/">Open source</a></li>
+						</ul>     
+                    </div>
+                    <div class="dw-mast-col-5-4">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/rational/">Rational</a></li>
+							<li><a href="http://www.ibm.com/developerworks/security/">Security</a></li>
+							<li><a href="http://www.ibm.com/developerworks/servicemanagement/">Tivoli (service management)</a></li>
+							<li><a href="http://www.ibm.com/developerworks/web/">Web development</a></li>
+							<li><a href="http://www.ibm.com/developerworks/websphere/">WebSphere</a></li>
+						</ul> 
+                    </div>
+                    <div class="dw-mast-col-5-5">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/library/"><strong>Technical library</strong></a></li>
+							<li><a href="http://www.ibm.com/developerworks/products/"><strong>Products A to Z</strong></a></li>
+						</ul>
+                    </div>
+                    <div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-tech"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+				</div>
+				<!-- Evaluation software category -->
+                <div class="dw-mast-columns">
+					<div class="dw-mast-col-2-1">
+						<h2><a id="dw-mast-nav-1-0" href="http://www.ibm.com/developerworks/downloads/">Evaluation software</a></h2>
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#ba">Business analytics</a></li>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#data">Information management</a></li>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#lotus">Lotus (collaboration)</a></li>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#rational">Rational</a></li>
+						</ul>            
+                    </div>
+					<div class="dw-mast-col-2-2">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#tivoli">Tivoli (service management)</a></li>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#websphere">WebSphere</a></li>
+							<li><a href="http://www.ibm.com/developerworks/downloads/#more">More IBM products (Mobile, PureSystems, Security...)</a></li>
+						</ul>            
+                    </div>
+                    <div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-eval"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+				</div>
+				<!-- Community category -->
+                <div class="dw-mast-columns">
+					<div class="dw-mast-col-3-1">
+						<h2><a id="dw-mast-nav-2-0" href="http://www.ibm.com/developerworks/community/index.html">Community</a></h2>
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/community/homepage/?lang=en">My home</a></li>
+							<li><a href="http://www.ibm.com/developerworks/community/profiles/?lang=en">Profiles</a></li>
+							<li><a href="http://www.ibm.com/developerworks/community/groups/?lang=en">Communities</a></li>
+						</ul>     
+                    </div>
+					<div class="dw-mast-col-3-2">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/community/blogs/?lang=en">Blogs</a></li>
+							<li><a href="http://www.ibm.com/developerworks/community/forums/?lang=en">Forums</a></li>
+							<li><a href="http://www.ibm.com/developerworks/community/wikis/?lang=en">Wikis</a></li>
+						</ul>
+                    </div>
+					<div class="dw-mast-col-3-3 dw-mast-col-3-3-en">
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/community/activities/?lang=en">Activities</a></li>
+							<li><a href="https://www.ibm.com/developerworks/community/podcasts/?lang=en">Podcasts</a></li>    
+							<li><a href="http://www.ibm.com/developerworks/champion/">IBM Champion program</a></li>
+						</ul>
+                    </div>
+                    <div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-comm"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+				</div>
+				<!-- Events category -->
+                <div class="dw-mast-columns">
+					<div class="dw-mast-col-1-1">
+						<h2><a id="dw-mast-nav-3-0" href="http://www.ibm.com/developerworks/events/">Events</a></h2>
+						<ul>
+							<li><a href="http://www.ibm.com/developerworks/find/webcasts/">Webcasts</a></li>
+							<li><a href="http://www.ibm.com/developerworks/find/events/">Find events (webcasts, conferences...)</a></li>
+						</ul>            
+                    </div>
+                    <div class="dw-mast-close">
+						<ul>
+							<li><div class="dw-mast-close-event"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+				</div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+<div id="fdiv" class="ibm-access"></div>
+<!-- MASTHEAD_END --><!-- MASTHEAD_END -->
+
+<div id="ibm-pcon">
+
+<!-- CONTENT_BEGIN -->
+<div id="ibm-content">
+
+<!-- Navigation_Trail_BEGIN -->
+<!-- &nbsp; -->
+      <div id="ibm-content-head"><ul id="ibm-navigation-trail"><li class="ibm-first"><a href="http://www.ibm.com/developerworks/">developerWorks</a></li><li><a href="http://www.ibm.com/developerworks/topics/">Technical topics</a></li><li><a href="http://www.ibm.com/developerworks/opensource/">Open source</a></li><li><a href="http://www.ibm.com/developerworks/views/opensource/library.jsp">Technical library</a></li></ul></div>
+<!-- Navigation_Trail_END -->
+
+<!-- dW_Summary Area_START -->
+<div id="dw-summary-article">
+
+<div class="dw-content-head">
+<h1>Data mining with WEKA, Part 1: Introduction and regression</h1><p>
+</p></div>
+
+<div class="ibm-container-body ibm-two-column">
+
+<div class="ibm-column ibm-first">
+<div class="author"><a class="dwauthor" rel="#authortip1" href="#author1">Michael Abernethy</a>, Freelance Programmer, Freelancer</div><div style="display: none;" id="authortip1" class="dwauthor-onload-state ibm-no-print"><div class="position"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/p-miabernethy.jpg" alt="Mike Abernethy" height="80" width="64"></div>In
+ his 13 years in technology, Michael Abernethy has worked with a wide 
+variety of technologies and a wide variety of clients.  He currently 
+works as a freelance programmer specializing in Java high availability 
+and jQuery.  His focus nowadays is on Rich Internet Applications and 
+making them both more complex and simpler at the same time.  When he's 
+not working at his computer, he can be found on the golf course, or more
+ accurately in the bushes, looking for his ball.</div>
+<p></p>
+<p><strong>Summary:</strong>&nbsp; Data mining is the talk of the tech industry, as companies are
+            generating millions of data points about their users and looking for a way to
+            turn that information into increased revenue. Data mining is a collective
+            term for dozens of techniques to glean information from data and turn it into
+            something meaningful. This article will introduce you to open source
+            data-mining software and some of the most common techniques to interpret
+            data.</p>
+<p class="ibm-no-print"><a href="http://www.ibm.com/developerworks/views/opensource/libraryview.jsp?search_by=data+mining+weka,">View more content in this series</a></p>
+</div>
+
+<div class="ibm-column ibm-second">
+<p class="leading"><strong>Date:</strong>&nbsp; 27 Apr 2010
+<br><strong>Level: </strong>&nbsp;Intermediate
+<br class="ibm-ind-link"><strong>PDF:</strong>&nbsp; <a href="http://public.dhe.ibm.com/software/dw/opensource/os-weka1/os-weka1-pdf.pdf">A4 and Letter</a> (256KB | 18 pages)<a class="ibm-external-link" href="http://www.adobe.com/products/acrobat/readstep2.html">Get Adobe® Reader®</a>
+<br><strong>Also available in:&nbsp;</strong>
+
+
+&nbsp;<a href="http://www.ibm.com/developerworks/ru/library/os-weka1/">Russian</a> 
+
+
+&nbsp;<a href="http://www.ibm.com/developerworks/br/opensource/library/os-weka1/">Portuguese</a> 
+
+<br>
+<br><strong>Activity:</strong>&nbsp; 101307 views
+<br><strong>Comments:</strong> &nbsp; <span id="nCmts">4&nbsp;(<a class="dw-view-comment" href="#icomments">View</a>&nbsp;|&nbsp;<a onclick="showSignIn();return false;" href="#">Add comment</a> - Sign in)</span>
+<!-- Rating_Area_Begin -->
+</p><div id="art-rating-summary"><img alt="Average rating 5 stars based on 242 votes" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/stars120x20-5b.jpg" class="dw-avg-rating"> Average rating (242 votes)<br><a class="dw-view-comment" href="#iratings">Rate this article</a></div>
+<!-- Rating_Area_End -->
+<p></p>
+</div>
+
+</div>
+</div>
+<!-- dW_Summary_Area_END -->
+
+<!-- CONTENT_BODY -->
+<div id="ibm-content-body">
+
+<!-- MAIN_COLUMN_BEGIN -->
+<div id="ibm-content-main">
+
+<!-- Related_Searches_Area -->
+<!-- Related_Searches_Area_Begin -->
+<script type="text/javascript" language="javascript">
+	     capture_referrer();
+</script>
+
+<div id="dw-related-searches-article" style="display:none">
+<div class="ibm-container ibm-alternate-two">
+<div class="ibm-container-body">
+
+<!--  START : HTML FOR ARTICLE SEARCH -->
+  <div id="article_results" style="display:block"></div>
+<!--  END : HTML FOR ARTICLE SEARCH -->
+
+</div>
+</div>
+</div>
+<!-- Related_Searches_Area_End -->
+<!-- MAIN_COLUMN_CONTAINER_BEGIN -->
+<div class="ibm-container">
+
+<!-- MAIN_COLUMN_CONTENT_BEGIN -->
+<p><a name="N10073"><span class="atitle">Introduction</span></a></p>
+            <p>What is <em>data mining?</em> You may find yourself asking this question
+                occasionally, as the topic seems to be getting increased attention in the
+                world of technology. You read that companies like Google and Yahoo! are
+                generating billions of data points about all their users, and you may
+                wonder, "What do they plan to do with all that information?" You may also
+                be surprised to know that Walmart is one of the most advanced companies
+                that mines data and applies the results to their business. Virtually every
+                company in the world is using data mining now, and those that don't will
+                soon find themselves at an extreme disadvantage.</p>
+            <p>So, how do you get you and your company on board the data-mining bandwagon? </p>
+            <p>We hope to answer all of your initial questions about 
+data mining. We also
+                will introduce you to Waikato Environment for Knowledge 
+Analysis (WEKA), free and open source software you can use to mine
+                your own data and turn what you know about your users, 
+your clients, and
+                your business into useful information for increasing 
+your revenue. You
+                will see that it is not as difficult as you might think 
+it is to do a
+                "pretty good" job of mining data. </p>
+            <p>Additionally, this article will discuss the first technique for data
+                mining: <em>regression,</em> which transforms existing 
+data into a
+                numerical prediction for future data. It is likely the 
+easiest method of mining data and even on a simple level something you 
+may have done before in your favorite market-dominant spreadsheet 
+software (though WEKA can do much more complex calculations). Future 
+articles will touch upon
+                other methods of mining data, including clustering, 
+Nearest Neighbor, and
+                classification trees. (If those terms mean nothing to 
+you, don't worry.
+                We'll cover it all in this series.)</p>
+            <div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><a name="N1008C"><span class="atitle">What is data
+                mining?</span></a></p>
+            <p>Data mining, at its core, is the transformation of large amounts of data
+                into meaningful patterns and rules. Further, it could be broken down into
+                two types: directed and undirected. In <em>directed</em> data mining, you
+                are trying to predict a particular data point — the sales
+                price of a house given information about other houses for sale in the
+                neighborhood, for example. </p>
+            <p>In <em>undirected</em> data mining, you are trying to create groups of
+                data, or find patterns in existing data — creating the 
+                "Soccer Mom" demographic group, for example. In effect, every U.S. census
+                is data mining, as the government looks to gather data about everyone in
+                the country and turn it into useful information. </p>
+            <p>For our purposes, modern data mining started in the mid-1990s, as the power
+                of computing, and the cost of computing and storage finally reached a
+                level where it was possible for companies to do it in-house, without
+                having to look to outside computer powerhouses. </p>
+            <p>Additionally, the term data mining is all-encompassing, referring to dozens
+                of techniques and procedures used to examine and transform data.
+                Therefore, this series of articles will only scratch the surface of what
+                is possible with data mining. Experts likely will have doctorates in
+                statistics and have spent 10-30 years in the field. That may leave you
+                with the impression that data mining is something only big companies can
+                afford. </p>
+            <p>We hope to clear up many of these misconceptions about data mining, and we
+                hope to make it clear that it is not as easy as simply running a function
+                in a spreadsheet against a grid of data, yet it is not so difficult that
+                everyone can't manage some of it themselves. This is the perfect example
+                of the 80/20 paradigm — maybe even pushed further to the
+                90/10 paradigm. You can create a data-mining model with 90-percent
+                effectiveness with only 10 percent of the expertise of one of these
+                so-called data-mining experts. To bridge the remaining 10 percent of the
+                model and create a perfect model would require 90-percent additional time
+                and perhaps another 20 years. So unless you plan to make a career out of
+                data mining, the "good enough" is likely all that you need. Looking at it
+                another way, good enough is probably better than what you're doing right
+                now anyway. </p>
+            <p>The ultimate goal of data mining is to create a model, a model that can
+                improve the way you read and interpret your existing data and your future
+                data. Since there are so many techniques with data mining, the major step
+                to creating a good model is to determine what type of technique to use.
+                That will come with practice and experience, and some guidance. From
+                there, the model needs to be refined to make it even more useful. After
+                reading these articles, you should be able to look at your data set,
+                determine the right technique to use, then take steps to refine it. You'll
+                be able to create a good-enough model for your own data. </p>
+            <div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><a name="N100B4"><span class="atitle">WEKA</span></a></p>
+            <p>Data mining isn't solely the domain of big companies and expensive
+                software. In fact, there's a piece of software that does almost all the
+                same things as these expensive pieces of software — the
+                software is called WEKA (see <a href="#resources">Resources</a>). WEKA is
+                the product of the University of Waikato (New Zealand) and was first
+                implemented in its modern form in 1997. It uses the GNU General Public
+                License (GPL). The software is written in the Java™
+                language and contains a GUI for interacting with data files and producing
+                visual results (think tables and curves). It also has a general API, so
+                you can embed WEKA, like any other library, in your own applications to
+                such things as automated server-side data-mining tasks. </p>
+            <p>At this point, please go ahead and install WEKA. It's Java-based, so if you
+                don't have a JRE installed on your computer, download the WEKA version
+                that contains the JRE, as well. </p>
+            
+                <br><a name="fig1"><strong>Figure 1. WEKA startup
+                    screen</strong></a><br>
+                <img alt="Screenshot shows opening WEKA screen with choices for Explorer, Experimenter, KnowledgeFlow and Sinple CLI" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/weka-startup1.jpg" height="243" width="359">
+            <br>
+            <br>
+            <p>When you start WEKA, the GUI chooser pops up and lets you choose four ways
+                to work with WEKA and your data. For all the examples in this article
+                series, we will choose only the <strong>Explorer</strong> option. This
+                option is more than sufficient for everything we need to do in these
+                articles. </p>
+            
+                <br><a name="fig2"><strong>Figure 2. WEKA
+                    Explorer</strong></a><br>
+                <img alt="Screenshot shows the Explorer tool with various displays and action buttons" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/weka-data.jpg" height="410" width="580">
+            <br>
+            <br>
+            <p>Now that you're familiar with how to install and start up WEKA, let's get
+                into our first data-mining technique: regression. </p>
+            <div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><a name="N100F6"><span class="atitle">Regression</span></a></p>
+            <p>Regression is the easiest technique to use, but is also probably the least
+                powerful (funny how that always goes hand in hand). This model can be as
+                easy as one input variable and one output variable (called a Scatter
+                diagram in Excel, or an XYDiagram in OpenOffice.org). Of course, it can
+                get more complex than that, including dozens of input variables. In
+                effect, regression models all fit the same general pattern. There are a
+                number of independent variables, which, when taken together, produce a
+                result — a dependent variable. The regression model is then
+                used to predict the result of an unknown dependent variable, given the
+                values of the independent variables. </p>
+            <p>Everyone has probably used or seen a regression model before, maybe even
+                mentally creating a regression model. The example that immediately comes
+                to mind is pricing a house. The price of the house (the dependent
+                variable) is the result of many independent variables — the
+                square footage of the house, the size of the lot, whether granite is in
+                the kitchen, bathrooms are upgraded, etc. So, if you've ever bought a
+                house or sold a house, you've likely created a regression model to price
+                the house. You created the model based on other comparable houses in the
+                neighborhood and what they sold for (the model), then put the values of
+                your own house into this model to produce an expected price. </p>
+            <p>Let's continue this example of a house price-based regression model, and
+                create some real data to examine. These are actual numbers from houses for
+                sale in my neighborhood, and I will be trying to find the value for my own
+                house. (I'll also be taking the output from this model to protest my
+                property-tax assessment).</p>
+            <br><a name="table1"><strong>Table 1.  House values for regression
+                model</strong></a><br>
+            <table class="data-table-2" summary="Sample regression-model dataset"><tbody><tr><th>House size (square feet) </th><th>Lot size </th><th>Bedrooms </th><th>Granite </th><th>Upgraded bathroom? </th><th>Selling price </th></tr><tr><td>3529 </td><td>9191 </td><td>6 </td><td>0 </td><td>0 </td><td>$205,000 </td></tr><tr><td>3247 </td><td>10061 </td><td>5 </td><td>1 </td><td>1 </td><td>$224,900 </td></tr><tr><td>4032 </td><td>10150 </td><td>5 </td><td>0 </td><td>1 </td><td>$197,900 </td></tr><tr><td>2397 </td><td>14156 </td><td>4 </td><td>1 </td><td>0 </td><td>$189,900 </td></tr><tr><td>2200 </td><td>9600 </td><td>4 </td><td>0 </td><td>1` </td><td>$195,000 </td></tr><tr><td>3536 </td><td>19994 </td><td>6 </td><td>1 </td><td>1 </td><td>$325,000 </td></tr><tr><td>2983 </td><td>9365 </td><td>5 </td><td>0 </td><td>1 </td><td>$230,000 </td></tr><tr><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr><tr><td>3198 </td><td>9669 </td><td>5 </td><td>1 </td><td>1 </td><td>???? </td></tr></tbody></table>
+            <br>
+            <p>The good news (or bad news, depending on your point of view) is that this
+                little introduction to regression barely scratches the surface, and that
+                scratch is really even barely noticeable. There are entire college
+                semester courses on regression models, that will teach you more about
+                regression models than you probably even want to know. But this scratch
+                gets you acquainted with the concept and suffice for our WEKA tests in
+                this article. If you have continued interest in regression models and all
+                the statistical details that go into them, research the following terms
+                with your favorite search engine: least squares, homoscedasticity, normal
+                distribution, White tests, Lilliefors tests, R-squared, and p-values. </p>
+            <div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><a name="N101ED"><span class="atitle">Building the data
+                det for WEKA</span></a></p>
+            <p>To load data into WEKA, we have to put it into a format that will be
+                understood. WEKA's preferred method for loading data is in the
+                Attribute-Relation File Format (ARFF), where you can define the type of
+                data being loaded, then supply the data itself. In the file, you define
+                each column and what each column contains. In the case of the regression
+                model, you are limited to a <code>NUMERIC</code> or a <code>DATE</code> column. Finally, you supply each row of data
+                in a comma-delimited format. The ARFF file we'll be using with WEKA
+                appears below. Notice in the rows of data that we've left out my house.
+                Since we are creating the model, we cannot input my house into it since
+                the selling price is unknown. </p>
+            <br><a name="listing1"><strong>Listing 1. WEKA file format</strong></a><br><table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td class="code-outline"><pre class="displaycode">	
+@RELATION house
+
+@ATTRIBUTE houseSize NUMERIC
+@ATTRIBUTE lotSize NUMERIC
+@ATTRIBUTE bedrooms NUMERIC
+@ATTRIBUTE granite NUMERIC
+@ATTRIBUTE bathroom NUMERIC
+@ATTRIBUTE sellingPrice NUMERIC
+
+@DATA
+3529,9191,6,0,0,205000 
+3247,10061,5,1,1,224900 
+4032,10150,5,0,1,197900 
+2397,14156,4,1,0,189900 
+2200,9600,4,0,1,195000 
+3536,19994,6,1,1,325000 
+2983,9365,5,0,1,230000</pre></td></tr></tbody></table><br>
+            <div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><a name="N10209"><span class="atitle">Loading the data
+                into WEKA</span></a></p>
+            <p>Now that the data file has been created, it's time to create our regression
+                model. Start WEKA, then choose the <strong>Explorer.</strong> You'll be taken to the
+                Explorer screen, with the <strong>Preprocess</strong> tab selected. Select the
+                    <strong>Open File</strong> button and select the ARFF file you created in the
+                section above. After selecting the file, your WEKA Explorer should look
+                similar to the screenshot in Figure 3.</p>
+            
+                <br><a name="fig3"><strong>Figure 3. WEKA with house
+                    data loaded</strong></a><br>
+                <img alt="Screenshot of WEKA Explorer with data loaded" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/weka-data1.jpg" height="435" width="580">
+            <br>
+            <br>
+            <p>In this view, WEKA allows you to review the data you're working with. In
+                the left section of the Explorer window, it outlines all of the columns in
+                your data (Attributes) and the number of rows of data supplied
+                (Instances). By selecting each column, the right section of the Explorer
+                window will also give you information about the data in that column of
+                your data set. For example, by selecting the <strong>houseSize</strong> column in
+                the left section (which should be selected by default), the right-section
+                should change to show you additional statistical information about the
+                column. It shows the maximum value in the data set for this column is
+                4,032 square feet, and the minimum is 2,200 square feet. The average size
+                is 3,131 square feet, with a standard deviation of 655 square feet.
+                (Standard deviation is a statistical measure of variance.) Finally,
+                there's a visual way of examining the data, which you can see by clicking
+                the <strong>Visualize All</strong> button. Due to our limited number of rows in this
+                data set, the visualization is not as powerful as it would be if there
+                were more data points (in the hundreds, for example). </p>
+            <p>Enough looking at the data. Let's create a model and get a price for my
+                house. </p>
+            <div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><a name="N10239"><span class="atitle">Creating the
+                regression model with WEKA</span></a></p>
+            <p>To create the model, click on the <strong>Classify</strong> tab. The first step is to
+                select the model we want to build, so WEKA knows how to work with the
+                data, and how to create the appropriate model: </p>
+            <ol>
+                <li>Click the <strong>Choose</strong> button, then expand the <strong>functions</strong>
+                    branch.</li>
+                <li>Select the <strong>LinearRegression</strong> leaf. </li>
+            </ol>
+            <p>This tells WEKA that we want to build a regression model. As you can see
+                from the other choices, though, there are lots of possible models to
+                build. Lots! This should give you a good indication of how we are only
+                touching the surface of this subject. Also of note: There is another
+                choice called <strong>SimpleLinearRegression</strong> in the same branch.
+                Do not choose this because simple regression only looks at one variable,
+                and we have six. When you've selected the right model, your WEKA Explorer
+                should look like Figure 4. </p>
+            
+                <br><a name="fig4"><strong>Figure 4. Linear
+                    regression model in WEKA</strong></a><br>
+                <img alt="Screenshot shows the data set viewed in WEKA's linear regression                     model" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/weka-data2.jpg" height="435" width="580">
+            <br>
+            <br>
+                        <div class="ibm-container ibm-alt-header dw-container-sidebar"><h2>Can I do this with a
+                    spreadsheet?</h2><div class="ibm-container-body">
+                 Short answer: No. Long answer: Yes. Most
+                popular spreadsheet programs cannot easily do what we did with WEKA, which
+                was defining a linear regression model with multiple independent
+                variables. However, you  do a Simple Linear Regression model
+                (one independent variable) pretty easily. If you're feeling brave, it can
+                do multi-variable regression, though it's quite confusing and difficult,
+                definitely not as easy as WEKA. You can see an example video for
+                    Microsoft Excel in <a href="#resources">Resources</a>.</div></div>
+            <p>Now that the desired model has been chosen, we have to tell WEKA where the
+                data is that it should use to build the model. Though it may be obvious to
+                us that we want to use the data we supplied in the ARFF file, there are
+                actually different options, some more advanced than what we'll be using.
+                The other three choices are <strong>Supplied test set,</strong> where you
+                can supply a different set of data to build the model;
+                    <strong>Cross-validation,</strong> which lets WEKA build a model based
+                on subsets of the supplied data and then average them out to create a
+                final model; and <strong>Percentage split,</strong> where WEKA takes a
+                percentile subset of the supplied data to build a final model. These other
+                choices are useful with different models, which we'll see in future
+                articles. With regression, we can simply choose <strong>Use training
+                    set.</strong> This tells WEKA that to build our desired model, we can
+                simply use the data set we supplied in our ARFF file. </p>
+            <p>Finally, the last step to creating our model is to choose the dependent
+                variable (the column we are looking to predict). We know this should be
+                the selling price, since that's what we're trying to determine for my
+                house. Right below the test options, there's a combo box that lets you
+                choose the dependent variable. The column <strong>sellingPrice</strong>
+                should be selected by default. If it's not, please select it. </p>
+            <p>Now we are ready to create our model. Click <strong>Start</strong>. Figure 5 shows
+                what the output should look like. </p>
+            
+                <br><a name="fig5"><strong>Figure 5. House price
+                    regression model in WEKA</strong></a><br>
+                <img alt="Screenshot shows the summary report from WEKA's linear regression                     model" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/weka-data3.jpg" height="435" width="580">
+            <br>
+            <br>
+            <div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><a name="N102B1"><span class="atitle">Interpreting the
+                regression model</span></a></p>
+            <p>WEKA doesn't mess around. It puts the regression model right there in the
+                output, as shown in Listing 2.</p>
+            <br><a name="listing2"><strong>Listing 2. Regression output</strong></a><br><table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td class="code-outline"><pre class="displaycode">	
+sellingPrice = (-26.6882   * houseSize) + 
+               (7.0551     * lotSize) + 
+               (43166.0767 * bedrooms) +
+               (42292.0901 * bathroom) 
+             - 21661.1208
+            </pre></td></tr></tbody></table><br>
+            <p>Listing 3 shows the results, plugging in the values for my house.</p>
+            <br><a name="listing3"><strong>Listing 3. House value using regression model</strong></a><br><table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td class="code-outline"><pre class="displaycode">	
+sellingPrice = (-26.6882   * 3198) + 
+               (7.0551     * 9669) + 
+               (43166.0767 * 5) + 
+               (42292.0901 * 1) 
+             - 21661.1208
+
+sellingPrice = 219,328
+            </pre></td></tr></tbody></table><br>
+            <p>However, looking back to the top of the article, data mining isn't just
+                about outputting a single number: It's about identifying patterns and
+                rules. It's not strictly used to produce an absolute number but rather to
+                create a model that lets you detect patterns, predict output, and come up
+                with conclusions backed by the data. Let's take another step and interpret
+                the patterns and conclusions that our model tells us, besides just a
+                strict house value:</p>
+            <ul>
+                <li><strong>Granite doesn't matter</strong>
+                    — WEKA will only use columns that statistically
+                    contribute to the accuracy of the model (measured in R-squared, but
+                    beyond the scope of this article). It will throw out and ignore
+                    columns that don't help in creating a good model. So this regression
+                    model is telling us that granite in your kitchen doesn't affect the
+                    house's value.</li>
+                <li><strong>Bathrooms do matter</strong>
+                    — Since we use a simple 0 or 1 value for an upgraded
+                    bathroom, we can use the coefficient from the regression model to
+                    determine the value of an upgraded bathroom on the house value. The
+                    model tells us it adds $42,292 to the house value.</li>
+                <li><strong>Bigger houses reduce the value</strong>
+                    — WEKA is telling us that the bigger our house is, the
+                    lower the selling price? This can be seen by the negative coefficient
+                    in front of the <code>houseSize</code> variable. The
+                    model is telling us that every additional square foot of the house
+                    reduces its price by $26? That doesn't make any sense at all. This is
+                    America! Bigger is better, especially where I live in Texas. How
+                    should we interpret this? This is a good example of garbage in,
+                    garbage out. The house size, unfortunately, isn't an independent
+                    variable because it's related to the bedrooms variable, which makes
+                    sense, since bigger houses tend to have more bedrooms. So our model
+                    isn't perfect. But we can fix this. Remember: On the <strong>Preprocess</strong>
+                    tab, you can remove columns from the data set. For your own practice,
+                    remove the <strong>houseSize</strong> column and create another model. How does
+                    it affect the price of my house? How does this new model make more
+                    sense? (My amended house value: $217,894).</li>
+            </ul>
+            <div class="ibm-container ibm-alt-header dw-container-sidebar"><h2>Note to
+                statisticians</h2><div class="ibm-container-body">This model breaks several requirements of a
+                "proper" linear regression model, since every column isn't truly
+                independent, and there aren't enough rows of data to produce a valid
+                model. Since the primary purpose of this article is to introduce WEKA as a
+                data-mining tool, we are oversimplifying the example data.</div></div>
+            <p>To take this simple example to the next level, let's take a look at a data
+                file that the WEKA Web site supplies to us as a regression example.
+                Theoretically, this should be much more complex than our simple example
+                with seven houses. This sample data file attempts to create a regression
+                model to predict the miles per gallon (MPG) for a car based on several
+                attributes of the car (this data is from 1970 to 1982, so keep that in
+                mind). The model includes these possible attributes of the car: cylinders,
+                displacement, horsepower, weight, acceleration, model year, origin, and
+                car make. Further, this data set has 398 rows of data and meets many of
+                the statistical requirements that our earlier house price model didn't. In
+                theory, this should be a much more complex regression model, and perhaps
+                WEKA might have a hard time creating a model with this much data (though
+                I'm sure you can predict at this point that WEKA will handle this just
+                fine). </p>
+            <p>To produce the regression model with this data set, you should follow the
+                exact same steps you followed for the house data, so I won't repeat it. So
+                go ahead and create the regression model. It should produce the output
+                shown in Listing 4.</p>
+            <br><a name="listing4"><strong>Listing 4. MPG data regression model</strong></a><br><table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td class="code-outline"><pre class="displaycode">		
+class (aka MPG) =
+
+     -2.2744 * cylinders=6,3,5,4 +
+     -4.4421 * cylinders=3,5,4 +
+      6.74   * cylinders=5,4 +
+      0.012  * displacement +
+     -0.0359 * horsepower +
+     -0.0056 * weight +
+      1.6184 * model=75,71,76,74,77,78,79,81,82,80 +
+      1.8307 * model=77,78,79,81,82,80 +
+      1.8958 * model=79,81,82,80 +
+      1.7754 * model=81,82,80 +
+      1.167  * model=82,80 +
+      1.2522 * model=80 +
+      2.1363 * origin=2,3 +
+      37.9165</pre></td></tr></tbody></table><br>
+            <p>When you do it yourself, you'll see that WEKA flies through the model in
+                less than a second. So it's not a problem, computationally, to create a
+                powerful regression model from a lot of data. This model may also appear
+                much more complex than the house data, but it isn't. For example, the
+                first line of the regression model, <code>-2.2744 *
+                    cylinders=6,3,5,4</code> means that if the car has six cylinders, you
+                would place a 1 in this column, and if it has eight cylinders, you would
+                place a 0. Let's take one example row from the data set (row 10) and plug
+                those numbers into the regression model, and see if the output from the
+                model approximates the output that was given to us in the data set. </p>
+            <br><a name="listing5"><strong>Listing 5. Example MPG data</strong></a><br><table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td class="code-outline"><pre class="displaycode">		
+data = 8,390,190,3850,8.5,70,1,15
+
+class (aka MPG) =
+
+     -2.2744 * 0 +
+     -4.4421 * 0 +
+      6.74   * 0 +
+      0.012  * 390 +
+     -0.0359 * 190 +
+     -0.0056 * 3850 +
+      1.6184 * 0 +
+      1.8307 * 0 +
+      1.8958 * 0 +
+      1.7754 * 0 +
+      1.167  * 0 +
+      1.2522 * 0 +
+      2.1363 * 0 +
+     37.9165
+     
+Expected Value = 15 mpg
+Regression Model Output = 14.2 mpg</pre></td></tr></tbody></table><br>
+            <p>So our model did pretty well when we evaluate it with our randomly chosen
+                test data, predicting a 14.2 MPG on a car whose actual value was 15
+                MPG.</p>
+            <div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><a name="N10325"><span class="atitle">Conclusion</span></a></p>
+            <p>This article strives to answer the question "what is data mining?" by
+                giving you a background on the subject and introducing the goals of the
+                field. Data mining strives to turn a lot of misinformation (in the form of
+                scattered data) into useful information by creating models and rules. Your
+                goal is to use the models and rules to predict future behavior, to improve
+                your business, or to just explain things you might not otherwise be able
+                to. These models may confirm what you've already thought, or even better,
+                may find new things in your data you never knew existed. As a funny
+                example, there is an urban data-mining legend (not sure how many of these
+                exist) that, in the United States, Walmart moves beer to the end of the
+                diaper aisles on weekends because its data mining showed that men
+                typically buy diapers on weekends, and many men also like beer on
+                weekends.</p>
+            <p>This article also introduced you to the free and open source software
+                program WEKA. There are certainly complex commercial software products
+                built for data mining, but, for the average person looking to start in
+                data mining, there's a useful solution available that's open source.
+                Remember, you are never going to be an expert in data mining unless you
+                want to spend 20 years doing it. WEKA will let you get started and provide
+                a pretty good solution to many of your initial problems. If you weren't
+                doing any mining before, the pretty-good solution is all you need. </p>
+            <p>Finally, this article discussed the first data-mining model, the regression
+                model (specifically, the linear regression multi-variable model), and
+                showed how to use it in WEKA. This regression model is easy to use and can
+                be used for myriad data sets. You may find it the most useful model I
+                discuss in this series. However, data mining is much more than simply
+                regression, and you'll find some other models are better solutions with
+                different data sets and different output goals. </p>
+            <p>Finally, I want to reiterate that this article and the ones in the future
+                parts of this series only are a brief introduction to the field of
+                statistics and data mining. People spend an entire semester on statistics
+                and an entire semester on data mining, and only then are they considered
+                "beginners." Our goal is to explore the open source tooling available for
+                a beginner and to foster an appreciation for the value that data mining
+                might provide. Keep that in mind as we continue the series.</p>
+        <!-- CMA ID: 485346 --> <!-- Site ID: 1 --> <!-- XSLT stylesheet used to transform this file: dw-document-html-6.0.xsl -->
+<br><div class="ibm-alternate-rule"><hr></div><p class="ibm-ind-link ibm-back-to-top"><a href="#ibm-pcon" class="ibm-anchor-up-link">Back to top</a></p><p><span class="atitle"><a name="download">Download</a></span></p><table class="ibm-data-table" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><th scope="col">Description</th><th scope="col">Name</th><th scope="col">Size</th><th scope="col">Download method</th></tr><tr><td class="tb-row" scope="row">Sample code</td><td nowrap="nowrap">os-weka1-Examples.zip</td><td nowrap="nowrap">6KB</td><td nowrap="nowrap"><a class="fbox" href="http://www.ibm.com/developerworks/apps/download/index.jsp?contentid=485346&amp;filename=os-weka1-Examples.zip&amp;method=http&amp;locale=">HTTP</a></td></tr></tbody></table><p><a href="http://www.ibm.com/developerworks/library/whichmethod.html" class="ibm-forward-link">Information about download methods</a></p><br>
+<p><a name="resources"><span class="atitle">Resources</span></a></p><p><strong>Learn</strong></p><ul><li>
+                WEKA requests that all publications about
+                it cite the paper titled "<a href="http://www.kdd.org/explorations/issues/11-1-2009-07/p2V11n1.pdf">The WEKA Data Mining Software: An Update</a>," by Mark Hall, Eibe Frank, Geoffrey Holmes, Bernhard Pfahringer
+Peter Reutemann, and Ian H. Witten. <br><br></li><li>
+                See how to use a spreadsheet for a simple
+                regression model with <a href="http://www.youtube.com/watch?v=YUmYNutmbRM">this video on
+                    YouTube</a>.<br><br></li><li>
+                Check out the <a href="http://www.cs.waikato.ac.nz/ml/weka/">WEKA Web site</a> for
+                    all the documentation and an FAQ about the software.<br><br></li><li>
+                Read more about <a href="http://en.wikipedia.org/wiki/Regression_analysis">Regression
+                    analysis on Wikipedia</a>, which probably has more technical details
+                    than you'd ever want to know.<br><br></li><li>
+                Read the details about <a href="http://weka.wikispaces.com/ARFF+%28book+version%29">ARFF</a>, so you can get load your data into WEKA.<br><br></li><li>
+                IBM has its own data-mining software, and
+                "<a href="http://www.ibm.com/developerworks/data/library/techarticle/dm-0810wurst/">Integrate InfoSphere Warehouse data mining with IBM Cognos reporting,
+                    Part 1</a>" is a good starting point.<br><br></li><li>
+To listen to interesting interviews and discussions for software developers, check out <a href="http://www.ibm.com/developerworks/podcast/" onmouseover="linkQueryAppend(this)">developerWorks  podcasts</a>.<br><br></li><li>
+Stay current with developerWorks' <a href="http://www.ibm.com/developerworks/offers/techbriefings/" onmouseover="linkQueryAppend(this)">Technical events and webcasts</a>.<br><br></li><li> 
+     Follow <a href="http://twitter.com/developerworks">developerWorks on Twitter</a>.<br><br></li><li>
+Check out upcoming conferences, trade shows, webcasts, and other <a href="http://www.ibm.com/developerworks/views/opensource/events.jsp" onmouseover="linkQueryAppend(this)">Events</a> around the world that are of interest to IBM open source developers.<br><br></li><li>
+Visit the developerWorks <a href="http://www.ibm.com/developerworks/opensource" onmouseover="linkQueryAppend(this)">Open source zone</a>
+ for extensive how-to information, tools, and project updates to help 
+you develop with open source technologies and use them with IBM's 
+products, as well as our <a href="http://www.ibm.com/developerworks/opensource/library/os-top10.html">most popular articles and tutorials</a>.<br><br></li><li>
+The <a href="http://www.ibm.com/developerworks/community">My developerWorks</a> community is an example of a successful general community that covers a wide variety of topics.<br><br></li><li>
+Watch and learn about IBM and open source technologies and product functions with the no-cost <a href="http://www.ibm.com/developerworks/offers/lp/demos/" onmouseover="linkQueryAppend(this)">developerWorks On demand demos</a>.<br><br></li></ul><p><strong>Get products and technologies</strong></p><ul><li>
+                <a href="http://www.cs.waikato.ac.nz/%7Eml/weka/index_downloading.html">Download WEKA</a> to run it on your own system.<br><br></li><li>
+                You can also see
+                specific details about the IBM <a href="http://www-01.ibm.com/software/data/iminer/">DB2 Intelligent
+                    Miner</a> software for comparison to WEKA.<br><br></li><li>
+Innovate your next open source development project with <a href="http://www.ibm.com/developerworks/downloads/" onmouseover="linkQueryAppend(this)">IBM trial software</a>, available for download or on DVD.<br><br></li><li> Download
+       <a href="http://www.ibm.com/developerworks/downloads/" onmouseover="linkQueryAppend(this)">IBM product evaluation versions</a>
+      or <a href="http://www.ibm.com/developerworks/downloads/soasandbox/" onmouseover="linkQueryAppend(this)">explore 
+      the online trials in the IBM SOA Sandbox</a> and get your hands on application development tools and middleware products from
+      DB2®, Lotus®, Rational®, Tivoli®, and WebSphere®.<br><br></li></ul><p><strong>Discuss</strong></p><ul><li>Also, check out the new <a href="https://www.ibm.com/developerworks/mydeveloperworks/groups/service/html/communityview?communityUuid=8c11dc9f-dab3-46f1-83ba-1430256bc332">Data Mining</a> group in My developerWorks.<br><br></li><li>
+Participate in <a href="http://www.ibm.com/developerworks/blogs" onmouseover="linkQueryAppend(this)">developerWorks blogs</a> and get involved in the developerWorks community.<br><br></li></ul>
+<p><a name="author"><span class="atitle">About the author</span></a></p><div class="ibm-container ibm-portrait-module ibm-alternate-two"><div class="ibm-container-body"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/p-miabernethy.jpg" class="dw-author-img" alt="Mike Abernethy" height="80" width="64"><p><a name="author1"> </a>In
+ his 13 years in technology, Michael Abernethy has worked with a wide 
+variety of technologies and a wide variety of clients.  He currently 
+works as a freelance programmer specializing in Java high availability 
+and jQuery.  His focus nowadays is on Rich Internet Applications and 
+making them both more complex and simpler at the same time.  When he's 
+not working at his computer, he can be found on the golf course, or more
+ accurately in the bushes, looking for his ball.</p></div></div>
+<!-- MAIN_COLUMN_CONTENT_END -->
+
+<!-- OVERLAYS_START -->
+<!-- Report_Abuse_Start -->
+<div class="ibm-common-overlay ibm-no-print" id="reportabuseoverlay">
+   <div class="ibm-head"><p><a class="ibm-common-overlay-close" href="#">Close [x]</a></p></div>
+   <div class="ibm-body">
+      <div class="ibm-main">
+         <a class="ibm-access" name="reportabuseoverlay">Report abuse help</a>   
+         <div class="ibm-title"><h1>Report abuse</h1></div>
+         <div class="ibm-container ibm-alternate">
+            <p><strong>Thank you.</strong>  This entry has been flagged for moderator attention.</p>
+            <div class="ibm-overlay-rule"><hr></div>
+            <div class="ibm-buttons-row">
+               <input onclick="ibmCommon.Overlays.hide('reportabuseoverlay');return false;" class="ibm-btn-cancel-sec dw-btn-cancel-sec" name="ibm-cancel" value="Close" type="button">
+            </div>
+         </div>
+      </div> 
+   </div>
+<div class="ibm-footer"></div>
+</div>
+<!-- Report_Abuse_Error_Start -->
+<div class="ibm-common-overlay ibm-no-print" id="reportabuseoverlayerror">
+   <div class="ibm-head"><p><a class="ibm-common-overlay-close" href="#">Close [x]</a></p></div>
+   <div class="ibm-body">
+      <div class="ibm-main">
+         <a class="ibm-access" name="reportabuseoverlayerror">Report abuse help</a>   
+         <div class="ibm-title"><h1>Report abuse</h1></div>
+         <div class="ibm-container ibm-alternate">
+            <p class="ibm-ind-error"><strong>Report abuse submission failed.  Please try again later.</strong></p>
+            <div class="ibm-overlay-rule"><hr></div>
+            <div class="ibm-buttons-row">
+               <input onclick="ibmCommon.Overlays.hide('reportabuseoverlayerror');return false;" class="ibm-btn-cancel-sec dw-btn-cancel-sec" name="ibm-cancel" value="Close" type="button">
+            </div>
+         </div>
+      </div> 
+   </div>
+<div class="ibm-footer"></div>
+</div>
+<!-- Sign in OVERLAY STARTS HERE --> 
+<div class="ibm-common-overlay" id="signin_overlay">
+<div class="ibm-head">
+<p><a class="ibm-common-overlay-close" href="#" onclick="clearForm();">Close [x]</a></p>
+</div>
+<div class="ibm-body">
+<div class="ibm-main">
+<div class="ibm-title ibm-subtitle">
+<h1>developerWorks: Sign in</h1>
+<div id="ibm-overlay-error-signin" class="no-display"></div>
+</div>
+
+<div class="ibm-container ibm-alternate ibm-buttons-last">
+<div class="ibm-container-body">
+<form class="ibm-column-form" id="sFormId" action="" method="post" name="sForm" onsubmit="return false;">
+<p><label for="ibmid">IBM ID:</label><span><input name="ibm-id" id="ibmid" size="25" class="required" onkeypress="handleEP(event,this.form);" type="text"><br><a class="ibm-forward-link" href="#" onclick="(function () {window.location='/developerworks/dwwi/DWAuthRouter?m=reg&amp;d='+encodeURIComponent(location.href);})();">Need an IBM ID?</a><br><a class="ibm-forward-link" href="http://www.ibm.com/developerworks/dwwi/jsp/WSHelp.jsp?lang=en_US">Forgot your IBM ID?</a>   
+</span></p> 
+<p><label for="password">Password:</label><span><input name="password" id="password" size="25" value="" class="required" onkeypress="handleEP(event,this.form);" type="password"><br><a class="ibm-forward-link" href="#" onclick="(function () {window.location='https://www.ibm.com/account/profile?page=forgot&amp;lang=en_US&amp;appname=ibm&amp;required=null&amp;d='+encodeURIComponent(getAuthUrl())+'%3Fm%3Dloginpage%26lang%3Den_US%26d%3D'+encodeURIComponent(location.href);})();">Forgot your password?</a><br><a class="ibm-forward-link" href="#" onclick="(function () {window.location='https://www.ibm.com/account/profile?page=chpw&amp;lang=en_US&amp;appname=ibm&amp;required=null&amp;d='+encodeURIComponent(location.href);})();">Change your password</a></span></p>
+ 
+<p class="dw-perm-box">
+	<span><input id="perm" name="perm_name" type="checkbox"><label for="perm"> Keep me signed in.</label></span>
+</p>
+<p>By clicking <strong>Submit</strong>, you agree to the <a href="https://www.ibm.com/developerworks/community/terms/">developerWorks terms of use</a>.</p>
+<div class="ibm-buttons-row">
+   <p><input class="ibm-btn-arrow-pri" name="ibm-submit" value="Submit" onclick="signin();return false;" type="submit"><span class="ibm-sep">&nbsp;</span>
+<input value="Cancel" name="ibm-cancel" class="ibm-btn-cancel-sec" onclick="clearForm();ibmCommon.Overlays.hide('signin_overlay');return false;" type="button"></p>
+</div>
+</form>
+<div class="ibm-overlay-rule"><hr></div>
+<p>The first time you sign into developerWorks, a profile is created for you.  <strong>Select
+ information in your profile (name, country/region, and company) is 
+displayed to the public and will accompany any content you post</strong>.  You may update your IBM account at any time.</p>
+<div class="dw-overlay-legal"><p>All information submitted is secure.</p></div>
+</div>
+</div>
+</div>
+</div>
+<div class="ibm-footer"></div>
+</div>
+<!-- Sign in OVERLAY ENDS HERE --> 
+ 
+
+<!-- Display name OVERLAY STARTS HERE --> 
+<div class="ibm-common-overlay" id="displayname_overlay">
+<div class="ibm-head">
+<p><a class="ibm-common-overlay-close" href="#" onclick="clearForm();">Close [x]</a></p>
+</div>
+<div class="ibm-body">
+<div class="ibm-main">
+<div class="ibm-title ibm-subtitle">
+<h1>Choose your display name</h1>
+<div id="ibm-overlay-error-dname" class="no-display"></div>
+</div>
+<div class="ibm-container ibm-alternate ibm-buttons-last">
+<div class="ibm-container-body">
+<p class="ibm-overlay-intro">The first time you sign in to 
+developerWorks, a profile is created for you, so you need to choose a 
+display name.  Your display name accompanies the content you post on 
+developerWorks.</p>
+<p><strong>Please choose a display name between 3-31 characters</strong>. Your display name must be unique in the developerWorks community and should not be your email address for privacy reasons.</p>
+<form id="dFormId" method="post" action="" name="dForm" onsubmit="return false;" class="ibm-column-form">
+<p><label for="displayname">Display name:</label><span><input name="displayname" id="displayname" size="25" onkeypress="handleEP(event,this.form);" type="text"></span><span class="ibm-form-note">(Must be between 3 – 31 characters.)</span>
+</p>
+<p>By clicking <strong>Submit</strong>, you agree to the <a href="https://www.ibm.com/developerworks/community/terms/">developerWorks terms of use</a>.</p>
+<div class="ibm-buttons-row">
+   <p><input class="ibm-btn-arrow-pri" name="ibm-submit" value="Submit" onclick="signin();return false;" type="submit"><span class="ibm-sep">&nbsp;</span>
+<input value="Cancel" name="ibm-cancel" class="ibm-btn-cancel-sec" onclick="clearForm();ibmCommon.Overlays.hide('displayname_overlay');return false;" type="button"></p>
+</div>
+</form>
+<div class="ibm-overlay-rule"><hr></div>
+<div class="dw-overlay-legal"><p>All information submitted is secure.</p></div>
+</div>
+</div>
+</div>
+</div>
+<div class="ibm-footer"></div>
+</div>
+<!-- Display name OVERLAY ENDS HERE -->
+<!-- OVERLAYS_END -->
+
+<!-- RATINGS START -->
+<p class="ibm-no-print"><span class="atitle"><a name="iratings">Rate this article</a></span></p>
+<input id="art-rating" name="ratinga" value="5" type="hidden"><div id="art-rating-module"><p id="submitErr" class="ibm-ind-error" style="display: none;"><strong>Error: Submission failed. Please try again.</strong></p><p><span id="ratingSectUI"><img alt="Average rating 5 stars based on 242 votes" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/stars120x20-5gw.jpg" class="dw-avg-rating"> Average rating (242 votes)</span></p><div class="ibm-container" id="ratingForm"><div class="ibm-container-body dw-container-ratings"><form class="dw-ratings-form" onsubmit="artRating.submitRating(); return false;"><input name="ratingstars" id="rat-1" value="1" type="radio"><label class="rating-label" id="star1" for="rat-1">1 star</label><img id="rat-1-img" alt="1 star" title="1 star" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/stars120x20-1w.jpg" class="rating-image"><span class="dw-rating-text">1 star</span><br><input name="ratingstars" id="rat-2" value="2" type="radio"><label class="rating-label" id="star2" for="rat-2">2 stars</label><img id="rat-2-img" alt="2 stars" title="2 stars" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/stars120x20-2w.jpg" class="rating-image2"><span class="dw-rating-text">2 stars</span><br><input name="ratingstars" id="rat-3" value="3" type="radio"><label class="rating-label" id="star3" for="rat-3">3 stars</label><img id="rat-3-img" alt="3 stars" title="3 stars" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/stars120x20-3w.jpg" class="rating-image2"><span class="dw-rating-text">3 stars</span><br><input name="ratingstars" id="rat-4" value="4" type="radio"><label class="rating-label" id="star4" for="rat-4">4 stars</label><img id="rat-4-img" alt="4 stars" title="4 stars" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/stars120x20-4w.jpg" class="rating-image2"><span class="dw-rating-text">4 stars</span><br><input name="ratingstars" id="rat-5" value="5" type="radio"><label class="rating-label" id="star5" for="rat-5">5 stars</label><img id="rat-5-img" alt="5 stars" title="5 stars" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/stars120x20-5w.jpg" class="rating-image2"><span class="dw-rating-text">5 stars</span><div class="ibm-buttons-row"><p class="ibm-first"><input value="Submit" name="ibm-submit" class="ibm-btn-arrow-pri dw-ratings-submit" type="submit"></p></div></form></div></div></div>
+<script language="JavaScript" type="text/javascript">
+// <![CDATA[
+   // widget div id and article id as args
+   window.artRating.init('art-rating-module','art-rating-summary');
+// ]]>
+</script>
+<!-- RATINGS END -->
+
+<!-- INLINE_COMMENTS_START -->
+<p class="ibm-no-print"><span class="atitle"><a name="icomments">Comments</a></span></p>
+<div id="threadShow"><div id="cmtTog" style=""><div class="ibm-container ibm-alternate-two dw-commentbox dw-noborder"><p id="cmtHead"><label for="newCmt"><strong>Add comment:</strong></label></p><div class="ibm-container-body dw-commentbox dw-noborder"><p id="signInSect"> <a onclick="showSignIn();return false;" href="#">Sign in</a> or <a href="http://www.ibm.com/developerworks/dwwi/DWAuthRouter?m=register&amp;lang=en&amp;d=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka1%2Findex.html%23icomments">register</a>  to leave a comment.</p><p>Note: HTML elements are not supported within comments.</p><span id="infoCmt"></span><form focus="name" enctype="multipart/form-data" method="post" action="" name="form" class="ibm-column-form"><p><textarea disabled="disabled" cols="120" rows="5" name="newCmt" id="newCmt" class="dw-inoperable"></textarea><br></p><span class="ibm-input-group"><input value="1" name="comment_notification" id="comment_notification" disabled="disabled" type="checkbox"><label id="notifyText" class="ibm-form-note dw-btn-cancel-sec" for="comment_notification">Notify me when a comment is added</label></span><span class="ibm-form-note dw-btn-cancel-sec notifySection" id="maxCharsCount"><span id="charCount">1000</span> characters left</span><br><br><p></p><p class="ibm-buttons-row"><input disabled="disabled" value="Post" jquery1275054459750="11" name="postCmt" id="postCmt" class="ibm-btn-arrow-sec dw-btn-arrow-sec" alt="Post your comment" type="button"><br><br></p></form></div></div><div id="topControl" class="ibm-container ibm-alternate-two dw-comment-totals" style=""><div class="ibm-container-body"><form id="selectComments" method="get" action=""><p><span class="dw-comment-totals-label"><strong>Total comments (<span id="numCmts">4</span>)</strong></span><span><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="" height="10" width="100"></span><span class="dw-how-many-comments-label" style="display:none" id="dropdownCmts"><label for="howManyComments">Show:</label>&nbsp;<select name="comments" id="howManyComments" class="dw-how-many-comments"><option selected="selected" value="recent">Most recent comments   </option></select><input class="ibm-btn-go" name="ibm-go" value="Go" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/short-btn.gif" alt="Go" type="image"><br></span></p></form></div></div><div id="cmtSect"><div class="comment"><div class="dw-icomment-container"><div class="dw-icomment-body dw-noborder"><div class="dw-icomment-body dw-noborder"><p>Hi,<br><br>I
+ dont undrestand why you say in your article "For example, the first 
+line of the regression model, -2.2744 * cylinders=6,3,5,4 means that if 
+the car has six cylinders, you would place a 1 in this column, and if it
+ has eight cylinders, you would place a 0".<br><br>Thank you for your help. Best regards</p><p class="ibm-item-note-alternate dw-item-note-alternate-left">Posted by <strong><a href="https://www.ibm.com/developerworks/community/profiles/user/270006JKBK">kri34</a></strong> on 07 August 2013</p><p class="ibm-ind-link ibm-item-note-alternate dw-item-note-alternate-right"><a class="ibm-caution-link dw-report-abuse" href="http://www.ibm.com/developerworks/community/report?lang=en&amp;referingURL=http://www.ibm.com/developerworks/opensource/library/os-weka1/index.html&amp;mymessage=Comment:%20Hi%2CI%20dont%20undrestand%20why%20you%20say%20in%20your%20article%20%22For%20example%2C%20the%20first%20line%20of%20the%20regression%20model%2C%20-2.2744%20*%20cylinders%3D6%2C3%2C5%2C4%20means%20that%20if%20the%20car%20has%20six%20cylinders%2C%20you%20would%20place%20a%201%20in%20this%20column%2C%20and%20if%20it%20has%20eight%20cylinders%2C%20you%20would%20place%20a%200%22.Thank%20you%20for%20your%20help.%20Best%20regards%0DPosted%20by%20kri34%20on%2007%20August%202013%0D%0D---%20Add%20any%20comments%20below%20this%20line%20---" target="_newtab">Report abuse</a></p><div class="dw-clear-both"></div></div></div></div></div><div class="comment"><div class="dw-icomment-container"><div class="dw-icomment-body dw-noborder"><div class="dw-icomment-body dw-noborder"><p>Awesome!!</p><p class="ibm-item-note-alternate dw-item-note-alternate-left">Posted by <strong><a href="https://www.ibm.com/developerworks/community/profiles/user/gbondo">gbondo</a></strong> on 22 February 2012</p><p class="ibm-ind-link ibm-item-note-alternate dw-item-note-alternate-right"><a class="ibm-caution-link dw-report-abuse" href="http://www.ibm.com/developerworks/community/report?lang=en&amp;referingURL=http://www.ibm.com/developerworks/opensource/library/os-weka1/index.html&amp;mymessage=Comment:%20Awesome%21%21%0DPosted%20by%20gbondo%20on%2022%20February%202012%0D%0D---%20Add%20any%20comments%20below%20this%20line%20---" target="_newtab">Report abuse</a></p><div class="dw-clear-both"></div></div></div></div></div><div class="comment"><div class="dw-icomment-container"><div class="dw-icomment-body dw-noborder"><div class="dw-icomment-body dw-noborder"><p>Thank
+ you for your article. However, when I try to run the first example I 
+couldn't identify a routine of Weka (classify) that were able to provide
+ "automatically" the value of the response (SellingPrice) considering 
+the values of several predictors variables of new home (i.e. houseSize =
+ 3198, lotSize = 9669, bedrooms = 5, granite = 1, bathroom = 1). 
+Analyzing the output of second example, it seems that the estimate of 
+value can be obtained without which this is done manually (this 
+understanding to be correct?). The listing 3 and 5 were manually created
+ or generated automatically?</p><p class="ibm-item-note-alternate dw-item-note-alternate-left">Posted by <strong><a href="https://www.ibm.com/developerworks/community/profiles/user/Weidson">Weidson</a></strong> on 27 October 2010</p><p class="ibm-ind-link ibm-item-note-alternate dw-item-note-alternate-right"><a class="ibm-caution-link dw-report-abuse" href="http://www.ibm.com/developerworks/community/report?lang=en&amp;referingURL=http://www.ibm.com/developerworks/opensource/library/os-weka1/index.html&amp;mymessage=Comment:%20Thank%20you%20for%20your%20article.%20However%2C%20when%20I%20try%20to%20run%20the%20first%20example%20I%20couldn%27t%20identify%20a%20routine%20of%20Weka%20%28classify%29%20that%20were%20able%20to%20provide%20%22automatically%22%20the%20value%20of%20the%20response%20%28SellingPrice%29%20considering%20the%20values%20of%20several%20predictors%20variables%20of%20new%20home%20%28i.e.%20houseSize%20%3D%203198%2C%20lotSize%20%3D%209669%2C%20bedrooms%20%3D%205%2C%20granite%20%3D%201%2C%20bathroom%20%3D%201%29.%20Analyzing%20the%20output%20of%20second%20example%2C%20it%20seems%20that%20the%20estimate%20of%20value%20can%20be%20obtained%20without%20which%20this%20is%20done%20manually%20%28this%20understanding%20to%20be%20correct%3F%29.%20The%20listing%203%20and%205%20were%20manually%20created%20or%20generated%20automatically%3F%0DPosted%20by%20Weidson%20on%2027%20October%202010%0D%0D---%20Add%20any%20comments%20below%20this%20line%20---" target="_newtab">Report abuse</a></p><div class="dw-clear-both"></div></div></div></div></div><div class="comment"><div class="dw-icomment-container"><div class="dw-icomment-body dw-noborder"><div class="dw-icomment-body dw-noborder"><p>I have used this application with Biotechnology on my graduate thesis. If you would like to get more information, keep in touch.</p><p class="ibm-item-note-alternate dw-item-note-alternate-left">Posted by <strong><a href="https://www.ibm.com/developerworks/community/profiles/user/Juk">Juk</a></strong> on 29 April 2010</p><p class="ibm-ind-link ibm-item-note-alternate dw-item-note-alternate-right"><a class="ibm-caution-link dw-report-abuse" href="http://www.ibm.com/developerworks/community/report?lang=en&amp;referingURL=http://www.ibm.com/developerworks/opensource/library/os-weka1/index.html&amp;mymessage=Comment:%20I%20have%20used%20this%20application%20with%20Biotechnology%20on%20my%20graduate%20thesis.%20If%20you%20would%20like%20to%20get%20more%20information%2C%20keep%20in%20touch.%0DPosted%20by%20Juk%20on%2029%20April%202010%0D%0D---%20Add%20any%20comments%20below%20this%20line%20---" target="_newtab">Report abuse</a></p><div class="dw-clear-both"></div></div></div></div></div></div></div><div id="bottomControl" class="ibm-container ibm-alternate-two dw-comment-totals" style="display:none"><div class="ibm-container-body"><form id="selectComments2" method="get" action=""><p><span class="dw-comment-totals-label"><strong>Total comments (<span id="numCmts2">4</span>)</strong></span><span><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="" height="10" width="100"></span><span class="dw-how-many-comments-label" style="display:none" id="dropdownCmts2"><label for="howManyComments2">Show:</label>&nbsp;<select name="comments" id="howManyComments2" class="dw-how-many-comments"><option selected="selected" value="recent">Most recent comments   </option></select><input class="ibm-btn-go" name="ibm-go" value="Go" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/short-btn.gif" alt="Go" type="image"><br></span></p></form></div></div></div>
+<!-- INLINE_COMMENTS_END -->
+
+<p class="ibm-ind-link ibm-back-to-top"><a class="ibm-anchor-up-link" href="#ibm-pcon">Back to top</a></p>
+
+<!-- Overlays -->
+
+</div>
+<!-- MAIN_COLUMN_CONTAINER_END -->
+
+<!-- Rating_Meta_BEGIN -->
+<!--Rating_Meta_BEGIN--><div class="metavalue">static.content.url=http://www.ibm.com/developerworks/js/artrating/</div><div class="metavalue">SITE_ID=1</div><div class="metavalue">Zone=Open source</div><div class="metavalue">ArticleID=485346</div><div class="metavalue">ArticleTitle=Data mining with WEKA, Part 1: Introduction and regression</div><div class="metavalue">publish-date=04272010</div><div class="metavalue">author1-email=mabernethy@yahoo.com</div><div class="metavalue">author1-email-cc=</div><script language="javascript" type="text/javascript">document.write('<div class="metavalue">url='+location.href.replace(/</g,  '%3C')+'</div>');</script><div class="metavalue">url=http://www.ibm.com/developerworks/opensource/library/os-weka1/index.html</div><!--Rating_Meta_END-->
+<!-- Rating_Meta_END -->
+
+</div>
+<!-- MAIN_COLUMN_END-->
+
+<!-- RIGHT_COLUMN_BEGIN -->
+<div id="ibm-content-sidebar">
+
+<!-- RIGHT_COLUMN_CONTENT_BEGIN --> 
+<div class="ibm-container"><h2>Table of contents</h2><div class="ibm-container-body"><img alt="" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c_002.gif" height="1" width="1"><ul class="ibm-bullet-list"><li><a class="ibm-feature-link" href="#N10073">Introduction</a></li><li><a class="ibm-feature-link" href="#N1008C">What is data
+                mining?</a></li><li><a class="ibm-feature-link" href="#N100B4">WEKA</a></li><li><a class="ibm-feature-link" href="#N100F6">Regression</a></li><li><a class="ibm-feature-link" href="#N101ED">Building the data
+                det for WEKA</a></li><li><a class="ibm-feature-link" href="#N10209">Loading the data
+                into WEKA</a></li><li><a class="ibm-feature-link" href="#N10239">Creating the
+                regression model with WEKA</a></li><li><a class="ibm-feature-link" href="#N102B1">Interpreting the
+                regression model</a></li><li><a class="ibm-feature-link" href="#N10325">Conclusion</a></li><li><a class="ibm-feature-link" href="#download">Download</a></li><li><a class="ibm-feature-link" href="#resources">Resources</a></li><li><a class="ibm-feature-link" href="#author">About the author</a></li><li><a class="ibm-feature-link" href="#icomments">Comments</a></li></ul></div></div>
+
+
+<!-- Dig_Deeper -->
+<div class="ibm-container"><h2>Dig deeper into Open source on developerWorks</h2><div class="ibm-container-body"><ul class="ibm-link-list"><li class="ibm-first"><a href="http://www.ibm.com/developerworks/opensource/" class="ibm-forward-link">Overview</a></li><li><a href="http://www.ibm.com/developerworks/opensource/newto/" class="ibm-forward-link">New to Open source</a></li><li><a href="http://www.ibm.com/developerworks/opensource/find/projects/" class="ibm-forward-link">Projects</a></li><li><a href="http://www.ibm.com/developerworks/opensource/library/" class="ibm-forward-link">Technical library (articles, tutorials, and more)</a></li><li><a href="http://www.ibm.com/developerworks/forums/dw_osforums.jsp" class="ibm-forward-link">Forums</a></li><li><a href="http://www.ibm.com/developerworks/opensource/find/events/" class="ibm-forward-link">Events</a></li></ul></div></div>
+<!-- High_Visibility_Offer -->
+<!--XSLT stylesheet used to transform this content: s-highvisibilityoffer.xsl--><div class="ibm-container"><h2>Try IBM PureSystems. No charge.</h2><div class="ibm-container-body"><img alt="IBM PureSystems on a kaleideoscope background" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/hiviz-168x64-troy.jpg" border="0" height="70" width="188"><p>Experience today!</p><div class="ibm-rule"><hr></div><p class="ibm-ind-link"><a href="https://www.ibm.com/developerworks/puresystems/try/?ca=dti-hivis-troy" class="ibm-forward-link">Get started with the cloud-based trial and pattern development kit.</a></p></div></div>
+<!-- Special_Offers -->
+<div class="ibm-container"><h2>Special offers</h2><div class="ibm-container-body"><p class="dw-special-offers"><a href="http://www.ibm.com/developerworks/demos/"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/tile_v16_ondemanddemos.gif" alt="On demand demos: An easy way to watch and learn" border="0" height="50" width="158"></a></p><p class="dw-special-offers"><a href="http://www.ibm.com/developerworks/aboutdw/dwa/?ca=dti-dwarp"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/tile_v16_dwaarp.gif" alt="Get recognized! W Author Program" border="0" height="50" width="158"></a></p><p class="dw-special-offers"><a href="https://www.ibm.com/developerworks/cloud/index.html?ca=dti-cloudzone"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/tile_v16_cloudzoneA.gif" alt="Cloud Computing resources for IT professionals" border="0" height="50" width="158"></a></p><div class="ibm-rule"><hr></div><p class="ibm-ind-link"><a class="ibm-forward-link" href="http://www.ibm.com/developerworks/downloads/?ca=dti-tilemoreoffers">Trial software offers</a></p></div></div>
+<!-- RIGHT_COLUMN_CONTENT_END -->
+
+</div>
+<!-- RIGHT_COLUMN_END -->
+
+<!-- CONTENT_BODY_END -->
+</div>
+
+</div>
+<!-- CONTENT_END -->
+
+ <!-- END_IBM-PCON -->
+</div>
+
+<!-- FOOTER_BEGIN -->
+<div id="ibm-footer">
+<!-- IBM footer container; disabled -->
+</div>
+
+<div id="ibm-page-tools-dw">
+	<div id="dw-footer-top-row">
+		<ul id="dw-foot-options">
+			<li id="dw-print"><a class="ibm-print-link" href="#">Print this page</a></li>
+		</ul>
+		<ul id="ibm-foot-options-dw">
+			<li id="dw-foot-0"><a href="#">Share this page</a></li>
+			<li id="dw-foot-1"><a href="#">Follow developerWorks</a></li>
+		</ul>
+	</div>
+
+	<!-- TOP ROW SLIDER -->
+    <div id="dw-page-tools-menu">    
+        <div class="ibm-ribbon-pane-dw">
+            <div class="ibm-ribbon-section-dw">
+				<!-- Share this page -->			
+                <div class="dw-footer-columns">
+                    <div class="dw-footer-col-3-1">
+                        <h2>Share this page:</h2>                       
+						<ul class="ibm-link-list">
+							<li><a id="dw-foot-0-0" class="ibm-facebook-link" href="http://www.facebook.com/sharer.php?u=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka1%2Findex.html&amp;t=Data%20mining%20with%20WEKA%2C%20Part%201%3A%20Introduction%20and%20regression">Facebook</a></li>
+							<li><a class="ibm-linkedin-link" href="http://www.linkedin.com/shareArticle?mini=true&amp;url=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka1%2Findex.html&amp;title=Data%20mining%20with%20WEKA%2C%20Part%201%3A%20Introduction%20and%20regression">LinkedIn</a></li>
+							<li><a class="ibm-twitter-link" href="http://twitter.com/home?status=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka1%2Findex.html%20-%20Data%20mining%20with%20WEKA%2C%20Part%201%3A%20Introduction%20and%20regression">Twitter</a></li>
+						</ul>
+                    </div>
+                    <div class="dw-footer-col-3-2">
+						<ul class="ibm-link-list">
+							<li><a class="ibm-delicious-link" href="http://delicious.com/post?url=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka1%2Findex.html&amp;title=Data%20mining%20with%20WEKA%2C%20Part%201%3A%20Introduction%20and%20regression">Delicious</a></li>
+							<li><a class="ibm-digg-link" href="http://digg.com/submit?phase=2&amp;url=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka1%2Findex.html&amp;title=Data%20mining%20with%20WEKA%2C%20Part%201%3A%20Introduction%20and%20regression">Digg</a></li>
+							<li><a class="ibm-stumbleupon" href="http://www.stumbleupon.com/submit?url=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka1%2Findex.html&amp;title=Data%20mining%20with%20WEKA%2C%20Part%201%3A%20Introduction%20and%20regression">StumbleUpon</a></li>
+						</ul>
+                    </div>
+                    <div class="dw-footer-col-3-3">
+						<ul class="ibm-link-list">
+							<li><a class="ibm-email-link" href="#">Email this page</a></li>
+						</ul>
+                    </div>
+                    <div class="dw-footer-close">
+						<ul>
+							<li><div class="dw-footer-close-share"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+                </div>
+                <!-- Follow developerWorks -->
+                <div class="dw-footer-columns">
+                    <div class="dw-footer-col-1-1">
+                        <h2>Follow developerWorks:</h2>
+						<ul class="ibm-link-list">
+							<li><a id="dw-foot-1-0" class="ibm-facebook-link" href="http://www.facebook.com/sharer.php?u=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka1%2Findex.html&amp;t=Data%20mining%20with%20WEKA%2C%20Part%201%3A%20Introduction%20and%20regression">Facebook</a></li>
+							<li><a class="ibm-twitter-link" href="http://twitter.com/home?status=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Fopensource%2Flibrary%2Fos-weka1%2Findex.html%20-%20Data%20mining%20with%20WEKA%2C%20Part%201%3A%20Introduction%20and%20regression">Twitter</a></li>
+						</ul>
+                    </div>
+                    <div class="dw-footer-close">
+						<ul>
+							<li><div class="dw-footer-close-follow"><a href="#"><img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/c.gif" alt="Close [x]" border="0" height="10" width="20"></a></div></li>
+						</ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="ibm-footer-module-dw">
+	<div class="dw-footer-columns">
+		<div class="dw-footer-col-6-1">
+			<ul>
+				<li><a href="http://www.ibm.com/developerworks/aboutdw/">About</a></li>
+				<li><a href="https://www.ibm.com/developerworks/feedback">Help</a></li>
+				<li><a href="http://www.ibm.com/developerworks/aboutdw/contacts.html">Contact us</a></li>
+				<li><a href="https://www.ibm.com/developerworks/ideas">Submit content</a></li>
+			</ul>
+		</div>
+		<div class="dw-footer-col-6-2">
+			<ul>
+				<li><a href="http://www.ibm.com/developerworks/feeds/">Feeds</a></li>
+			</ul>
+		</div>
+		<div class="dw-footer-col-6-3">
+			<ul>
+				<li><a href="https://www.ibm.com/developerworks/community/report/">Report abuse</a></li>
+				<li><a href="https://www.ibm.com/developerworks/community/terms/">Terms of use</a></li>
+				<li><a href="http://www.ibm.com/privacy/">IBM privacy</a></li>
+				<li><a href="http://www.ibm.com/accessibility/">IBM accessibility</a></li>
+			</ul>
+		</div>
+		<div class="dw-footer-col-6-4">
+			<ul>
+				<li><a href="http://www.ibm.com/developerworks/university/academicinitiative/">Faculty</a></li>
+				<li><a href="http://www.ibm.com/developerworks/university/students/">Students</a></li>
+				<li><a href="http://www.ibm.com/isv/">Business Partners</a></li>
+			</ul>
+		</div>
+		<div class="dw-footer-col-6-5">
+		</div>
+		<div class="dw-footer-col-6-6">
+			<img src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/dwn-ibm-logo-v16.png" alt="IBM®" height="46" width="100">
+			<img class="dw-preload" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/arrow-down-active.gif" alt="" height="1" width="1">
+		</div>
+	</div>
+	<!-- Language selector no-script -->
+	<noscript>
+	<div id="dw-footer-selectlang">
+		<h2><a name="SELECTLANG">Select a language:</a></h2>
+		<ul>
+			<li><a href="http://www.ibm.com/developerworks/">English</a></li>
+			<li><a href="http://www.ibm.com/developerworks/cn/">中文</a></li>
+			<li><a href="http://www.ibm.com/developerworks/jp/">日本語</a></li>
+			<li><a href="http://www.ibm.com/developerworks/ru/">Русский</a></li>
+			<li><a href="http://www.ibm.com/developerworks/br/">Português (Brasil)</a></li>
+			<li><a href="http://www.ibm.com/developerworks/ssa/">Español</a></li>
+			<li><a href="http://www.ibm.com/developerworks/vn/">Việt</a></li>
+		</ul>
+	</div>
+	</noscript>
+</div><!-- FOOTER_END -->
+
+ <!-- END_IBM-TOP -->
+<div id="ibm-overlay-top"></div></div>
+ 
+ <!-- SCRIPTS_INCLUDE_BEGIN -->
+<!-- JQuery start -->
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/jquery_004.js"></script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/jquery_002.js"></script>
+<!-- xM Masthead/Footer -->
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/jquery_003.js">//</script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/jquery.js">//</script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/dw_v16.js">//</script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/flash-detect.js">//</script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/dwsi.js">//</script>
+<script type="text/javascript" language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/showcomments.js">//</script>
+<script language="JavaScript" type="text/javascript">
+// <![CDATA[
+ jQuery('threadShow').showComments('95%',5,'nCmts','icomments');
+// ]]>
+</script>
+
+<script type="text/javascript" language="JavaScript">
+	jQuery.noConflict();     
+	// Put all your code in your document ready area
+	jQuery(document).ready(function(jQuery) {
+	// Do jQuery stuff using jQuery 
+	jQuery('a.dwauthor').cluetip({
+		local: true,
+		showTitle: false,
+		positionBy: 'bottomTop',
+		sticky: true,	
+		mouseOutClose: true,
+		closeText: '<img src="//dw1.s81c.com/developerworks/js/jquery/cluetip98/i/x.gif" alt="Close" />',
+		arrows: false,
+		dropShadow: true,
+		cluetipClass: 'dwbasic'
+		});
+
+		rBHash = {};
+		rBHash['viperLang'] = 'en';
+		rBHash['urlLang'] = 'en';
+
+		// si
+		initSI();
+	});
+ </script>
+ <!-- JQuery end -->
+ <!-- Overlay js -->
+<script language="JavaScript" src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/overlay.js" type="text/javascript"></script><!-- BEGIN: Use this section to set page specific variables for the Unica Page Tag -->
+<script language="JavaScript">var NTPT_PGEXTRA="ibmSkillLevel=3&ibmAdoptPhase=651&ibmRole=36&ibmCmaId=485346&ibmContentAreas=opensource";</script>
+<!--END --><!-- SCRIPTS_INCLUDE_END -->
+
+<div id="ibm-metrics">
+<script src="Data%20mining%20with%20WEKA,%20Part%201_%20Introduction%20and%20regression_files/stats.js" type="text/javascript">//</script>
+</div>
+
+
+<div style="position: absolute; z-index: 95; display: none;" id="cluetip-waitimage"></div><div style="z-index: 96; display: none; position: absolute;" id="cluetip"><div style="z-index: 95; opacity: 0.1; top: 1px; left: 1px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="z-index: 94; opacity: 0.1; top: 2px; left: 2px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="z-index: 93; opacity: 0.1; top: 3px; left: 3px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="z-index: 92; opacity: 0.1; top: 4px; left: 4px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="z-index: 91; opacity: 0.1; top: 5px; left: 5px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="z-index: 90; opacity: 0.1; top: 6px; left: 6px; position: absolute; background-color: rgb(0, 0, 0);"></div><div style="position: relative; z-index: 97;" id="cluetip-outer"><div id="cluetip-title"></div><div id="cluetip-inner"></div></div><div id="cluetip-extra"></div><div style="z-index: 97;" id="cluetip-arrows" class="cluetip-arrows"></div></div></body></html>

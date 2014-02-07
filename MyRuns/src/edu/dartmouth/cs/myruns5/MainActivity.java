@@ -165,7 +165,8 @@ public class MainActivity extends Activity {
 		return recommendFragment;
 	}
 
-	public void onStartClicked(View view) {
+	public void startActivityMonitoringView(){
+
 		// check input type
 		Spinner spinner = (Spinner) findViewById(R.id.Spinner_InputType);
 		int pos = spinner.getSelectedItemPosition();
@@ -192,7 +193,31 @@ public class MainActivity extends Activity {
 
 		// fire intent
 		startActivity(intent);
-
+	}
+	
+	protected void setupUserBodyTypeProfile(){
+		Intent intent = new Intent(this, UserBodyProfileDialog.class);
+		startActivity(intent);
+	}
+	
+	public void onStartClicked(View view) {
+		new AlertDialog.Builder(this)
+        .setIcon(android.R.drawable.ic_dialog_alert)
+        .setTitle(R.string.user_profile)
+        .setMessage(R.string.user_profile_update)
+        .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                setupUserBodyTypeProfile();
+            }
+        })
+        .setNegativeButton(R.string.no,  new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+            	startActivityMonitoringView();    
+            }
+        })
+        .show();
 	}
 }
 

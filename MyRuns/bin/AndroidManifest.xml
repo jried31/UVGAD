@@ -82,7 +82,10 @@
              android:screenOrientation="portrait">
         </activity>
         
-        <activity android:name="org.achartengine.GraphicalActivity" ></activity>
+		<activity
+            android:name="edu.dartmouth.cs.myruns5.UserBodyProfileDialog"
+            android:label="@string/app_name">    
+        </activity> 
         
 		<service android:name="edu.dartmouth.cs.myruns5.UltravioletIndexService"/>
         
