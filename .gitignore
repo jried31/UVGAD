@@ -1,1 +1,15 @@
+MyRuns/project.properties
+MyRunsDataCollector/project.properties
+UsbSerialExamples/project.properties
+google_play_services/project.properties
+MyRuns/AndroidManifest.xml
+MyRunsDataCollector/AndroidManifest.xml
 *.class
+MyRuns/bin/*
+MyRuns/gen/*
+MyRunsDataCollector/bin/*
+MyRunsDataCollector/gen/*
+UsbSerialExamples/bin/*
+UsbSerialExamples/gen/*
+google_play_services/libproject/google-play-services_lib/bin/*
+google_play_services/libproject/google-play-services_lib/gen/*

@@ -38,6 +38,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.TwoLineListItem;
 
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
@@ -178,6 +179,7 @@ public class DeviceListActivity extends Activity {
                     final List<UsbSerialDriver> drivers =
                             UsbSerialProber.probeSingleDevice(mUsbManager, device);
                     Log.d(TAG, "Found usb device: " + device);
+                    
                     if (drivers.isEmpty()) {
                         Log.d(TAG, "  - No UsbSerialDriver available.");
                         result.add(new DeviceEntry(device, null));
