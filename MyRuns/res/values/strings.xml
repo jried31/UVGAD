@@ -43,11 +43,18 @@
     <string name="relationship">Relationship</string>    
     <string name="StartFragment_InputType">Input type</string>
     <string name="StartFragment_ActivityType">Activity Type</string>
-     <string name="recommend_low">A UV Index reading of 0 to 2 means low danger from the sun\'s UV rays for the average person.\n\nRecommendations:\n-Wear sunglasses on bright days.\n-If you burn easily, cover up and use broad spectrum SPF 30+ sunscreen.\n-Watch out for bright surfaces, like sand, water and snow, which reflect UV and increase exposure.</string>
+    <string name="recommend_low">A UV Index reading of 0 to 2 means low danger from the sun\'s UV rays for the average person.\n\nRecommendations:\n-Wear sunglasses on bright days.\n-If you burn easily, cover up and use broad spectrum SPF 30+ sunscreen.\n-Watch out for bright surfaces, like sand, water and snow, which reflect UV and increase exposure.</string>
     <string name="recommend_moderate">A UV Index reading of 3 to 5 means moderate risk of harm from unprotected sun exposure.\n\nRecommendations:\n-Stay in shade near midday when the sun is strongest.\n-If outdoors, wear protective clothing, a wide-brimmed hat, and UV-blocking sunglasses.\n-Generously apply broad spectrum SPF 30+ sunscreen every 2 hours, even on cloudy days, and after swimming or sweating.\n-Watch out for bright surfaces, like sand, water and snow, which reflect UV and increase exposure.</string>
     <string name="recommend_high">A UV Index reading of 6 to 7 means high risk of harm from unprotected sun exposure. Protection against skin and eye damage is needed.\n\nRecommendations:\n-Reduce time in the sun between 10 a.m. and 4 p.m.\n-If outdoors, seek shade and wear protective clothing, a wide-brimmed hat, and UV-blocking sunglasses.\n-Generously apply broad spectrum SPF 30+ sunscreen every 2 hours, even on cloudy days, and after swimming or sweating. \n-Watch out for bright surfaces, like sand, water and snow, which reflect UV and increase exposure.</string>
     <string name="recommend_veryhigh">A UV Index reading of 8 to 10 means very high risk of harm from unprotected sun exposure. Take extra precautions because unprotected skin and eyes will be damaged and can burn quickly.\n\nRecommendations:\n-Minimize sun exposure between 10 a.m. and 4 p.m.\n-If outdoors, seek shade and wear protective clothing, a wide-brimmed hat, and UV-blocking sunglasses.\n-Generously apply broad spectrum SPF 30+ sunscreen every 2 hours, even on cloudy days, and after swimming or sweating. \n-Watch out for bright surfaces, like sand, water and snow, which reflect UV and increase exposure.</string>
     <string name="recommend_extreme">A UV Index reading of 11 or more means extreme risk of harm from unprotected sun exposure. Take all precautions because unprotected skin and eyes can burn in minutes.\n\nRecommendations:\n-Try to avoid sun exposure between 10 a.m. and 4 p.m.\n-If outdoors, seek shade and wear protective clothing, a wide-brimmed hat, and UV-blocking sunglasses.\n-Generously apply broad spectrum SPF 30+ sunscreen every 2 hours, even on cloudy days, and after swimming or sweating.\n-Watch out for bright surfaces, like sand, water and snow, which reflect UV and increase exposure.</string>
+    
+    <string name="deviceStatus">Device Status</string>
+    <string name="dumpSerial">Dump Serial</string>
+    <string name="clear">Clear</string>
+    
+    <string name="startStreaming">Start Streaming</string>
+    <string name="stopStreaming">Stop Streaming</string>
     
     
     <string-array name="InputTypeEntries">
