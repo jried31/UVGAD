@@ -5,6 +5,7 @@ public class Constants
 	public static final String PACKAGE_NAME = "edu.dartmouth.cs.myruns5";
 	
 	public static final String PERMISSION_ACTION_USB_SENSOR = PACKAGE_NAME + ".action.USB_SENSOR_PERMISSION";
+	public static final int USB_READ_BUFFER_SIZE = 4096;
 	
-	public static final int DFLT_BAUD_RATE = 115200;
+	public static final int DFLT_BAUD_RATE = 9600;
 }

@@ -25,9 +25,9 @@ import android.util.Log;
  * @author daniel
  *
  */
-public class UsbSensorDatabaseHelper extends SQLiteOpenHelper
+public class UsbSensorAssistant extends SQLiteOpenHelper
 {
-	private static final String TAG = UsbSensorDatabaseHelper.class.getName();
+	private static final String TAG = UsbSensorAssistant.class.getName();
 	
 	private static final String DATABASE_NAME = "hardware.db";
 	private static final String TABLE_NAME = "UsbSensorProfile";
@@ -47,12 +47,12 @@ public class UsbSensorDatabaseHelper extends SQLiteOpenHelper
 	
 	private final String mDatabasePath;
 	
-	public UsbSensorDatabaseHelper(Context context)
+	public UsbSensorAssistant(Context context)
 	{
 		this(context, MyRunsApplication.getUsbSensorManager());
 	}
 	
-	public UsbSensorDatabaseHelper(Context context, UsbSensorManager usbSensorManager)
+	public UsbSensorAssistant(Context context, UsbSensorManager usbSensorManager)
 	{
 		super(context, DATABASE_NAME, null, 1);
 		
@@ -160,7 +160,7 @@ public class UsbSensorDatabaseHelper extends SQLiteOpenHelper
 			return(null);
 		}
 		
-		final String columns[] = new String[] {COL_SENSORS, COL_BAUD};
+		final String columns[] = new String[] {COL_SENSORS};
 
 		Cursor queryCursor = mDatabase.query(TABLE_NAME, columns, 
 				COL_VENDOR_ID + "=" + device.getVendorId() + " AND " 
@@ -175,11 +175,10 @@ public class UsbSensorDatabaseHelper extends SQLiteOpenHelper
 		queryCursor.moveToFirst();
 		
 		int sensors = queryCursor.getInt(0);
-		int baud = queryCursor.getInt(1);
 		
 		if(Sensor.hasLightSensor(sensors))
 		{
-			return(new UsbLightSensor(mContext, mUsbSensorManager, device, baud));
+			return(new UsbLightSensor(mContext, mUsbSensorManager, device));
 		}
 		else
 		{
@@ -202,7 +201,7 @@ public class UsbSensorDatabaseHelper extends SQLiteOpenHelper
 			return(null);
 		}
 		
-		final String columns[] = new String[] {COL_SENSORS, COL_BAUD};
+		final String columns[] = new String[] {COL_SENSORS};
 		
 		Cursor queryCursor = mDatabase.query(TABLE_NAME, columns, 
 				COL_VENDOR_ID + "=" + device.getVendorId() + " AND " 
@@ -217,12 +216,10 @@ public class UsbSensorDatabaseHelper extends SQLiteOpenHelper
 		queryCursor.moveToFirst();
 		
 		int sensors = queryCursor.getInt(0);
-		int baud = queryCursor.getInt(1);
 		
 		if(Sensor.hasUVSensor(sensors))
 		{
-
-			return(new UsbUVSensor(mContext, mUsbSensorManager, device, baud));
+			return(new UsbUVSensor(mContext, mUsbSensorManager, device));
 		}
 		else
 		{
@@ -235,9 +232,6 @@ public class UsbSensorDatabaseHelper extends SQLiteOpenHelper
 		try
 		{
 			File localDatabaseFile = new File(mDatabasePath);
-			
-			Log.i("FOO", "FILE: " + localDatabaseFile.getAbsolutePath());
-			Log.i("FOO", "DIR: " + localDatabaseFile.getParentFile().getAbsolutePath());
 			
 			localDatabaseFile.getParentFile().mkdirs();
 			localDatabaseFile.createNewFile();
