@@ -1,11 +1,13 @@
 package edu.dartmouth.cs.myruns5;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -16,19 +18,44 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 {
 	private class LightSensorCallback implements ILightSensor.Callback
 	{
+		private final Activity mActivity;
+		
+		LightSensorCallback(Activity activity)
+		{
+			mActivity = activity;
+		}
+		
+		@Override
+		public void onSensorUpdate(final byte data[], int length)
+		{
+			try
+			{
+				final String msg = new String(data, 0, length, "UTF-8");
+				
+				mActivity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						mConsole_text.setText(msg);
+					}
+				});
+			}
+			catch(UnsupportedEncodingException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		
 		@Override
 		public void onSensorUpdate(int updateLux)
 		{
-			// TODO Auto-generated method stub
-			
 			Toast.makeText(mContext, "Light sensor update!", Toast.LENGTH_SHORT).show();
 		}
 
 		@Override
 		public void onSensorEjected()
 		{
-			// TODO Auto-generated method stub
-			
 			Toast.makeText(mContext, "Light sensor ejected!", Toast.LENGTH_SHORT).show();
 			
 			mIsStreaming = false;
@@ -38,19 +65,44 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 	
 	private class UVSensorCallback implements IUVSensor.Callback
 	{
+		private final Activity mActivity;
+		
+		UVSensorCallback(Activity activity)
+		{
+			mActivity = activity;
+		}
+		
+		@Override
+		public void onSensorUpdate(final byte data[], int length)
+		{
+			try
+			{
+				final String msg = new String(data, 0, length, "UTF-8");
+				
+				mActivity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						mClear_btn.setText(msg);
+					}
+				});
+			}
+			catch(UnsupportedEncodingException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		
 		@Override
 		public void onSensorUpdate(int updateLux)
 		{
-			// TODO Auto-generated method stub
-			
 			Toast.makeText(mContext, "UV sensor update!", Toast.LENGTH_SHORT).show();
 		}
 
 		@Override
 		public void onSensorEjected()
 		{
-			// TODO Auto-generated method stub
-			
 			Toast.makeText(mContext, "UV sensor ejected!", Toast.LENGTH_SHORT).show();
 		}
 	}
@@ -59,7 +111,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 	private Resources mResources;
 	private UsbSensorManager mUsbSensorManager;
 	
-	private TextView mConsole_text;
+	private volatile TextView mConsole_text;
 	private Button mDeviceStatus_btn;
 	private Button toggleStreaming_btn;
 	private Button mClear_btn;
@@ -91,8 +143,8 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		toggleStreaming_btn.setOnClickListener(this);
 		mClear_btn.setOnClickListener(this);
 		
-		mLightSensorCallback = new LightSensorCallback();
-		mUVSensorCallback = new UVSensorCallback();
+		mLightSensorCallback = new LightSensorCallback(this);
+		mUVSensorCallback = new UVSensorCallback(this);
 		
 		mIsStreaming = false;
 		toggleStreaming_btn.setText(mResources.getString(R.string.startStreaming));
@@ -143,7 +195,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 					mLightSensor.register(mLightSensorCallback);
 					
 					mUVSensor = uvSensor_list.get(0);
-					// mUVSensor.register(mUVSensorCallback);
+					mUVSensor.register(mUVSensorCallback);
 					
 					mIsStreaming = true;
 					toggleStreaming_btn.setText(mResources.getString(R.string.stopStreaming));
@@ -153,7 +205,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 					if(mLightSensor != null)
 					{
 						mLightSensor.unregister();
-						// mUVSensor.unregister();
+						mUVSensor.unregister();
 					}
 					
 					mIsStreaming = false;
