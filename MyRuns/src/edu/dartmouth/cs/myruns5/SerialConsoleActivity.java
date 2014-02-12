@@ -50,16 +50,23 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		@Override
 		public void onSensorUpdate(int updateLux)
 		{
-			Toast.makeText(mContext, "Light sensor update!", Toast.LENGTH_SHORT).show();
+			// Toast.makeText(mContext, "Light sensor update!", Toast.LENGTH_SHORT).show();
 		}
 
 		@Override
 		public void onSensorEjected()
 		{
-			Toast.makeText(mContext, "Light sensor ejected!", Toast.LENGTH_SHORT).show();
+			mActivity.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					Toast.makeText(mContext, "Light sensor ejected!", Toast.LENGTH_SHORT).show();
+					toggleStreaming_btn.setText(mResources.getString(R.string.startStreaming));
+				}
+			});
 			
 			mIsStreaming = false;
-			toggleStreaming_btn.setText(mResources.getString(R.string.startStreaming));
 		}
 	}
 	
@@ -97,13 +104,20 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		@Override
 		public void onSensorUpdate(int updateLux)
 		{
-			Toast.makeText(mContext, "UV sensor update!", Toast.LENGTH_SHORT).show();
+			// Toast.makeText(mContext, "UV sensor update!", Toast.LENGTH_SHORT).show();
 		}
 
 		@Override
 		public void onSensorEjected()
 		{
-			Toast.makeText(mContext, "UV sensor ejected!", Toast.LENGTH_SHORT).show();
+			mActivity.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					Toast.makeText(mContext, "UV sensor ejected!", Toast.LENGTH_SHORT).show();
+				}
+			});
 		}
 	}
 	
@@ -205,6 +219,10 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 					if(mLightSensor != null)
 					{
 						mLightSensor.unregister();
+					}
+					
+					if(mUVSensor != null)
+					{
 						mUVSensor.unregister();
 					}
 					

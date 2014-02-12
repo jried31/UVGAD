@@ -173,13 +173,13 @@ public class UsbSensorConnection
 			
 			while(mConnectionActive)
 			{
-				int dataLen = mUsbDeviceConnection.bulkTransfer(mUsbReadEndpoint, buffer, buffer.length, 3000);
+				int length = mUsbDeviceConnection.bulkTransfer(mUsbReadEndpoint, buffer, buffer.length, 3000);
 				
-				if(dataLen > 0)
+				if(length > 0)
 				{
 					String msg = new String();
 					
-					for(int i = 0; i < dataLen; i++)
+					for(int i = 0; i < length; i++)
 					{
 						msg += Integer.toHexString(buffer[i]) + " ";
 					}
@@ -188,14 +188,14 @@ public class UsbSensorConnection
 					
 					if(mCallback_map != null)
 					{
-						UsbSensor.Callback callback;
-						Iterator<Entry<UsbSensor, UsbSensor.Callback>> callback_iter = 
+						UsbSensor sensor;
+						Iterator<Entry<UsbSensor, UsbSensor.Callback>> sensor_iter = 
 								mCallback_map.entrySet().iterator();
 						
-						while(callback_iter.hasNext())
+						while(sensor_iter.hasNext())
 						{
-							callback = callback_iter.next().getValue();
-							callback.onNewData(buffer, dataLen);
+							sensor = sensor_iter.next().getKey();
+							sensor.notifySensorUpdate(buffer, length);
 						}
 					}
 				}
