@@ -40,7 +40,7 @@ public class UsbSensorManager
 			mCallback_map = new ConcurrentHashMap<UsbSensor, UsbSensor.Callback>();
 		}
 		
-		private int register(UsbSensor sensor, UsbSensor.Callback callback)
+		private synchronized int register(UsbSensor sensor, UsbSensor.Callback callback)
 		{	
 			if(sensor == null || callback == null || sensor.getDevice() != mUsbDevice)
 			{
@@ -68,16 +68,17 @@ public class UsbSensorManager
 					return(ErrorCode.ERR_STATE);
 				}
 				
-				// A sensor has already been registered to this USB device.
+				// A different sensor has already been registered to this USB device.
 				// Add the sensor's callback to the task's callback map and return success.
 				
 				mCallback_map.put(sensor, callback);
 			}
 			
+			sensor.startCallbackThread(callback);
 			return(ErrorCode.NO_ERROR);
 		}
 		
-		private int unregister(UsbSensor sensor)
+		private synchronized int unregister(UsbSensor sensor)
 		{
 			if(sensor == null || sensor.getDevice() != mUsbDevice)
 			{
@@ -92,6 +93,7 @@ public class UsbSensorManager
 			}
 			
 			mCallback_map.remove(sensor);
+			sensor.stopCallbackThread();
 			
 			if(mCallback_map.size() == 0)
 			{
@@ -114,12 +116,12 @@ public class UsbSensorManager
 				return;
 			}
 			
-			Iterator<Entry<UsbSensor, UsbSensor.Callback>> callback_iter = 
+			Iterator<Entry<UsbSensor, UsbSensor.Callback>> sensorCallback_iter = 
 					mCallback_map.entrySet().iterator();
 			
-			while(callback_iter.hasNext())
+			while(sensorCallback_iter.hasNext())
 			{
-				callback_iter.next().getValue().onDeviceEjected();
+				sensorCallback_iter.next().getKey().notifySensorEjected();
 			}
 			
 			mCallback_map.clear();
