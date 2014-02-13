@@ -455,7 +455,7 @@ public class TrackingService extends Service
 	      
 	                          try {                                  
 	                        	  long uviReading=0;
-								sunClassificationFile.append(System.currentTimeMillis() +"\t" + classification + "\t" + uviReading + pitchReading + "\n");           
+								sunClassificationFile.append(System.currentTimeMillis() +"\t" + classification + "\t" + uviReading + "\t" + pitchReading + "\n");           
 	                          } catch (IOException ex){
 	                          }
 	                          finally{
