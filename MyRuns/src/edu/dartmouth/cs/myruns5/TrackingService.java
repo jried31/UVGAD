@@ -76,8 +76,7 @@ public class TrackingService extends Service
 	
 	
 	private SensorManager mSensorManager;
-	private Sensor mAccelerometer;
-	private Sensor mLightSensor;
+	private Sensor mAccelerometer,mLightSensor,mMagnetSensor,mGravitySensor;
 	
 	private float[] mGeomagnetic;
 	private static ArrayBlockingQueue<Double> mAccBuffer;
@@ -177,14 +176,19 @@ public class TrackingService extends Service
 	    	// init sensor manager
 	    	mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 	    
-	    	mAccelerometer = mSensorManager .getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-	    	// register listener
+	    	mGravitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+	    	mSensorManager.registerListener(this, mGravitySensor, SensorManager.SENSOR_DELAY_FASTEST);
+	    	
+	    	mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 	    	mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 	    	mAccelerometerActivityClassificationTask.execute();
 	    	
 	    	//JERRID: Register light Sensor
 			mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 			mSensorManager.registerListener(this, mLightSensor,SensorManager.SENSOR_DELAY_FASTEST);
+			
+			mMagnetSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+			mSensorManager.registerListener(this, mMagnetSensor,SensorManager.SENSOR_DELAY_FASTEST);
 			}
 	    
 		// Using pending intent to bring back the MapActivity from notification center.
@@ -309,13 +313,13 @@ public class TrackingService extends Service
 		
 	      if (event.sensor.getType() == android.hardware.Sensor.TYPE_MAGNETIC_FIELD){
 	           mGeomagnetic = event.values;
+	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_GRAVITY ){
+	    	  mGravity = event.values;
 	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_LINEAR_ACCELERATION ){
-	    	  
-              mGravity = event.values;
-              double x = mGravity[0];
-              double y = mGravity[1];
+              double x = event.values[0];
+              double y = event.values[1];
               //Jerrid: Dont care about z component (for now)
-              double z = mGravity[2];				
+              double z = event.values[2];				
               double m = Math.sqrt(x*x + y*y + z*z);
 	
               // Add m to the mAccBuffer one by one.
