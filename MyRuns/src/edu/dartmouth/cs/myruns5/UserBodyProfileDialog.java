@@ -22,7 +22,10 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 	SpriteGender genderSprite;
 	SpriteSPF spfSprite;
 	SpriteSkinType skinTypeSprite;
-	Region genderRegion,spfRegion,skinTypeRegion;
+	SpriteHeadwear headwearSprite;
+	SpriteTorso torsoSprite;
+	SpriteLegs legsSprite;
+	Region genderRegion, spfRegion, skinTypeRegion, headwearRegion, torsoRegion, legsRegion;
 	int sexOption = 0;
 	
 	@Override
@@ -74,6 +77,18 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 					skinTypeSprite.onTouch();
 					break;
 				}
+				if (headwearRegion.contains((int)x, (int)y)) {
+					headwearSprite.toggle();
+					break;
+				}
+				if (torsoRegion.contains((int)x, (int)y)) {
+					torsoSprite.toggle();
+					break;
+				}
+				if (legsRegion.contains((int)x, (int)y)) {
+					legsSprite.toggle();
+					break;
+				}
 			case MotionEvent.ACTION_UP:
 			case MotionEvent.ACTION_MOVE:
 		
@@ -104,6 +119,18 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 			skinTypeSprite = new SpriteSkinType(this);
 			skinTypeRegion = new Region(skinTypeSprite.getX(),skinTypeSprite.getY(), skinTypeSprite.getX() + skinTypeSprite.getWidth(),skinTypeSprite.getY() + skinTypeSprite.getHeight());
 			
+			headwearSprite = new SpriteHeadwear(this, personSprite);
+			headwearRegion = new Region(headwearSprite.getX(), headwearSprite.getY(), 
+					headwearSprite.getX() + headwearSprite.getWidth(), headwearSprite.getY() + headwearSprite.getHeight());
+			
+			torsoSprite = new SpriteTorso(this, personSprite);
+			torsoRegion = new Region(torsoSprite.getX(), torsoSprite.getY(), 
+					torsoSprite.getX() + torsoSprite.getWidth(), torsoSprite.getY() + torsoSprite.getHeight());
+			
+			legsSprite = new SpriteLegs(this, personSprite);
+			legsRegion = new Region(legsSprite.getX(), legsSprite.getY(), 
+					legsSprite.getX() + legsSprite.getWidth(), legsSprite.getY() + legsSprite.getHeight());
+			
 			while(isItOk){//If the surface (holder) view is NOT valid don't render
 				if(!holder.getSurface().isValid()){
 					continue;
@@ -121,6 +148,18 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 			genderSprite.onDraw(canvas);//Draw the gender canvas
 			skinTypeSprite.onDraw(canvas);
 			spfSprite.onDraw(canvas);
+			
+			// Update clothing toggling
+			legsSprite.onDraw(canvas);
+			legsRegion.set(legsSprite.getX(), legsSprite.getY(), 
+					legsSprite.getX() + legsSprite.getWidth(), legsSprite.getY() + legsSprite.getHeight());
+			torsoSprite.onDraw(canvas);
+			torsoRegion.set(torsoSprite.getX(), torsoSprite.getY(), 
+					torsoSprite.getX() + torsoSprite.getWidth(), torsoSprite.getY() + torsoSprite.getHeight());
+			headwearSprite.onDraw(canvas);
+			headwearRegion.set(headwearSprite.getX(), headwearSprite.getY(), 
+					headwearSprite.getX() + headwearSprite.getWidth(), headwearSprite.getY() + headwearSprite.getHeight());
+			
 			canvas.drawBitmap(arrowBitmap,x - arrowBitmap.getWidth()/2,y - arrowBitmap.getHeight()/2, null);//draws ball
 		}
 		
