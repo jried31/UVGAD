@@ -7,4 +7,6 @@ public class ErrorCode
 	public static final int ERR_PARAMS = -2;
 	public static final int ERR_STATE = -3;
 	public static final int ERR_RESOURCE = -4;
+	public static final int ERR_READ = -5;
+	public static final int ERR_WRITE = -6;
 }

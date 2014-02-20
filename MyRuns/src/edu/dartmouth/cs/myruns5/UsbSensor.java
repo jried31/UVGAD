@@ -162,7 +162,7 @@ public abstract class UsbSensor extends Sensor
 					
 					synchronized(this)
 					{
-						this.notify();
+						notify();
 					}
 				}
 				else
