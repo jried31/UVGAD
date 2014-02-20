@@ -7,7 +7,7 @@ public class LumenDataPoint {
       return timestamp;
     }
 
-    public double getPitch() {
+    public double[] getPitch() {
       return pitch;
     }
 
@@ -19,11 +19,11 @@ public class LumenDataPoint {
       return uvi;
     }
 
-    private double pitch;
+    private double pitch[];
     private double intensity;
     private float uvi;
     
-    public LumenDataPoint(long timestamp, double pitch, double intensity, float uvi) {
+    public LumenDataPoint(long timestamp, double[] pitch, double intensity, float uvi) {
       super();
       this.timestamp = timestamp;
       this.pitch = pitch;

@@ -88,8 +88,7 @@ public class TrackingService extends Service
 	private final IBinder mBinder = new TrackingBinder();
 
 	private float[] mGravity;
-
-	private long pitchReading;
+	private double []pitchReading={0,0,0};
 
 	
 	public static final String LOCATION_UPDATE = "location update";
@@ -313,7 +312,7 @@ public class TrackingService extends Service
 		
 	      if (event.sensor.getType() == android.hardware.Sensor.TYPE_MAGNETIC_FIELD){
 	           mGeomagnetic = event.values;
-	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_GRAVITY ){
+	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_GRAVITY){
 	    	  mGravity = event.values;
 	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_LINEAR_ACCELERATION ){
               double x = event.values[0];
@@ -334,7 +333,8 @@ public class TrackingService extends Service
 	      }else
 	      if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
 	    	  //JERRID: Light Sensor Reading
-	          if (mGravity != null && mGeomagnetic != null)
+	         
+	    	  if (mGravity != null && mGeomagnetic != null)
 	          {
 	              float R[] = new float[9];
 	              float I[] = new float[9];
@@ -342,15 +342,31 @@ public class TrackingService extends Service
 	              if (success) 
 	              {
 	                  float orientation[] = new float[3];
-	                  android.hardware.SensorManager.getOrientation(R, orientation);             
-	                  pitchReading = Math.round(Math.abs((orientation[1]*180)/Math.PI));
-	         
+	                  android.hardware.SensorManager.getOrientation(R, orientation); 
+		              pitchReading[0] = Math.round(Math.abs((orientation[0]*180)/Math.PI));
+		              pitchReading[1] = Math.round(Math.abs((orientation[1]*180)/Math.PI));
+		              pitchReading[2] = Math.round(Math.abs((orientation[2]*180)/Math.PI));
 	                  float uvi = 0;
 	                  LumenDataPoint intensityReading = new LumenDataPoint(event.timestamp, pitchReading, event.values[0], uvi);
 	                    
 	                  try {
 	                      //JERRID: Add the magnitude reading to the buffer
 	                      mLightIntensityReadingBuffer.add(intensityReading);
+	                      File dir = new File (android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/accelerometer");
+	                      dir.mkdirs();
+	                      FileWriter sunClassificationFile = new FileWriter(dir.getAbsolutePath()+"/"+Globals.LIGHT_INTENSITY_FILE_NAME, true);                       
+                          try {                  
+                        	  String out = (System.currentTimeMillis() + "\t" + event.values[0] + "\t" + pitchReading[0] +  "\t" + pitchReading[1] + "\t" + pitchReading[2] +"\n");         
+                        	  //Log.e("LIGHT DATA: ", out);
+                        	  sunClassificationFile.append(out);           
+                          } catch (IOException ex){
+                          }
+                          finally{
+                        	  sunClassificationFile.flush();
+                        	  sunClassificationFile.close();
+                          }
+	                         
+	                      
 	                  } catch (IllegalStateException e) {
 	                
 	                      // Exception happens when reach the capacity.
@@ -360,7 +376,10 @@ public class TrackingService extends Service
 	                      mLightIntensityReadingBuffer.drainTo(newBuf);
 	                      mLightIntensityReadingBuffer = newBuf;
 	                      mLightIntensityReadingBuffer.add(intensityReading);
-	                  }
+	                  } catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 	              }
 	          }
 //			Toast.makeText(getApplicationContext(), String.valueOf(mAccBuffer.size()), Toast.LENGTH_SHORT).show();
@@ -450,16 +469,17 @@ public class TrackingService extends Service
 	                      double prediction = wrapper.classifyInstance(featureInstance);
 	                      String classification = featureInstance.classAttribute().value((int) prediction);
 	                      
-	                      File dir = new File (android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/accelerometer");
+	                      /*File dir = new File (android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/accelerometer");
 	                      dir.mkdirs();
 	                      FileWriter sunClassificationFile=null;
 	                  
 	                      try {
-	                          sunClassificationFile = new FileWriter(dir.getAbsolutePath()+"/"+Globals.LIGHT_INTENSITY_FILE_NAME, true);                 
-	      
+	                          sunClassificationFile = new FileWriter(dir.getAbsolutePath()+"/"+Globals.LIGHT_INTENSITY_FILE_NAME, true);                       
 	                          try {                                  
 	                        	  long uviReading=0;
-								sunClassificationFile.append(System.currentTimeMillis() +"\t" + classification + "\t" + uviReading + "\t" + pitchReading + "\n");           
+	                        	  String out = (System.currentTimeMillis() +"\t" + classification + "\t" + uviReading + "\t" + pitchReading[0] +  "\t" + pitchReading[1] + "\t" + pitchReading[2] +"\n");         
+	                        	  Log.e("LIGHT DATA: ", out);
+	                        	  sunClassificationFile.append(out);           
 	                          } catch (IOException ex){
 	                          }
 	                          finally{
@@ -470,7 +490,7 @@ public class TrackingService extends Service
 	                      } catch (IOException e) {
 	                          e.printStackTrace();
 	                      }
-	                      
+	                      */
 	                      
 	                      //Reset the Values
 	                      blockSize = 0;

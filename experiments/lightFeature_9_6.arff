@@ -1,0 +1,16 @@
+@relation light_intensity_features
+
+@attribute min numeric
+@attribute max numeric
+@attribute mean numeric
+@attribute std numeric
+@attribute mean_abs_dev numeric
+@attribute label {in_shade,in_sun,in_cloud,others}
+
+@data
+1914,1914,4350.569279,5600.447253,4209.717505,in_shade
+1871,1871,1963.703125,76.979386,52.185303,in_shade
+1751,1751,1762.289063,44.313364,36.981812,in_shade
+1770,1770,1759.429688,26.034587,21.255493,in_shade
+1743,1743,1730.226563,49.237739,36.083618,in_shade
+2248,2248,2251.603185,814.20197,492.142377,in_shade
