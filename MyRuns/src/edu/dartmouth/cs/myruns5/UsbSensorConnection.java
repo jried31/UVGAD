@@ -28,17 +28,17 @@ public class UsbSensorConnection
 	private static final int B_REQUEST_SET_LINE_CODING = 0x20;
 	private static final int B_REQUEST_SET_CONTROL_LINE_STATE = 0x22;
 	
-	
 	private final UsbManager mUsbManager;
 	private final UsbDevice mUsbDevice;
-	
-	private boolean mConnectionActive;
 	
 	private UsbDeviceConnection mUsbDeviceConnection;
 	private UsbInterface mUsbInterface;
 	private UsbEndpoint mUsbReadEndpoint;
+	private UsbEndpoint mUsbWriteEndpoint;
+	
 	private Map<UsbSensor, UsbSensor.Callback> mUsbSensorCallback_map;
 	
+	private UsbSensorRunnable mUsbSensorRunnable;
 	private Thread mUsbSensorThread;
 	
 	UsbSensorConnection(UsbManager usbManager, UsbDevice usbDevice, 
@@ -49,7 +49,6 @@ public class UsbSensorConnection
 		mUsbSensorCallback_map = usbSensorCallback_map;
 		
 		mUsbReadEndpoint = null;
-		mConnectionActive = false;
 	}
 	
 	public UsbDevice getDevice()
@@ -91,9 +90,16 @@ public class UsbSensorConnection
 					
 					for(int epCursor = 0; epCursor < epCount; epCursor++)
 					{
-						if(mUsbInterface.getEndpoint(epCursor).getDirection() == UsbConstants.USB_DIR_IN)
+						UsbEndpoint endpoint = mUsbInterface.getEndpoint(epCursor);
+						int endpointDir = endpoint.getDirection();
+						
+						if(endpointDir == UsbConstants.USB_DIR_IN)
 						{
-							mUsbReadEndpoint = mUsbInterface.getEndpoint(epCursor);
+							mUsbReadEndpoint = endpoint;
+						}
+						else if(endpointDir == UsbConstants.USB_DIR_OUT)
+						{
+							mUsbWriteEndpoint = endpoint;
 						}
 					}
 				}
@@ -104,13 +110,16 @@ public class UsbSensorConnection
 				return(ErrorCode.ERR_FAILED);
 			}
 			
-			UsbSensorRunnable usbSensorRunnable = new UsbSensorRunnable(
-					mUsbDeviceConnection, mUsbReadEndpoint, mUsbSensorCallback_map);
+			mUsbSensorRunnable = new UsbSensorRunnable(mUsbDeviceConnection, mUsbReadEndpoint, 
+					mUsbWriteEndpoint, mUsbSensorCallback_map);
 			
-			mConnectionActive = true;
-			
-			mUsbSensorThread = new Thread(usbSensorRunnable);
+			mUsbSensorThread = new Thread(mUsbSensorRunnable);
 			mUsbSensorThread.start();
+			
+			while(!mUsbSensorRunnable.isConnectionActive())
+			{
+				// Poll until the thread is running
+			}
 		}
 		
 		return(ErrorCode.NO_ERROR);
@@ -123,10 +132,9 @@ public class UsbSensorConnection
 			return(ErrorCode.ERR_STATE);
 		}
 		
-		if(mConnectionActive)
+		if(mUsbSensorRunnable.isConnectionActive())
 		{
-			mConnectionActive = false;
-			
+			mUsbSensorRunnable.stop();
 			mUsbSensorThread.interrupt();
 			
 			try
@@ -143,6 +151,11 @@ public class UsbSensorConnection
 		}
 		
 		mUsbReadEndpoint = null;
+		mUsbWriteEndpoint = null;
+		
+		mUsbSensorRunnable = null;
+		mUsbSensorThread = null;
+		
 		return(ErrorCode.NO_ERROR);
 	}
 	
@@ -150,56 +163,5 @@ public class UsbSensorConnection
 	public void finalize()
 	{
 		stop();
-	}
-	
-	private class UsbSensorRunnable implements Runnable
-	{
-		private final UsbDeviceConnection mUsbDeviceConnection;
-		private final UsbEndpoint mUsbReadEndpoint;
-		private final Map<UsbSensor, UsbSensor.Callback> mCallback_map;
-		
-		UsbSensorRunnable(UsbDeviceConnection usbConnection, UsbEndpoint usbReadEndpoint, 
-				Map<UsbSensor, UsbSensor.Callback> callback_map)
-		{
-			mUsbDeviceConnection = usbConnection;
-			mUsbReadEndpoint = usbReadEndpoint;
-			mCallback_map = callback_map;
-		}
-		
-		@Override
-		public void run()
-		{
-			byte buffer[] = new byte[Constants.USB_READ_BUFFER_SIZE];
-			
-			while(mConnectionActive)
-			{
-				int length = mUsbDeviceConnection.bulkTransfer(mUsbReadEndpoint, buffer, buffer.length, 3000);
-				
-				if(length > 0)
-				{
-					String msg = new String();
-					
-					for(int i = 0; i < length; i++)
-					{
-						msg += Integer.toHexString(buffer[i]) + " ";
-					}
-					
-					Log.i("FOO", "DATA: " + msg);
-					
-					if(mCallback_map != null)
-					{
-						UsbSensor sensor;
-						Iterator<Entry<UsbSensor, UsbSensor.Callback>> sensor_iter = 
-								mCallback_map.entrySet().iterator();
-						
-						while(sensor_iter.hasNext())
-						{
-							sensor = sensor_iter.next().getKey();
-							sensor.notifySensorUpdate(buffer, length);
-						}
-					}
-				}
-			}
-		}
 	}
 }
