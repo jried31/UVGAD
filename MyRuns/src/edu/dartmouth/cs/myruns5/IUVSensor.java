@@ -12,9 +12,7 @@ public interface IUVSensor
 {
 	public interface Callback
 	{
-		public void onSensorUpdate(final byte data[], int length);
-		
-		public void onSensorUpdate(int updateUV);
+		public void onSensorUpdate(final int updateUV);
 		public void onSensorEjected();
 	}
 	

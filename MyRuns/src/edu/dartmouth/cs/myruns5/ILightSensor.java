@@ -13,9 +13,7 @@ public interface ILightSensor
 {
 	public interface Callback
 	{
-		public void onSensorUpdate(final byte data[], int length);
-		
-		public void onSensorUpdate(int updateLux);
+		public void onSensorUpdate(final int updateLux);
 		public void onSensorEjected();
 	}
 	

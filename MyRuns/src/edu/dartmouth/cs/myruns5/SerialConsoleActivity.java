@@ -26,31 +26,16 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		}
 		
 		@Override
-		public void onSensorUpdate(final byte data[], int length)
+		public void onSensorUpdate(final int updateLux)
 		{
-			try
+			mActivity.runOnUiThread(new Runnable()
 			{
-				final String msg = new String(data, 0, length, "UTF-8");
-				
-				mActivity.runOnUiThread(new Runnable()
+				@Override
+				public void run()
 				{
-					@Override
-					public void run()
-					{
-						mConsole_text.setText(msg);
-					}
-				});
-			}
-			catch(UnsupportedEncodingException e)
-			{
-				e.printStackTrace();
-			}
-		}
-		
-		@Override
-		public void onSensorUpdate(int updateLux)
-		{
-			// Toast.makeText(mContext, "Light sensor update!", Toast.LENGTH_SHORT).show();
+					mConsole_text.setText("LUX: " + updateLux);
+				}
+			});
 		}
 
 		@Override
@@ -80,31 +65,17 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		}
 		
 		@Override
-		public void onSensorUpdate(final byte data[], int length)
+		public void onSensorUpdate(final int updateUV)
 		{
-			try
+			
+			mActivity.runOnUiThread(new Runnable()
 			{
-				final String msg = new String(data, 0, length, "UTF-8");
-				
-				mActivity.runOnUiThread(new Runnable()
+				@Override
+				public void run()
 				{
-					@Override
-					public void run()
-					{
-						mClear_btn.setText(msg);
-					}
-				});
-			}
-			catch(UnsupportedEncodingException e)
-			{
-				e.printStackTrace();
-			}
-		}
-		
-		@Override
-		public void onSensorUpdate(int updateLux)
-		{
-			// Toast.makeText(mContext, "UV sensor update!", Toast.LENGTH_SHORT).show();
+					mClear_btn.setText("UV: " + updateUV);
+				}
+			});
 		}
 
 		@Override
@@ -162,6 +133,22 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		
 		mIsStreaming = false;
 		toggleStreaming_btn.setText(mResources.getString(R.string.startStreaming));
+	}
+	
+	@Override
+	public void onDestroy()
+	{
+		super.onDestroy();
+		
+		if(mLightSensor != null)
+		{
+			mLightSensor.unregister();
+		}
+		
+		if(mUVSensor != null)
+		{
+			mUVSensor.unregister();
+		}
 	}
 	
 	@Override

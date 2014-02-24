@@ -33,14 +33,14 @@ public abstract class UsbSensor extends Sensor
 	
 	public interface Callback
 	{
-		public abstract void onNewData(final byte data[], int length);
+		public abstract void onNewData(Pulse32 pkt);
 		public abstract void onDeviceEjected();
 	}
 	
 	private class CallbackEvent
 	{
 		private int what;
-		private Bundle data;
+		private Pulse32 data;
 		
 		CallbackEvent(int what)
 		{
@@ -48,7 +48,7 @@ public abstract class UsbSensor extends Sensor
 			this.data = null;
 		}
 		
-		CallbackEvent(int what, Bundle data)
+		CallbackEvent(int what, Pulse32 data)
 		{
 			this.what = what;
 			this.data = data;
@@ -61,8 +61,7 @@ public abstract class UsbSensor extends Sensor
 		private static final int EVENT_SENSOR_EJECT = 2;
 		private static final int EVENT_EXIT = 3;
 		
-		private static final String KEY_DATA_BUF = "dataBuffer";
-		private static final String KEY_DATA_LEN = "dataLen";
+		private static final String KEY_DATA_PKT = "pulsePkt";
 		
 		private CallbackEvent mCurrentEvent;
 		
@@ -78,23 +77,20 @@ public abstract class UsbSensor extends Sensor
 		
 		private void handleMessage()
 		{
-			Bundle data = mCurrentEvent.data;
+			Pulse32 pkt = mCurrentEvent.data;
 			
 			switch(mCurrentEvent.what)
 			{
 				case EVENT_SENSOR_UPDATE:
 				{
-					if(data == null)
+					if(pkt == null)
 					{
 						break;
 					}
 					
-					byte buffer[] = data.getByteArray(KEY_DATA_BUF);
-					int length = data.getInt(KEY_DATA_LEN);
-					
 					if(mCallback != null)
 					{
-						mCallback.onNewData(buffer, length);
+						mCallback.onNewData(pkt);
 					}
 					
 					break;
@@ -227,7 +223,7 @@ public abstract class UsbSensor extends Sensor
 		}
 	}
 	
-	public void notifySensorUpdate(final byte buffer[], int length)
+	public void notifySensorUpdate(Pulse32 pkt)
 	{	
 		if(mCallback_thread == null)
 		{
@@ -235,13 +231,8 @@ public abstract class UsbSensor extends Sensor
 			
 			return;
 		}
-
-		Bundle data = new Bundle();
 		
-		data.putByteArray(CallbackRunnable.KEY_DATA_BUF, buffer);
-		data.putInt(CallbackRunnable.KEY_DATA_LEN, length);
-		
-		mCallback_runnable.postEvent(new CallbackEvent(CallbackRunnable.EVENT_SENSOR_UPDATE, data));
+		mCallback_runnable.postEvent(new CallbackEvent(CallbackRunnable.EVENT_SENSOR_UPDATE, pkt));
 	}
 	
 	public void notifySensorEjected()

@@ -17,14 +17,23 @@ public class UsbLightSensor extends UsbSensor implements ILightSensor
 		}
 		
 		@Override
-		public void onNewData(final byte data[], int length)
+		public void onNewData(Pulse32 pkt)
 		{
-			// TODO: Parse the data from the Arduino and convert to integer
+			// Parse the data from the Arduino and convert to integer
 			
-			if(mCallback != null)
+			if(pkt != null && pkt.getLux() != null)
 			{
-				mCallback.onSensorUpdate(data, length);
-				// mCallback.onSensorUpdate(0);
+				Integer lux = pkt.getLux();
+				
+				if(lux != null)
+				{
+					mLight = lux;
+					
+					if(mCallback != null)
+					{
+						mCallback.onSensorUpdate(mLight);
+					}
+				}
 			}
 		}
 

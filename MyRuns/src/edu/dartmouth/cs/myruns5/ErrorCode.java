@@ -9,4 +9,5 @@ public class ErrorCode
 	public static final int ERR_RESOURCE = -4;
 	public static final int ERR_READ = -5;
 	public static final int ERR_WRITE = -6;
+	public static final int ERR_TIMEOUT = -7;
 }
