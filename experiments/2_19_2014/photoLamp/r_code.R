@@ -3,20 +3,42 @@ files<-c(
   '~/Desktop/experiments/2_19_2014/lightClassification1.txt',#1 rotate left, right around gravity, from close
   '~/Desktop/experiments/2_19_2014/lightClassification2.txt', #start close, move far, and back
   '~/Desktop/experiments/2_19_2014/lightClassification3.txt', #still, tilt up, down, back to middle
-  '~/Desktop/experiments/2_19_2014/lightClassification4.txt' #straight with up and down motion, backwards, and retur
-)
+  '~/Desktop/experiments/2_19_2014/lightClassification4.txt', #straight with up and down motion, backwards, and retur
 
-data<-read.table(files[4])
+  '~/Desktop/experiments/2_23_2014/still/lightClassificationbuilfingblocking.txt',#5
+  '~/Desktop/experiments/2_23_2014/still/lightClassificationshadeawayfacing.txt', 
+  '~/Desktop/experiments/2_23_2014/still/lightClassificationshadefacingsun.txt', 
+  '~/Desktop/experiments/2_23_2014/still/lightClassificationstillawayfacing.txt', 
+  '~/Desktop/experiments/2_23_2014/still/lightClassificationstillfacing.txt', #9
+  
+  '~/Desktop/experiments/2_23_2014/tilt/lightClassificationbuildingshadesunfacing.txt',#10
+  '~/Desktop/experiments/2_23_2014/tilt/lightClassificationbuilfingshadeawayfacing.txt', 
+  '~/Desktop/experiments/2_23_2014/tilt/lightClassificationshadetreeawayfacing.txt', 
+  '~/Desktop/experiments/2_23_2014/tilt/lightClassificationshadetreefacingsun.txt', 
+  '~/Desktop/experiments/2_23_2014/tilt/lightClassificationtiltawayfacing.txt', 
+  '~/Desktop/experiments/2_23_2014/tilt/lightClassificationtiltfacing.txt', #15
+  
+  '~/Desktop/experiments/2_23_2014/shake/lightClassificationshadebuildingawayfacing.txt',#16
+  '~/Desktop/experiments/2_23_2014/shake/lightClassificationshadebuildingfacingdun.txt', 
+  '~/Desktop/experiments/2_23_2014/shake/lightClassificationshadetreefacingsun.txt', 
+  '~/Desktop/experiments/2_23_2014/shake/lightClassificationsunawayfacing.txt', 
+  '~/Desktop/experiments/2_23_2014/shake/lightClassificationsunfacing.txt', 
+  '~/Desktop/experiments/2_23_2014/shake/lightClassificationtreeshadeawayfacing.txt' #21
+  )
+
+data<-read.table(files[6])
 #names(data)=c("Timestamp","Reading","Angle")#,"UV")
 names(data)=c("Timestamp","Reading","Angle1", "Angle2", "Angle3")#,"UV")
 
-par(mfrow=c(2,1))
-plot(data$Reading,type="l")
-plot(data$Angle1,type="l")
-par(mfrow=c(1,1))
-
 x <- data$Reading
 y = x[x > 0]
+par(mfrow=c(2,1))
+plot(y,type="l")
+plot(data$Angle3,type="l")
+par(mfrow=c(1,1))
+c(min(y),max(y),mean(y),median(y),var(y));
+
+
 
 val<-array()
 val2<-array()
