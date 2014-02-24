@@ -2,9 +2,13 @@ package edu.dartmouth.cs.myruns5;
 
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
+import android.util.Log;
 
 public class PulsePacket
 {
+	public static final byte TYPE_LIGHT = 1;
+	public static final byte TYPE_UV = 1 << 1;
+	
 	private static final int MAX_PAYLOAD_SIZE = 256;
 	private static final int HEADER_SIZE = 4;
 	
@@ -28,17 +32,17 @@ public class PulsePacket
 	
 	public int dispatch()
 	{
-		byte data[] = new byte[HEADER_SIZE + mSize];
+		byte data[] = new byte[HEADER_SIZE + getPayloadSize()];
 		
 		data[0] = mRequest;
 		data[1] = mType;
 		data[2] = mFlags;
 		data[3] = mSize;
 		
-		mPayload = new byte[mSize];
+		mPayload = new byte[getPayloadSize()];
 		
-		System.arraycopy(mPayload, 0, data, 4, mSize);
-		return(mUsbDeviceConnection.bulkTransfer(mUsbWriteEndpoint, data, HEADER_SIZE + mSize, 3000));
+		System.arraycopy(mPayload, 0, data, 4, getPayloadSize());
+		return(mUsbDeviceConnection.bulkTransfer(mUsbWriteEndpoint, data, HEADER_SIZE + getPayloadSize(), 3000));
 	}
 	
 	public int fetch()
@@ -67,12 +71,14 @@ public class PulsePacket
 		mFlags = header[2];
 		mSize = header[3];
 		
-		totalBytesRead = 0;
-		mPayload = new byte[mSize];
+		Log.e("FOO", "*mSIZE*: " + Byte.toString(mSize));
 		
-		while(totalBytesRead < mSize)
+		totalBytesRead = 0;/*
+		mPayload = new byte[getPayloadSize()];
+		
+		while(totalBytesRead < getPayloadSize())
 		{
-			bytesRead = mUsbDeviceConnection.bulkTransfer(mUsbReadEndpoint, buffer, mSize - totalBytesRead, 3000);
+			bytesRead = mUsbDeviceConnection.bulkTransfer(mUsbReadEndpoint, buffer, getPayloadSize() - totalBytesRead, 3000);
 			
 			if(bytesRead < 0)
 			{
@@ -82,7 +88,7 @@ public class PulsePacket
 			System.arraycopy(buffer, 0, mPayload, totalBytesRead, bytesRead);
 			totalBytesRead += bytesRead;
 		}
-		
+		*/
 		return(totalBytesRead + HEADER_SIZE);
 	}
 	
@@ -137,6 +143,6 @@ public class PulsePacket
 	
 	public int getPayloadSize()
 	{
-		return(mSize);
+		return(((int) mSize) & 0x000000FF);
 	}
 }

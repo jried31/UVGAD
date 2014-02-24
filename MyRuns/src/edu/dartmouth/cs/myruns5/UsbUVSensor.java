@@ -17,14 +17,23 @@ public class UsbUVSensor extends UsbSensor implements IUVSensor
 		}
 		
 		@Override
-		public void onNewData(final byte data[], int length)
+		public void onNewData(Pulse32 pkt)
 		{
-			// TODO: Parse the data from the Arduino and convert to integer
+			// Parse the data from the Arduino and convert to integer
 			
-			if(mCallback != null)
+			if(pkt != null && pkt.getLux() != null)
 			{
-				mCallback.onSensorUpdate(data, length);
-				// mCallback.onSensorUpdate(0);
+				Integer uv = pkt.getUV();
+				
+				if(uv != null)
+				{
+					mUV = uv;
+					
+					if(mCallback != null)
+					{
+						mCallback.onSensorUpdate(mUV);
+					}
+				}
 			}
 		}
 

@@ -66,51 +66,80 @@ public class UsbSensorConnection
 			return(ErrorCode.ERR_STATE);
 		}
 		
+		if(mUsbInterface != null)
+		{
+			// Release exclusive access to the USB interface
+			mUsbDeviceConnection.releaseInterface(mUsbInterface);
+			mUsbInterface = null;
+		}
+		
 		mUsbDeviceConnection = mUsbManager.openDevice(mUsbDevice);
 		
 		synchronized(mUsbDevice)
 		{
 			int ifaceCount = mUsbDevice.getInterfaceCount();
 			
-			for(int ifaceCursor = 0; ifaceCursor < ifaceCount; ifaceCursor++)
+			for(int ifaceCursor = 0; (ifaceCursor < ifaceCount) && (mUsbInterface == null); ifaceCursor++)
 			{
 				if(mUsbDevice.getInterface(ifaceCursor).getInterfaceClass() == UsbConstants.USB_CLASS_CDC_DATA)
 				{
 					mUsbInterface = mUsbDevice.getInterface(ifaceCursor);
-					int epCount = mUsbInterface.getEndpointCount();
 					
 					// Acquire exclusive access to the USB interface
 					mUsbDeviceConnection.claimInterface(mUsbInterface, true);
 					
 			        // Arduino USB serial converter setup
-					// TODO: Convert this to a class
+					// This is for CDC ACM USB devices...
 					mUsbDeviceConnection.controlTransfer(bmRequestType, B_REQUEST_SET_CONTROL_LINE_STATE, 0, 0, null, 0, 0);
-					mUsbDeviceConnection.controlTransfer(bmRequestType, B_REQUEST_SET_LINE_CODING, 0, 0, new byte[] { (byte) 0x80,
-			                0x25, 0x00, 0x00, 0x00, 0x00, 0x08 }, 7, 0);
+					mUsbDeviceConnection.controlTransfer(bmRequestType, B_REQUEST_SET_LINE_CODING, 0, 0, new byte[] { (byte) 0x00,
+			                (byte) 0xE1, 0x00, 0x00, 0x00, 0x00, 0x08 }, 7, 0);
+				}
+				else if(mUsbDevice.getInterface(ifaceCursor).getInterfaceClass() == UsbConstants.USB_CLASS_VENDOR_SPEC)
+				{
+					mUsbInterface = mUsbDevice.getInterface(ifaceCursor);
 					
-					for(int epCursor = 0; epCursor < epCount; epCursor++)
-					{
-						UsbEndpoint endpoint = mUsbInterface.getEndpoint(epCursor);
-						int endpointDir = endpoint.getDirection();
-						
-						if(endpointDir == UsbConstants.USB_DIR_IN)
-						{
-							mUsbReadEndpoint = endpoint;
-						}
-						else if(endpointDir == UsbConstants.USB_DIR_OUT)
-						{
-							mUsbWriteEndpoint = endpoint;
-						}
-					}
+					// Acquire exclusive access to the USB interface
+					mUsbDeviceConnection.claimInterface(mUsbInterface, true);
+					
+					mUsbDeviceConnection.controlTransfer(0x40, 0, 0, 0, null, 0, 0);// reset
+																	// mConnection.controlTransfer(0×40,
+                    												// 0, 1, 0, null, 0,
+                    												// 0);//clear Rx
+					mUsbDeviceConnection.controlTransfer(0x40, 0, 1, 0, null, 0, 0);// clear Rx
+					mUsbDeviceConnection.controlTransfer(0x40, 0, 2, 0, null, 0, 0);// clear Tx
+					mUsbDeviceConnection.controlTransfer(0x40, 0x02, 0x0000, 0, null, 0, 0);// flow
+					                            // control
+					                            // none
+					mUsbDeviceConnection.controlTransfer(0x40, 0x03, 0x0034, 0, null, 0, 0);// baudrate
+					                            // 57600
+					//mUsbDeviceConnection.controlTransfer(0x40, 0x03, 0x4138, 0, null, 0, 0);// baudrate
+					mUsbDeviceConnection.controlTransfer(0x40, 0x04, 0x0008, 0, null, 0, 0);
 				}
 			}
 			
-			if(mUsbReadEndpoint == null)
+			int epCount = mUsbInterface.getEndpointCount();
+			
+			for(int epCursor = 0; epCursor < epCount; epCursor++)
+			{
+				UsbEndpoint endpoint = mUsbInterface.getEndpoint(epCursor);
+				int endpointDir = endpoint.getDirection();
+				
+				if(endpointDir == UsbConstants.USB_DIR_IN)
+				{
+					mUsbReadEndpoint = endpoint;
+				}
+				else if(endpointDir == UsbConstants.USB_DIR_OUT)
+				{
+					mUsbWriteEndpoint = endpoint;
+				}
+			}
+			
+			if(mUsbReadEndpoint == null || mUsbWriteEndpoint == null)
 			{
 				return(ErrorCode.ERR_FAILED);
 			}
 			
-			mUsbSensorRunnable = new UsbSensorRunnable(mUsbDeviceConnection, mUsbReadEndpoint, 
+			mUsbSensorRunnable = new UsbSensorRunnable(mUsbDeviceConnection, mUsbDevice, mUsbReadEndpoint, 
 					mUsbWriteEndpoint, mUsbSensorCallback_map);
 			
 			mUsbSensorThread = new Thread(mUsbSensorRunnable);
@@ -148,6 +177,7 @@ public class UsbSensorConnection
 			
 			// Release exclusive access to the USB interface
 			mUsbDeviceConnection.releaseInterface(mUsbInterface);
+			mUsbInterface = null;
 		}
 		
 		mUsbReadEndpoint = null;
