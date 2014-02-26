@@ -43,7 +43,7 @@ public class AccelerometerSensorService extends Service implements SensorEventLi
 	
 	private File mWekaFeaturesFile;
 	private SensorManager mSensorManager;
-	private Sensor mAccelerometer;
+	private Sensor mAccelerometer,mGravity;
 	private int mServiceTaskType;
 	private String mLabel;
 	private Instances mDataset;
@@ -66,6 +66,7 @@ public class AccelerometerSensorService extends Service implements SensorEventLi
 		//Once Service starts, register the sensors
 		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+		mGravity = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
 		mSensorManager.registerListener(this, mAccelerometer,SensorManager.SENSOR_DELAY_FASTEST);
 
 		Bundle extras = intent.getExtras();
@@ -284,10 +285,11 @@ public class AccelerometerSensorService extends Service implements SensorEventLi
 
 	}
 
+	float []gravity;
 	public void onSensorChanged(SensorEvent event) {
 
-		if (event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
-
+		if (event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) 
+		{
 			//JERRID: Take the magnitude of the acceleration
 			double m = Math.sqrt(event.values[0] * event.values[0] + event.values[1] * event.values[1] + event.values[2] * event.values[2]);
 
@@ -311,6 +313,8 @@ public class AccelerometerSensorService extends Service implements SensorEventLi
 				mAccelerometerMagnitudeBuffer = newBuf;
 				mAccelerometerMagnitudeBuffer.add(m);
 			}
+		}else if (event.sensor.getType() == Sensor.TYPE_GRAVITY) {
+			gravity = event.values;
 		}
 	}
 

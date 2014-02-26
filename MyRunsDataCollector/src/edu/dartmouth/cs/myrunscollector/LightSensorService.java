@@ -2,6 +2,7 @@ package edu.dartmouth.cs.myrunscollector;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -41,21 +42,21 @@ public class LightSensorService extends Service implements SensorEventListener {
 	private File mWekaFeaturesFile;
 	private SensorManager mSensorManager;
 	private Sensor mLightSensor;
+	private Sensor mGravitySensor;
+	private Sensor mMagneticSensor;
 	private int mServiceTaskType;
 	private String mLabel;
 	private Instances mDataset;
 	private Attribute mClassNameForData,meanAttribute,stdAttribute,maxAttribute,minAttribute,meanAbsDeviationAttribute;
 	private SensorDataProcessorAsyncTask mSensorDataProcessingTask;
 
-	private static ArrayBlockingQueue<Double> mLightIntensityReadingBuffer;
+	private static ArrayBlockingQueue<LumenDataPoint> mLightIntensityReadingBuffer;
 	public static final DecimalFormat mdecimalformat = new DecimalFormat("#.##");
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
-
-		mLightIntensityReadingBuffer = new ArrayBlockingQueue<Double>(
-				Globals.LIGHT_BUFFER_CAPACITY);
+		mLightIntensityReadingBuffer = new ArrayBlockingQueue<LumenDataPoint>( Globals.LIGHT_BUFFER_CAPACITY);
 	}
 
 	@Override
@@ -64,7 +65,11 @@ public class LightSensorService extends Service implements SensorEventListener {
 		//Once Service starts, register the sensors
 		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+		mGravitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+		mMagneticSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 		mSensorManager.registerListener(this, mLightSensor,SensorManager.SENSOR_DELAY_FASTEST);
+    	mSensorManager.registerListener(this, mGravitySensor, SensorManager.SENSOR_DELAY_FASTEST);
+    	mSensorManager.registerListener(this, mMagneticSensor, SensorManager.SENSOR_DELAY_FASTEST);
 
 		Bundle extras = intent.getExtras();
 		mLabel = extras.getString(Globals.CLASS_LABEL_KEY);
@@ -185,7 +190,11 @@ public class LightSensorService extends Service implements SensorEventListener {
 				    }
 					
 					// JERRID: Pops the "head" element from the Blocking Queue one at a time
-					double intensityReading = mLightIntensityReadingBuffer.take().doubleValue();
+					LumenDataPoint reading = mLightIntensityReadingBuffer.take();
+					
+					double intensityReading = reading.getIntensity();
+						
+					
 					lightIntensityDataBlock[blockSize++] = intensityReading;
 					
 					//Calculate Mean Intensity Value
@@ -316,36 +325,72 @@ public class LightSensorService extends Service implements SensorEventListener {
 
 	}
 
+	float mGravity[]=null;
+	float[] mGeomagnetic=null;
+	float []pitchReading={0,0,0};;
 	public void onSensorChanged(SensorEvent event) {
 
 		if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
-
 			//JERRID: Light Sensor Reading
-			double m = event.values[0];
+			double lightReading = event.values[0];
+			if (mGravity != null && mGeomagnetic != null && lightReading > 0)
+	          {
+	              float R[] = new float[9];
+	              float I[] = new float[9];
+	              boolean success = android.hardware.SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+	              if (success) 
+	              {
+	                  float orientation[] = new float[3];
+	                  android.hardware.SensorManager.getOrientation(R, orientation); 
+		              pitchReading[0] = Math.round(Math.abs((orientation[0]*180)/Math.PI));
+		              pitchReading[1] = Math.round(Math.abs((orientation[1]*180)/Math.PI));
+		              pitchReading[2] = Math.round(Math.abs((orientation[2]*180)/Math.PI));
+		             
 
-			// Inserts the specified element into this queue if it is possible
-			// to do so immediately without violating capacity restrictions,
-			// returning true upon success and throwing an IllegalStateException
-			// if no space is currently available. When using a
-			// capacity-restricted queue, it is generally preferable to use
-			// offer.
-
-			try {
-				
-				//JERRID: Add the magnitude reading to the buffer
-				mLightIntensityReadingBuffer.add(m);
-			} catch (IllegalStateException e) {
-
-				// Exception happens when reach the capacity.
-				// Doubling the buffer. ListBlockingQueue has no such issue,
-				// But generally has worse performance
-				ArrayBlockingQueue<Double> newBuf = new ArrayBlockingQueue<Double>( mLightIntensityReadingBuffer.size() * 2);
-
-				mLightIntensityReadingBuffer.drainTo(newBuf);
-				mLightIntensityReadingBuffer = newBuf;
-				mLightIntensityReadingBuffer.add(m);
-			}
-		}
+					// Inserts the specified element into this queue if it is possible
+					// to do so immediately without violating capacity restrictions,
+					// returning true upon success and throwing an IllegalStateException
+					// if no space is currently available. When using a
+					// capacity-restricted queue, it is generally preferable to use
+					// offer.
+					try {
+						//JERRID: Add the magnitude reading to the buffer
+						mLightIntensityReadingBuffer.add(new LumenDataPoint(System.currentTimeMillis(),pitchReading,lightReading));
+						
+						File dir = new File (android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/accelerometer");
+						dir.mkdirs();
+						FileWriter sunClassificationFile = new FileWriter(dir.getAbsolutePath()+"/"+Globals.LIGHT_INTENSITY_FILE_NAME, true);                       
+						try {                  
+							String out = (System.currentTimeMillis() + "\t" + event.values[0] + "\t" + pitchReading[0] +  "\t" + pitchReading[1] + "\t" + pitchReading[2] +"\n");         
+							sunClassificationFile.append(out);           
+						} catch (IOException ex){
+							ex.printStackTrace();
+						}
+						finally{
+							sunClassificationFile.flush();
+							sunClassificationFile.close();
+						}
+					} catch (IllegalStateException e) {
+						
+						// Exception happens when reach the capacity.
+						// Doubling the buffer. ListBlockingQueue has no such issue,
+						// But generally has worse performance
+						ArrayBlockingQueue<LumenDataPoint> newBuf = new ArrayBlockingQueue<LumenDataPoint>(mLightIntensityReadingBuffer.size() * 2);
+		
+						mLightIntensityReadingBuffer.drainTo(newBuf);
+						mLightIntensityReadingBuffer = newBuf;
+						mLightIntensityReadingBuffer.add(new LumenDataPoint(System.currentTimeMillis(),pitchReading,lightReading));
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+	              }
+	          }
+		}else if(event.sensor.getType() == android.hardware.Sensor.TYPE_GRAVITY){
+			mGravity = event.values;
+	    }else if (event.sensor.getType() == android.hardware.Sensor.TYPE_MAGNETIC_FIELD){
+           mGeomagnetic = event.values;
+	    }
 	}
 
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
