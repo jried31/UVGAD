@@ -47,7 +47,13 @@ public class LightSensorService extends Service implements SensorEventListener {
 	private int mServiceTaskType;
 	private String mLabel;
 	private Instances mDataset;
-	private Attribute mClassNameForData,meanAttribute,stdAttribute,maxAttribute,minAttribute,meanAbsDeviationAttribute;
+	private Attribute mClassNameForData,
+	meanAttribute,
+	//stdAttribute,
+	maxAttribute;
+	//minAttribute,
+	//meanAbsDeviationAttribute;
+	
 	private SensorDataProcessorAsyncTask mSensorDataProcessingTask;
 
 	private static ArrayBlockingQueue<LumenDataPoint> mLightIntensityReadingBuffer;
@@ -93,17 +99,17 @@ public class LightSensorService extends Service implements SensorEventListener {
 		}*/
 		
 		// Adding the min,max,mean,std,mean_absolute_deviation feature column in the file (since it's the last column
-		minAttribute = new Attribute(Globals.FEAT_MIN_LABEL);
+		//minAttribute = new Attribute(Globals.FEAT_MIN_LABEL);
 		maxAttribute = new Attribute(Globals.FEAT_MAX_LABEL);
 		meanAttribute = new Attribute(Globals.FEAT_MEAN_LABEL);
-		stdAttribute = new Attribute(Globals.FEAT_STD_LABEL);
-		meanAbsDeviationAttribute = new Attribute(Globals.FEAT_MEAN_ABSOLUTE_DEVIATION_LABEL);
+		//stdAttribute = new Attribute(Globals.FEAT_STD_LABEL);
+		//meanAbsDeviationAttribute = new Attribute(Globals.FEAT_MEAN_ABSOLUTE_DEVIATION_LABEL);
 		
-		attributeList.add(minAttribute);
+		//attributeList.add(minAttribute);
 		attributeList.add(maxAttribute);
 		attributeList.add(meanAttribute);
-		attributeList.add(stdAttribute);
-		attributeList.add(meanAbsDeviationAttribute);
+		//attributeList.add(stdAttribute);
+		//attributeList.add(meanAbsDeviationAttribute);
 
 		
 		// Declare a nominal attribute along with its candidate values
@@ -229,11 +235,11 @@ public class LightSensorService extends Service implements SensorEventListener {
 						stdLightMagnitude = Math.sqrt(varianceIntensity);
 						meanAbsoluteDeveationLightIntensity = meanAbsoluteDeveationLightIntensity / Globals.LIGHT_BLOCK_CAPACITY;
 					
-						featureInstance.setValue(minAttribute,minLightMagnitude);
+						//featureInstance.setValue(minAttribute,minLightMagnitude);
 						featureInstance.setValue(maxAttribute,maxLightMagnitude);
 						featureInstance.setValue(meanAttribute,meanLightIntensity);
-						featureInstance.setValue(stdAttribute,stdLightMagnitude);
-						featureInstance.setValue(meanAbsDeviationAttribute,meanAbsoluteDeveationLightIntensity);
+						//featureInstance.setValue(stdAttribute,stdLightMagnitude);
+						//featureInstance.setValue(meanAbsDeviationAttribute,meanAbsoluteDeveationLightIntensity);
 						featureInstance.setValue(mClassNameForData, mLabel);
 						mDataset.add(featureInstance);
 						
