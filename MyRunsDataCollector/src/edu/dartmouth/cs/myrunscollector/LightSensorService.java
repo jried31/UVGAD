@@ -37,7 +37,7 @@ import android.widget.Toast;
 
 public class LightSensorService extends Service implements SensorEventListener {
 
-	private static final int mFeatLen = Globals.FEAT_NUMBER_FEATURES ;
+	private static final int mFeatLen = Globals.FEAT_NUMBER_FEATURES;
 	
 	private File mWekaFeaturesFile;
 	private SensorManager mSensorManager;
