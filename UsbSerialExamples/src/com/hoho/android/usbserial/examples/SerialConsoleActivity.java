@@ -118,7 +118,7 @@ public class SerialConsoleActivity extends Activity {
         } else {
             try {
                 sDriver.open();
-                sDriver.setParameters(115200, 8, UsbSerialDriver.STOPBITS_1, UsbSerialDriver.PARITY_NONE);
+                sDriver.setParameters(57600, 8, UsbSerialDriver.STOPBITS_1, UsbSerialDriver.PARITY_NONE);
             } catch (IOException e) {
                 Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
                 mTitleTextView.setText("Error opening device: " + e.getMessage());

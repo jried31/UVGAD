@@ -5,7 +5,7 @@ import android.hardware.usb.UsbDevice;
 
 public class UsbUVSensor extends UsbSensor implements IUVSensor
 {
-	private static final String ACTION_SENSOR_UPDATE = "edu.dartmouth.cs.myruns5.UsbUVSensor.action.SENSOR_UPDATE";
+	protected int mUV;
 	
 	private class UsbUVSensorCallback implements UsbSensor.Callback
 	{
@@ -21,18 +21,16 @@ public class UsbUVSensor extends UsbSensor implements IUVSensor
 		{
 			// Parse the data from the Arduino and convert to integer
 			
-			if(pkt != null && pkt.getLux() != null)
+			if(pkt != null)
 			{
-				Integer uv = pkt.getUV();
-				
-				if(uv != null)
+				if(mPulseId >= 0 && mPulseId <= Pulse32.PKT_MAX_PAYLOAD_ENTRIES)
 				{
-					mUV = uv;
-					
-					if(mCallback != null)
-					{
-						mCallback.onSensorUpdate(mUV);
-					}
+					mUV = pkt.getField(mPulseId);
+				}
+				
+				if(mCallback != null)
+				{
+					mCallback.onSensorUpdate(mUV);
 				}
 			}
 		}
@@ -47,28 +45,49 @@ public class UsbUVSensor extends UsbSensor implements IUVSensor
 		}
 	}
 	
-	private int mUV;
-	
-	public UsbUVSensor(Context context, UsbSensorManager usbSensorManager, UsbDevice usbDevice)
+	public UsbUVSensor(Context context, UsbSensorManager usbSensorManager, UsbDevice usbDevice, int protocol)
 	{
-		super(context, usbSensorManager, usbDevice);
+		super(context, usbSensorManager, usbDevice, protocol);
+		
+		mPulseId = -1;
+	}
+	
+	@Override
+	public UsbSensor.Callback baseCallback()
+	{
+		return(new UsbUVSensorCallback(null));
 	}
 
 	@Override
 	public int getUV()
 	{
+		if(!mIsInitialized)
+		{
+			return(0);
+		}
+		
 		return(mUV);
 	}
 	
 	@Override
 	public int register(IUVSensor.Callback callback)
 	{
+		if(!mIsInitialized)
+		{
+			return(ErrorCode.ERR_STATE);
+		}
+		
 		return(mUsbSensorManager.registerSensor(this, new UsbUVSensorCallback(callback)));
 	}
 	
 	@Override
 	public int unregister()
 	{
+		if(!mIsInitialized)
+		{
+			return(ErrorCode.ERR_STATE);
+		}
+		
 		return(mUsbSensorManager.unregisterSensor(this));
 	}
 	

@@ -1,14 +1,7 @@
 package edu.dartmouth.cs.myruns5;
 
-import java.util.concurrent.locks.Lock;
-
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.util.Log;
 
 /**
  * Base class for all USB-based sensor hardware.
@@ -18,16 +11,19 @@ import android.util.Log;
  */
 public abstract class UsbSensor extends Sensor
 {
-	private static final String TAG = UsbSensor.Callback.class.getName();
-	
 	protected final Context mContext;
 	
 	protected final UsbSensorManager mUsbSensorManager;
 	protected final UsbDevice mUsbDevice;
+	protected final SerialUsbDriver mSerialDriver;
 	
 	protected Callback mCallback;
+	protected Callback mBaseCallback;
 	protected CallbackRunnable mCallback_runnable;
 	protected Thread mCallback_thread;
+	
+	protected int mPulseId;
+	protected boolean mIsInitialized;
 	
 	private CallbackEvent mPendingEvent;
 	
@@ -61,18 +57,22 @@ public abstract class UsbSensor extends Sensor
 		private static final int EVENT_SENSOR_EJECT = 2;
 		private static final int EVENT_EXIT = 3;
 		
-		private static final String KEY_DATA_PKT = "pulsePkt";
-		
 		private CallbackEvent mCurrentEvent;
 		
+		private volatile Callback mRunnableCallback;
 		private volatile boolean mIsActive;
 		
-		CallbackRunnable()
+		private volatile boolean mResult;
+		
+		CallbackRunnable(Callback runnableCallback)
 		{
-			mIsActive = true;
+			mRunnableCallback = runnableCallback;
 			
 			mCurrentEvent = null;
 			mPendingEvent = null;
+			
+			mIsActive = false;
+			mResult = false;
 		}
 		
 		private void handleMessage()
@@ -88,21 +88,22 @@ public abstract class UsbSensor extends Sensor
 						break;
 					}
 					
-					if(mCallback != null)
+					if(mRunnableCallback != null)
 					{
-						mCallback.onNewData(pkt);
+						mRunnableCallback.onNewData(pkt);
 					}
 					
 					break;
 				}
 				case EVENT_SENSOR_EJECT:
 				{
-					if(mCallback != null)
+					if(mRunnableCallback != null)
 					{
-						mCallback.onDeviceEjected();
+						mResult = false;
+						mRunnableCallback.onDeviceEjected();
+						mResult = true;
 					}
-
-					mIsActive = false;
+					
 					break;
 				}
 				case EVENT_EXIT:
@@ -116,6 +117,8 @@ public abstract class UsbSensor extends Sensor
 		@Override
 		public void run()
 		{
+			mIsActive = true;
+			
 			synchronized(this)
 			{
 				while(mIsActive == true)
@@ -169,12 +172,83 @@ public abstract class UsbSensor extends Sensor
 		}
 	}
 	
-	public UsbSensor(Context context, UsbSensorManager usbSensorManager, UsbDevice usbDevice)
+	public UsbSensor(Context context, UsbSensorManager usbSensorManager, UsbDevice usbDevice, int protocol)
 	{
 		mContext = context;
 		
 		mUsbSensorManager = usbSensorManager;
 		mUsbDevice = usbDevice;
+		
+		mPulseId = 0;
+		mIsInitialized = false;
+		
+		switch(protocol)
+		{
+			case Sensor.PROTOCOL_FTDI:
+			{
+				// Load the FTDI serial USB driver
+				
+				mSerialDriver = new FTDISerialUsbDriver(usbSensorManager.getUsbManager(), usbDevice);
+				break;
+			}
+			case Sensor.PROTOCOL_ACM:
+			default:
+			{
+				// Load the ACM serial USB driver (default)
+				
+				mSerialDriver = new ACMSerialUsbDriver(usbSensorManager.getUsbManager(), usbDevice);
+			}
+		}
+	}
+	
+	protected abstract Callback baseCallback();
+	
+	public synchronized Callback getBaseCallback()
+	{
+		if(mBaseCallback == null)
+		{
+			mBaseCallback = baseCallback();
+		}
+		
+		return(mBaseCallback);
+	}
+	
+	public int init(int pulseId)
+	{
+		if(pulseId < 0 || pulseId > Pulse32.PKT_MAX_PAYLOAD_ENTRIES)
+		{
+			return(ErrorCode.ERR_PARAMS);
+		}
+		else if(mIsInitialized)
+		{
+			return(ErrorCode.ERR_STATE);
+		}
+		
+		synchronized(this)
+		{
+			mPulseId = pulseId;
+			mIsInitialized = true;
+		}
+		
+		return(mUsbSensorManager.initSensor(this));
+	}
+	
+	public int uninit()
+	{
+		int ret = mUsbSensorManager.uninitSensor(this);
+		
+		if(ret != ErrorCode.NO_ERROR)
+		{
+			return(ret);
+		}
+		
+		synchronized(this)
+		{
+			mPulseId = 0;
+			mIsInitialized = false;
+		}
+		
+		return(0);
 	}
 	
 	public UsbDevice getDevice()
@@ -182,16 +256,37 @@ public abstract class UsbSensor extends Sensor
 		return(mUsbDevice);
 	}
 	
+	public SerialUsbDriver getSerialDriver()
+	{
+		return(mSerialDriver);
+	}
+	
+	public synchronized void setRunnableCallback(Callback callback)
+	{
+		if(mCallback_runnable != null)
+		{
+			mCallback_runnable.mRunnableCallback = callback;
+		}
+	}
+	
+	public Callback getRunnableCallback()
+	{
+		if(mCallback_runnable != null)
+		{
+			return(mCallback_runnable.mRunnableCallback);
+		}
+		
+		return(null);
+	}
+	
 	public synchronized void startCallbackThread(Callback callback)
 	{
-		if(mCallback_thread != null)
+		if(!mIsInitialized || mCallback_thread != null)
 		{
 			return;
 		}
 		
-		mCallback = callback;
-		
-		mCallback_runnable = new CallbackRunnable();
+		mCallback_runnable = new CallbackRunnable(callback);
 		mCallback_thread = new Thread(mCallback_runnable);
 		mCallback_thread.start();
 		
@@ -203,7 +298,7 @@ public abstract class UsbSensor extends Sensor
 	
 	public synchronized void stopCallbackThread()
 	{
-		if(mCallback_thread == null)
+		if(!mIsInitialized || mCallback_thread == null)
 		{
 			return;
 		}
@@ -214,8 +309,8 @@ public abstract class UsbSensor extends Sensor
 		{
 			mCallback_thread.join();
 			
+			mCallback_runnable = null;
 			mCallback_thread = null;
-			mCallback = null;
 		}
 		catch(InterruptedException e)
 		{
@@ -243,13 +338,34 @@ public abstract class UsbSensor extends Sensor
 			
 			return;
 		}
-		
+
+		mCallback_runnable.mResult = false;
 		mCallback_runnable.postEvent(new CallbackEvent(CallbackRunnable.EVENT_SENSOR_EJECT));
+		
+		while(!mCallback_runnable.mResult)
+		{
+			// Busy wait until the ejection event has been taken care of
+		}
 	}
 	
 	@Override
 	public void finalize()
 	{
-		stopCallbackThread();
+		uninit();
+	}
+	
+	public boolean isInitialized()
+	{
+		return(mIsInitialized);
+	}
+	
+	public boolean isCallbackThreadRunning()
+	{
+		if(mCallback_runnable != null && mCallback_runnable.mIsActive)
+		{
+			return(true);
+		}
+		
+		return(false);
 	}
 }

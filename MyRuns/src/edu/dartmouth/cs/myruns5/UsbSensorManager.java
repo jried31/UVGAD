@@ -4,17 +4,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 import android.content.Context;
 import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.util.Log;
-import android.widget.Toast;
 
 public class UsbSensorManager
 {
@@ -32,122 +28,123 @@ public class UsbSensorManager
 		private final UsbDevice mUsbDevice;
 		private final ConcurrentHashMap<UsbSensor, UsbSensor.Callback> mCallback_map;
 		
-		private UsbSensorConnection mUsbSensorConnection;
+		private volatile UsbSensorConnection mUsbSensorConnection;
+		private SerialUsbDriver mSerialDriver;
 		
 		private UsbSensorTask(UsbDevice usbDevice)
 		{
 			mUsbDevice = usbDevice;
+			
 			mCallback_map = new ConcurrentHashMap<UsbSensor, UsbSensor.Callback>();
 		}
 		
-		private synchronized int register(UsbSensor sensor, UsbSensor.Callback callback)
-		{	
+		private int register(UsbSensor sensor, UsbSensor.Callback callback)
+		{
 			if(sensor == null || callback == null || sensor.getDevice() != mUsbDevice)
 			{
 				return(ErrorCode.ERR_PARAMS);
 			}
-			
-			if(mCallback_map.size() <= 0)
+			else if(!sensor.isInitialized() || mUsbSensorConnection == null || mCallback_map == null)
 			{
-				// No sensors have been registered to this USB device.
-				// Add the sensor's callback to the task's callback map and start the sensor.
-				
-				mCallback_map.put(sensor, callback);
-				
-				if(startTask() != ErrorCode.NO_ERROR)
-				{
-					return(ErrorCode.ERR_FAILED);
-				}
-			}
-			else
-			{	
-				if(mCallback_map.containsKey(sensor))
-				{
-					// @ERROR: The same sensor has already been registered.
-					
-					return(ErrorCode.ERR_STATE);
-				}
-				
-				// A different sensor has already been registered to this USB device.
-				// Add the sensor's callback to the task's callback map and return success.
-				
-				mCallback_map.put(sensor, callback);
+				return(ErrorCode.ERR_STATE);
 			}
 			
-			sensor.startCallbackThread(callback);
+			synchronized(mCallback_map)
+			{
+				synchronized(sensor)
+				{
+					if(mCallback_map.containsKey(sensor) && 
+					   mCallback_map.get(sensor).equals(callback))
+					{
+						return(ErrorCode.ERR_STATE);
+					}
+					
+					mCallback_map.put(sensor, callback);
+					
+					if(!sensor.isCallbackThreadRunning())
+					{
+						sensor.startCallbackThread(callback);
+					}
+					else
+					{
+						sensor.setRunnableCallback(callback);
+					}
+				}
+			}
+			
 			return(ErrorCode.NO_ERROR);
 		}
 		
-		private synchronized int unregister(UsbSensor sensor)
+		private int unregister(UsbSensor sensor)
 		{
 			if(sensor == null || sensor.getDevice() != mUsbDevice)
 			{
 				return(ErrorCode.ERR_PARAMS);
 			}
-			else if(mCallback_map.size() <= 0 || !mCallback_map.containsKey(sensor))
+			else if(!sensor.isInitialized() || mUsbSensorConnection == null || mCallback_map == null)
 			{
-				// @ERROR: No callbacks are associated with the sensor task or the sensor 
-				//         has not been registered with this task.
-				
 				return(ErrorCode.ERR_STATE);
 			}
 			
-			mCallback_map.remove(sensor);
-			sensor.stopCallbackThread();
-			
-			if(mCallback_map.size() == 0)
+			synchronized(mCallback_map)
 			{
-				// The last sensor was unregistered with the sensor task so terminate the 
-				// task.
-				
-				if(stopTask() != ErrorCode.NO_ERROR)
+				synchronized(sensor)
 				{
-					return(ErrorCode.ERR_FAILED);
+					if(!mCallback_map.containsKey(sensor))
+					{
+						return(ErrorCode.ERR_STATE);
+					}
+					
+					mCallback_map.put(sensor, sensor.getBaseCallback());
+					sensor.setRunnableCallback(sensor.getBaseCallback());
 				}
 			}
 			
 			return(ErrorCode.NO_ERROR);
 		}
 		
-		private void onDeviceEjected()
+		private synchronized void onDeviceEjected()
 		{
-			if(stopTask() != ErrorCode.NO_ERROR)
+			if(stopTask(false) != ErrorCode.NO_ERROR)
 			{
 				return;
 			}
 			
+			UsbSensor sensor;
 			Iterator<Entry<UsbSensor, UsbSensor.Callback>> sensorCallback_iter = 
 					mCallback_map.entrySet().iterator();
 			
 			while(sensorCallback_iter.hasNext())
 			{
-				sensorCallback_iter.next().getKey().notifySensorEjected();
+				sensor = sensorCallback_iter.next().getKey();
+				
+				sensor.notifySensorEjected();
+				sensor.uninit();
 			}
 			
 			mCallback_map.clear();
 		}
 		
-		private void unregisterAll()
+		private synchronized int startTask(SerialUsbDriver serialDriver)
 		{
-			stopTask();
-			mCallback_map.clear();
-		}
-		
-		private int startTask()
-		{
-			if(mUsbSensorConnection != null)
+			if(serialDriver == null)
+			{
+				return(ErrorCode.ERR_PARAMS);
+			}
+			else if(mUsbSensorConnection != null)
 			{
 				return(ErrorCode.ERR_STATE);
 			}
 			
-			mUsbSensorConnection = new UsbSensorConnection(mUsbManager, mUsbDevice, 
-					mCallback_map);
+			mSerialDriver = serialDriver;
+			
+			mUsbSensorConnection = new UsbSensorConnection(UsbSensorManager.this, mSerialDriver, mCallback_map);
 			mUsbSensorConnection.start();
 			
 			return(ErrorCode.NO_ERROR);
 		}
 		
-		private int stopTask()
+		private int stopTask(boolean clearCallbackMap)
 		{
 			if(mUsbSensorConnection == null)
 			{
@@ -155,15 +152,27 @@ public class UsbSensorManager
 			}
 			
 			mUsbSensorConnection.stop();
+			
 			mUsbSensorConnection = null;
+			mSerialDriver = null;
+			
+			if(clearCallbackMap)
+			{
+				mCallback_map.clear();
+			}
 			
 			return(ErrorCode.NO_ERROR);
+		}
+		
+		private boolean isTaskRunning()
+		{
+			return(mUsbSensorConnection != null ? true : false);
 		}
 		
 		@Override
 		public void finalize()
 		{
-			unregisterAll();
+			onDeviceEjected();
 		}
 	}
 	
@@ -221,6 +230,33 @@ public class UsbSensorManager
 		return(sensorList);
 	}
 	
+	public List<ILightSensor> getLightSensorList(int vendorId, int productId)
+	{
+		ArrayList<ILightSensor> sensorList = new ArrayList<ILightSensor>();
+		Iterator<Entry<UsbDevice, UsbSensorTask>> deviceIterator = 
+				mUsbSensorTask_map.entrySet().iterator();
+		
+		UsbDevice device;
+		UsbLightSensor sensor;
+		
+		while(deviceIterator.hasNext())
+		{
+			device = deviceIterator.next().getKey();
+			
+			if(device.getVendorId() == vendorId && device.getProductId() == productId)
+			{
+				sensor = (UsbLightSensor) mUsbSensorAssistant.getLightSensor(device);
+				
+				if(sensor != null)
+				{
+					sensorList.add(sensor);
+				}
+			}
+		}
+		
+		return(sensorList);
+	}
+	
 	public List<IUVSensor> getUVSensorList()
 	{
 		ArrayList<IUVSensor> sensorList = new ArrayList<IUVSensor>();
@@ -244,21 +280,105 @@ public class UsbSensorManager
 		return(sensorList);
 	}
 	
+	public List<IUVSensor> getUVSensorList(int vendorId, int productId)
+	{
+		ArrayList<IUVSensor> sensorList = new ArrayList<IUVSensor>();
+		Iterator<Entry<UsbDevice, UsbSensorTask>> deviceIterator = 
+				mUsbSensorTask_map.entrySet().iterator();
+		
+		UsbDevice device;
+		UsbUVSensor sensor;
+		
+		while(deviceIterator.hasNext())
+		{
+			device = deviceIterator.next().getKey();
+			
+			if(device.getVendorId() == vendorId && device.getProductId() == productId)
+			{
+				sensor = (UsbUVSensor) mUsbSensorAssistant.getUVSensor(device);
+				
+				if(sensor != null)
+				{
+					sensorList.add(sensor);
+				}
+			}
+		}
+		
+		return(sensorList);
+	}
+	
+	public synchronized int initSensor(UsbSensor sensor)
+	{
+		if(sensor == null)
+		{
+			return(ErrorCode.ERR_PARAMS);
+		}
+		else if(!sensor.isInitialized())
+		{
+			return(ErrorCode.ERR_STATE);
+		}
+		
+		UsbSensorTask sensorTask = mUsbSensorTask_map.get(sensor.getDevice());
+		
+		if(!sensorTask.isTaskRunning())
+		{
+			if(sensorTask.startTask(sensor.getSerialDriver()) != ErrorCode.NO_ERROR)
+			{
+				return(ErrorCode.ERR_FAILED);
+			}
+		}
+		
+		return(mUsbSensorTask_map.get(sensor.getDevice()).register(sensor, sensor.getBaseCallback()));
+	}
+	
+	public synchronized int uninitSensor(UsbSensor sensor)
+	{
+		if(sensor == null)
+		{
+			return(ErrorCode.ERR_PARAMS);
+		}
+		else if(!sensor.isInitialized())
+		{
+			return(ErrorCode.ERR_STATE);
+		}
+		
+		UsbSensorTask sensorTask = mUsbSensorTask_map.get(sensor.getDevice());
+		
+		if(sensorTask != null)
+		{
+			synchronized(sensorTask.mCallback_map)
+			{
+				sensorTask.mCallback_map.remove(sensor);
+			}
+			
+			if(sensorTask.mCallback_map.isEmpty())
+			{
+				return(mUsbSensorTask_map.get(sensor.getDevice()).stopTask(true));
+			}
+		}
+
+		return(ErrorCode.NO_ERROR);
+	}
+	
 	public synchronized int registerSensor(UsbSensor sensor, UsbSensor.Callback callback)
 	{
 		if(sensor == null)
 		{
 			return(ErrorCode.ERR_PARAMS);
 		}
+		else if(!sensor.isInitialized())
+		{
+			return(ErrorCode.ERR_STATE);
+		}
 		
-		UsbDevice device = sensor.getDevice();
+		SerialUsbDriver serialDriver = sensor.getSerialDriver();
 		
-		if(device == null)
+		if(serialDriver == null)
 		{
 			return(ErrorCode.ERR_RESOURCE);
 		}
 		
-		UsbSensorTask sensorTask = mUsbSensorTask_map.get(device);
+		UsbSensorTask sensorTask = mUsbSensorTask_map.get(serialDriver.getDevice());
 		
 		if(sensorTask == null)
 		{
@@ -274,15 +394,12 @@ public class UsbSensorManager
 		{
 			return(ErrorCode.ERR_PARAMS);
 		}
-		
-		UsbDevice device = sensor.getDevice();
-		
-		if(device == null)
+		else if(!sensor.isInitialized())
 		{
-			return(ErrorCode.ERR_RESOURCE);
+			return(ErrorCode.ERR_STATE);
 		}
 		
-		UsbSensorTask sensorTask = mUsbSensorTask_map.get(device);
+		UsbSensorTask sensorTask = mUsbSensorTask_map.get(sensor.getDevice());
 		
 		if(sensorTask == null)
 		{
@@ -336,14 +453,24 @@ public class UsbSensorManager
 		return(mUsbSensorAssistant.getUVSensor(device));
 	}
 	
-	public boolean isValidSensor(int vendorId, int productId)
+	public int getDeviceBaudRate(UsbDevice device)
 	{
-		return(mUsbSensorAssistant.isValidSensor(vendorId, productId));
+		return(mUsbSensorAssistant.getDeviceBaudRate(device));
+	}
+	
+	public int getDeviceBaudRate(int vendorId, int productId)
+	{
+		return(mUsbSensorAssistant.getDeviceBaudRate(vendorId, productId));
 	}
 	
 	public boolean isValidSensor(UsbDevice device)
 	{
 		return(mUsbSensorAssistant.isValidSensor(device));
+	}
+	
+	public boolean isValidSensor(int vendorId, int productId)
+	{
+		return(mUsbSensorAssistant.isValidSensor(vendorId, productId));
 	}
 	
 	@Override
