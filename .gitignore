@@ -1,7 +1,6 @@
 *.class
 MyRuns/bin/*
 MyRuns/gen/*
-MyRuns/AndroidManifest.xml
 MyRunsDataCollector/bin/*
 MyRunsDataCollector/gen/*
 UsbSerialExamples/bin/*
