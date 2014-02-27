@@ -1,23 +1,15 @@
 package edu.dartmouth.cs.myruns5;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbManager;
-import android.os.IBinder;
-import android.util.Log;
 
 /**
  * Manages lookups to the hardware SQLite database containing sensor profile information supported by the app.
@@ -27,8 +19,6 @@ import android.util.Log;
  */
 public class UsbSensorAssistant extends SQLiteOpenHelper
 {
-	private static final String TAG = UsbSensorAssistant.class.getName();
-	
 	private static final String DATABASE_NAME = "hardware.db";
 	private static final String TABLE_NAME = "UsbSensorProfile";
 	
@@ -37,8 +27,8 @@ public class UsbSensorAssistant extends SQLiteOpenHelper
 	
 	private static final String COL_VENDOR_ID = "vendorId";
 	private static final String COL_PRODUCT_ID = "productId";
-	private static final String COL_SENSORS = "sensors";
 	private static final String COL_BAUD = "baud";
+	private static final String COL_PROTOCOL = "protocol";
 	
 	private SQLiteDatabase mDatabase;
 	
@@ -160,7 +150,7 @@ public class UsbSensorAssistant extends SQLiteOpenHelper
 			return(null);
 		}
 		
-		final String columns[] = new String[] {COL_SENSORS};
+		final String columns[] = new String[] {COL_PROTOCOL};
 
 		Cursor queryCursor = mDatabase.query(TABLE_NAME, columns, 
 				COL_VENDOR_ID + "=" + device.getVendorId() + " AND " 
@@ -174,15 +164,19 @@ public class UsbSensorAssistant extends SQLiteOpenHelper
 		
 		queryCursor.moveToFirst();
 		
-		int sensors = queryCursor.getInt(0);
+		int protocol = queryCursor.getInt(0);
 		
-		if(Sensor.hasLightSensor(sensors))
+		switch(protocol)
 		{
-			return(new UsbLightSensor(mContext, mUsbSensorManager, device));
-		}
-		else
-		{
-			return(null);
+			case Sensor.PROTOCOL_ACM:
+			case Sensor.PROTOCOL_FTDI:
+			{
+				return(new UsbLightSensor(mContext, mUsbSensorManager, device, protocol));
+			}
+			default:
+			{
+				return(null);
+			}
 		}
 	}
 	
@@ -195,14 +189,13 @@ public class UsbSensorAssistant extends SQLiteOpenHelper
 	 */
 	public IUVSensor getUVSensor(UsbDevice device)
 	{
-		
 		if(device == null || mDatabase == null)
 		{
 			return(null);
 		}
 		
-		final String columns[] = new String[] {COL_SENSORS};
-		
+		final String columns[] = new String[] {COL_PROTOCOL};
+
 		Cursor queryCursor = mDatabase.query(TABLE_NAME, columns, 
 				COL_VENDOR_ID + "=" + device.getVendorId() + " AND " 
 			    + COL_PRODUCT_ID + "=" + device.getProductId(), 
@@ -215,15 +208,19 @@ public class UsbSensorAssistant extends SQLiteOpenHelper
 		
 		queryCursor.moveToFirst();
 		
-		int sensors = queryCursor.getInt(0);
+		int protocol = queryCursor.getInt(0);
 		
-		if(Sensor.hasUVSensor(sensors))
+		switch(protocol)
 		{
-			return(new UsbUVSensor(mContext, mUsbSensorManager, device));
-		}
-		else
-		{
-			return(null);
+			case Sensor.PROTOCOL_ACM:
+			case Sensor.PROTOCOL_FTDI:
+			{
+				return(new UsbUVSensor(mContext, mUsbSensorManager, device, protocol));
+			}
+			default:
+			{
+				return(null);
+			}
 		}
 	}
 	

@@ -5,7 +5,7 @@ import android.hardware.usb.UsbDevice;
 
 public class UsbLightSensor extends UsbSensor implements ILightSensor
 {
-	private static final String ACTION_SENSOR_UPDATE = "edu.dartmouth.cs.myruns5.UsbLightSensor.action.SENSOR_UPDATE";
+	protected int mLight;
 	
 	private class UsbLightSensorCallback implements UsbSensor.Callback
 	{
@@ -21,18 +21,16 @@ public class UsbLightSensor extends UsbSensor implements ILightSensor
 		{
 			// Parse the data from the Arduino and convert to integer
 			
-			if(pkt != null && pkt.getLux() != null)
+			if(pkt != null)
 			{
-				Integer lux = pkt.getLux();
-				
-				if(lux != null)
+				if(mPulseId >= 0 && mPulseId <= Pulse32.PKT_MAX_PAYLOAD_ENTRIES)
 				{
-					mLight = lux;
-					
-					if(mCallback != null)
-					{
-						mCallback.onSensorUpdate(mLight);
-					}
+					mLight = pkt.getField(mPulseId);
+				}
+				
+				if(mCallback != null)
+				{
+					mCallback.onSensorUpdate(mLight);
 				}
 			}
 		}
@@ -47,28 +45,49 @@ public class UsbLightSensor extends UsbSensor implements ILightSensor
 		}
 	}
 	
-	private int mLight;
-	
-	public UsbLightSensor(Context context, UsbSensorManager usbSensorManager, UsbDevice usbDevice)
+	public UsbLightSensor(Context context, UsbSensorManager usbSensorManager, UsbDevice usbDevice, int protocol)
 	{
-		super(context, usbSensorManager, usbDevice);
+		super(context, usbSensorManager, usbDevice, protocol);
+		
+		mPulseId = -1;
+	}
+	
+	@Override
+	public UsbSensor.Callback baseCallback()
+	{
+		return(new UsbLightSensorCallback(null));
 	}
 
 	@Override
 	public int getLuminosity()
 	{
+		if(!mIsInitialized)
+		{
+			return(0);
+		}
+		
 		return(mLight);
 	}
 	
 	@Override
 	public int register(ILightSensor.Callback callback)
 	{
+		if(!mIsInitialized)
+		{
+			return(ErrorCode.ERR_STATE);
+		}
+		
 		return(mUsbSensorManager.registerSensor(this, new UsbLightSensorCallback(callback)));
 	}
 	
 	@Override
 	public int unregister()
 	{
+		if(!mIsInitialized)
+		{
+			return(ErrorCode.ERR_STATE);
+		}
+		
 		return(mUsbSensorManager.unregisterSensor(this));
 	}
 	

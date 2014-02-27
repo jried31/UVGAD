@@ -1,7 +1,5 @@
 package edu.dartmouth.cs.myruns5;
 
-import android.content.Context;
-
 /**
  * Basic interface for all general UV sensors.
  * 
@@ -15,6 +13,9 @@ public interface IUVSensor
 		public void onSensorUpdate(final int updateUV);
 		public void onSensorEjected();
 	}
+	
+	public int init(int pulseId);
+	public int uninit();
 	
 	public int getUV();
 

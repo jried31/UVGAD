@@ -1,13 +1,11 @@
 package edu.dartmouth.cs.myruns5;
 
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -33,7 +31,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				@Override
 				public void run()
 				{
-					mConsole_text.setText("LUX: " + updateLux);
+					lightSensor0_text.setText("LUX: " + updateLux);
 				}
 			});
 		}
@@ -47,10 +45,10 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				public void run()
 				{
 					Toast.makeText(mContext, "Light sensor ejected!", Toast.LENGTH_SHORT).show();
-					toggleStreaming_btn.setText(mResources.getString(R.string.startStreaming));
 				}
 			});
 			
+			mLightSensor = null;
 			mIsStreaming = false;
 		}
 	}
@@ -73,7 +71,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				@Override
 				public void run()
 				{
-					mClear_btn.setText("UV: " + updateUV);
+					uvSensor0_text.setText("UV: " + updateUV);
 				}
 			});
 		}
@@ -89,6 +87,8 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 					Toast.makeText(mContext, "UV sensor ejected!", Toast.LENGTH_SHORT).show();
 				}
 			});
+			
+			mUVSensor = null;
 		}
 	}
 	
@@ -96,10 +96,12 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 	private Resources mResources;
 	private UsbSensorManager mUsbSensorManager;
 	
-	private volatile TextView mConsole_text;
-	private Button mDeviceStatus_btn;
-	private Button toggleStreaming_btn;
-	private Button mClear_btn;
+	private TextView uvSensor0_text;
+	private TextView lightSensor0_text;
+	
+	private Button loadSensor_btn;
+	private Button toggleStream_btn;
+	private Button instantSample_btn;
 	
 	private ILightSensor mLightSensor;
 	private LightSensorCallback mLightSensorCallback;
@@ -119,20 +121,22 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		mResources = getResources();
 		mUsbSensorManager = MyRunsApplication.getUsbSensorManager();
 		
-		mConsole_text = (TextView) findViewById(R.id.console_text);
-		mDeviceStatus_btn = (Button) findViewById(R.id.deviceStatus_btn);
-		toggleStreaming_btn = (Button) findViewById(R.id.toggleStreaming_btn);
-		mClear_btn = (Button) findViewById(R.id.clear_btn);
+		uvSensor0_text = (TextView) findViewById(R.id.uvSensor0_text);
+		lightSensor0_text = (TextView) findViewById(R.id.lightSensor0_text);
 		
-		mDeviceStatus_btn.setOnClickListener(this);
-		toggleStreaming_btn.setOnClickListener(this);
-		mClear_btn.setOnClickListener(this);
+		loadSensor_btn = (Button) findViewById(R.id.loadSensor_btn);
+		toggleStream_btn = (Button) findViewById(R.id.toggleStream_btn);
+		instantSample_btn = (Button) findViewById(R.id.instantSample_btn);
+		
+		loadSensor_btn.setOnClickListener(this);
+		toggleStream_btn.setOnClickListener(this);
+		instantSample_btn.setOnClickListener(this);
 		
 		mLightSensorCallback = new LightSensorCallback(this);
 		mUVSensorCallback = new UVSensorCallback(this);
 		
 		mIsStreaming = false;
-		toggleStreaming_btn.setText(mResources.getString(R.string.startStreaming));
+		toggleStream_btn.setText(mResources.getString(R.string.startStreaming));
 	}
 	
 	@Override
@@ -156,72 +160,64 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 	{
 		switch(view.getId())
 		{
-			case R.id.deviceStatus_btn:
+			case R.id.loadSensor_btn:
 			{
-				List<IUVSensor> uvSensorList = mUsbSensorManager.getUVSensorList();
-				List<ILightSensor> lightSensorList = mUsbSensorManager.getLightSensorList();
+				List<IUVSensor> uvSensor_list = mUsbSensorManager.getUVSensorList();
+				List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
 				
-				if((uvSensorList.size() > 0) && (lightSensorList.size() > 0))
+				if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
 				{
-					Toast.makeText(this, "Found Light + UV sensor!", Toast.LENGTH_SHORT).show();
-				}
-				else if(lightSensorList.size() > 0)
-				{
-					Toast.makeText(this, "Found Light sensor!", Toast.LENGTH_LONG).show();
-				}
-				else if(uvSensorList.size() > 0)
-				{
-					Toast.makeText(this, "Found UV sensor!", Toast.LENGTH_LONG).show();
-				}
-				else
-				{
-					Toast.makeText(this, "Could not find valid sensor!", Toast.LENGTH_SHORT).show();
+					Toast.makeText(this, "ERROR: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+					return;
 				}
 				
+				mLightSensor = lightSensor_list.get(0);
+				mUVSensor = uvSensor_list.get(0);
+				
+				mLightSensor.init(Constants.PULSE_ID_LIGHT_0);
+				mUVSensor.init(Constants.PULSE_ID_UV_0);
+				
+				Toast.makeText(this, "Initialized sensor hardware!", Toast.LENGTH_LONG).show();
 				break;
 			}
-			case R.id.toggleStreaming_btn:
+			case R.id.toggleStream_btn:
 			{
+				if(mLightSensor == null || mUVSensor == null)
+				{
+					Toast.makeText(this, "ERROR: Sensor hardware not initialized", Toast.LENGTH_LONG).show();
+					return;
+				}
+				
 				if(!mIsStreaming)
 				{
-					List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
-					List<IUVSensor> uvSensor_list = mUsbSensorManager.getUVSensorList();
-					
-					if(lightSensor_list.isEmpty() || uvSensor_list.isEmpty())
-					{
-						return;
-					}
-					
-					mLightSensor = lightSensor_list.get(0);
 					mLightSensor.register(mLightSensorCallback);
-					
-					mUVSensor = uvSensor_list.get(0);
 					mUVSensor.register(mUVSensorCallback);
 					
 					mIsStreaming = true;
-					toggleStreaming_btn.setText(mResources.getString(R.string.stopStreaming));
+					toggleStream_btn.setText(mResources.getString(R.string.stopStreaming));
 				}
 				else
 				{
-					if(mLightSensor != null)
-					{
-						mLightSensor.unregister();
-					}
-					
-					if(mUVSensor != null)
-					{
-						mUVSensor.unregister();
-					}
+					mLightSensor.unregister();
+					mUVSensor.unregister();
 					
 					mIsStreaming = false;
-					toggleStreaming_btn.setText(mResources.getString(R.string.startStreaming));
+					toggleStream_btn.setText(mResources.getString(R.string.startStreaming));
 				}
 				
 				break;
 			}
-			case R.id.clear_btn:
+			case R.id.instantSample_btn:
 			{
-				mConsole_text.setText("");
+				if(mLightSensor == null || mUVSensor == null)
+				{
+					Toast.makeText(this, "ERROR: Sensor hardware not initialized", Toast.LENGTH_LONG).show();
+					return;
+				}
+				
+				lightSensor0_text.setText("iLUX: " + mLightSensor.getLuminosity());
+				uvSensor0_text.setText("iUV: " + mUVSensor.getUV());
+				
 				break;
 			}
 			default:

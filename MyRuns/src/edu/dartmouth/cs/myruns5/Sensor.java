@@ -8,16 +8,6 @@ package edu.dartmouth.cs.myruns5;
  */
 public abstract class Sensor
 {
-	protected static final int SENSOR_LIGHT = 1;
-	protected static final int SENSOR_UV = 1 << 1;
-	
-	public static final boolean hasLightSensor(int sensors)
-	{
-		return((sensors & SENSOR_LIGHT) != 0 ? true : false);
-	}
-	
-	public static final boolean hasUVSensor(int sensors)
-	{
-		return((sensors & SENSOR_UV) != 0 ? true : false);
-	}
+	public static final int PROTOCOL_ACM = 1;
+	public static final int PROTOCOL_FTDI = 2;
 }

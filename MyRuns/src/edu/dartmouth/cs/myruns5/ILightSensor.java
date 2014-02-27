@@ -1,8 +1,5 @@
 package edu.dartmouth.cs.myruns5;
 
-import android.content.Context;
-import edu.dartmouth.cs.myruns5.IUVSensor.Callback;
-
 /**
  * Basic interface for all general light sensors.
  * 
@@ -16,6 +13,9 @@ public interface ILightSensor
 		public void onSensorUpdate(final int updateLux);
 		public void onSensorEjected();
 	}
+	
+	public int init(int pulseId);
+	public int uninit();
 	
 	public int getLuminosity();
 	

@@ -17,24 +17,24 @@
         android:layout_alignParentBottom="true"
         >
         <Button
-            android:id="@+id/deviceStatus_btn"
+            android:id="@+id/loadSensor_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/deviceStatus"
+            android:text="@string/loadSensor"
         />
         <Button
-            android:id="@+id/toggleStreaming_btn"
+            android:id="@+id/toggleStream_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
         />
         <Button
-            android:id="@+id/clear_btn"
+            android:id="@+id/instantSample_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/clear"
+            android:text="@string/instantSample"
         />
     </LinearLayout>
     <ScrollView
@@ -43,10 +43,29 @@
         android:layout_height="match_parent"
         android:layout_above="@id/mode_layout"
         >
-	    <TextView
-	        android:id="@+id/console_text"
-	        android:layout_width="match_parent"
-	        android:layout_height="match_parent"
-        />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            >
+          	<TextView
+		        android:id="@+id/uvSensor0_text"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:text="UV0 : 0"
+		        android:textSize="24sp"
+		        android:textStyle="bold"
+		        android:paddingBottom="10dp"
+	        />
+		    <TextView 
+		        android:id="@+id/lightSensor0_text"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:text="LUX0 : 0"
+		        android:textSize="24sp"
+		        android:textStyle="bold"
+		        android:paddingBottom="10dp"
+		    />
+        </LinearLayout>
     </ScrollView>
 </RelativeLayout>

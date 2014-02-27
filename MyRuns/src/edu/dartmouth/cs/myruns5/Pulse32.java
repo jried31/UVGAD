@@ -8,12 +8,6 @@ public class Pulse32
 	public static final int PKT_SIZE = 32;
 	public static final int PKT_MAX_PAYLOAD_ENTRIES = 7;
 	
-	protected static final short ID_LIGHT = 0;
-	protected static final short ID_UV = 1;
-	
-	protected static final short FLAG_LIGHT = (short) (0x8000 >>> ID_LIGHT);
-	protected static final short FLAG_UV = (short) (0x8000 >>> ID_UV);
-	
 	protected class Pulse32Pkt
 	{
 		protected short flags;
@@ -75,47 +69,46 @@ public class Pulse32
 		
 		return(PKT_SIZE);
 	}
-	
-	void setLux(int value)
+
+	void setField(int id, int value)
 	{
-		mPkt.flags |= FLAG_LIGHT;
-		mPkt.payload[ID_LIGHT] = value;
-	}
-	
-	void setUV(int value)
-	{
-		mPkt.flags |= FLAG_UV;
-		mPkt.payload[ID_UV] = value;
-	}
-	
-	Integer getLux()
-	{
-		if((mPkt.flags & FLAG_LIGHT) == 0)
+		if(id < 0 || id > PKT_MAX_PAYLOAD_ENTRIES)
 		{
-			return(null);
+			id = 0;
 		}
 		
-		return(mPkt.payload[ID_LIGHT]);
+		mPkt.flags |= (short) (0x8000 >>> id);
+		mPkt.payload[id] = value;
 	}
 	
-	Integer getUV()
+	int getField(int id)
 	{
-		if((mPkt.flags & FLAG_UV) == 0)
+		if(id < 0 || id > PKT_MAX_PAYLOAD_ENTRIES)
 		{
-			return(null);
+			id = 0;
 		}
 		
-		return(mPkt.payload[ID_UV]);
+		return(mPkt.payload[id]);
 	}
 	
-	boolean isLightFlagSet()
+	void setFlags(short flags)
 	{
-		return(((mPkt.flags & FLAG_LIGHT) > 0) ? true : false);
+		mPkt.flags = flags;
 	}
 	
-	boolean isUVFlagSet()
+	short getFlags()
 	{
-		return(((mPkt.flags & FLAG_UV) > 0) ? true : false);
+		return(mPkt.flags);
+	}
+	
+	boolean isFieldSet(int id)
+	{
+		if(id < 0 || id > PKT_MAX_PAYLOAD_ENTRIES)
+		{
+			id = 0;
+		}
+		
+		return((mPkt.flags & (short) (0x8000 >>> id)) != 0 ? true : false);
 	}
 	
 	void clear()
