@@ -7,6 +7,7 @@ namespace Constants
   
   extern const unsigned int PULSE_ID_UV_0;
   extern const unsigned int PULSE_ID_LIGHT_0;
+  extern const unsigned int PULSE_ID_UV_1;
   extern const unsigned int PULSE_ID_LIGHT_1;
 }
 
