@@ -25,7 +25,7 @@ public class UsbUVSensor extends UsbSensor implements IUVSensor
 			{
 				if(mPulseId >= 0 && mPulseId <= Pulse32.PKT_MAX_PAYLOAD_ENTRIES)
 				{
-					mUV = pkt.getField(mPulseId);
+					mUV = pkt.getField(mPulseId) - 309;
 				}
 				
 				if(mCallback != null)

@@ -25,7 +25,7 @@ public class UsbLightSensor extends UsbSensor implements ILightSensor
 			{
 				if(mPulseId >= 0 && mPulseId <= Pulse32.PKT_MAX_PAYLOAD_ENTRIES)
 				{
-					mLight = pkt.getField(mPulseId);
+					mLight = pkt.getField(mPulseId) * 100000 / 1023;
 				}
 				
 				if(mCallback != null)

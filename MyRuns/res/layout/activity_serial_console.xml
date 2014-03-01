@@ -66,6 +66,15 @@
 		        android:textStyle="bold"
 		        android:paddingBottom="10dp"
 		    />
+		    <TextView 
+		        android:id="@+id/lightSensor1_text"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:text="LUX1 : 0"
+		        android:textSize="24sp"
+		        android:textStyle="bold"
+		        android:paddingBottom="10dp"
+		    />
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

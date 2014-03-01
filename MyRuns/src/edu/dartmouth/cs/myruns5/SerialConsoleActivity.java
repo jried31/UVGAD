@@ -14,11 +14,57 @@ import android.widget.Toast;
 
 public class SerialConsoleActivity extends Activity implements OnClickListener
 {
-	private class LightSensorCallback implements ILightSensor.Callback
+	// This is the callback object for the first light sensor
+	private class LightSensor0Callback implements ILightSensor.Callback
 	{
 		private final Activity mActivity;
 		
-		LightSensorCallback(Activity activity)
+		LightSensor0Callback(Activity activity)
+		{
+			mActivity = activity;
+		}
+		
+		@Override
+		public void onSensorUpdate(final int updateLux)
+		{
+			// This callback method is invoked when the light sensor gets a new light reading data
+			
+			// All UI updates MUST occur on the main thread (a.k.a. UI thread) so we update the
+			// light sensor TextView object using this Runnable
+			mActivity.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					lightSensor0_text.setText("LUX0: " + updateLux);
+				}
+			});
+		}
+
+		@Override
+		public void onSensorEjected()
+		{
+			// This function is run when the sensor is forcibly ejected while this callback object 
+			// is active and registered with the sensor
+			
+			mActivity.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					Toast.makeText(mContext, "Light sensor ejected!", Toast.LENGTH_SHORT).show();
+				}
+			});
+			
+			mLightSensor0 = null;
+		}
+	}
+	
+	private class LightSensor1Callback implements ILightSensor.Callback
+	{
+		private final Activity mActivity;
+		
+		LightSensor1Callback(Activity activity)
 		{
 			mActivity = activity;
 		}
@@ -31,7 +77,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				@Override
 				public void run()
 				{
-					lightSensor0_text.setText("LUX: " + updateLux);
+					lightSensor1_text.setText("LUX1: " + updateLux);
 				}
 			});
 		}
@@ -48,11 +94,11 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				}
 			});
 			
-			mLightSensor = null;
-			mIsStreaming = false;
+			mLightSensor1 = null;
 		}
 	}
 	
+	// This is the callback object for the UV sensor
 	private class UVSensorCallback implements IUVSensor.Callback
 	{
 		private final Activity mActivity;
@@ -65,13 +111,16 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		@Override
 		public void onSensorUpdate(final int updateUV)
 		{
+			// This callback method is invoked when the UV sensor gets a new light reading data
 			
+			// All UI updates MUST occur on the main thread (a.k.a. UI thread) so we update the
+			// UV sensor TextView object using this Runnable
 			mActivity.runOnUiThread(new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					uvSensor0_text.setText("UV: " + updateUV);
+					uvSensor0_text.setText("UV0: " + updateUV);
 				}
 			});
 		}
@@ -79,6 +128,9 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		@Override
 		public void onSensorEjected()
 		{
+			// This function is run when the sensor is forcibly ejected while this callback object 
+			// is active and registered with the sensor
+			
 			mActivity.runOnUiThread(new Runnable()
 			{
 				@Override
@@ -89,6 +141,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 			});
 			
 			mUVSensor = null;
+			mIsStreaming = false;
 		}
 	}
 	
@@ -98,13 +151,16 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 	
 	private TextView uvSensor0_text;
 	private TextView lightSensor0_text;
+	private TextView lightSensor1_text;
 	
 	private Button loadSensor_btn;
 	private Button toggleStream_btn;
 	private Button instantSample_btn;
 	
-	private ILightSensor mLightSensor;
-	private LightSensorCallback mLightSensorCallback;
+	private ILightSensor mLightSensor0;
+	private ILightSensor mLightSensor1;
+	private LightSensor0Callback mLightSensor0Callback;
+	private LightSensor1Callback mLightSensor1Callback;
 	
 	private IUVSensor mUVSensor;
 	private UVSensorCallback mUVSensorCallback;
@@ -123,6 +179,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		
 		uvSensor0_text = (TextView) findViewById(R.id.uvSensor0_text);
 		lightSensor0_text = (TextView) findViewById(R.id.lightSensor0_text);
+		lightSensor1_text = (TextView) findViewById(R.id.lightSensor1_text);
 		
 		loadSensor_btn = (Button) findViewById(R.id.loadSensor_btn);
 		toggleStream_btn = (Button) findViewById(R.id.toggleStream_btn);
@@ -132,7 +189,9 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		toggleStream_btn.setOnClickListener(this);
 		instantSample_btn.setOnClickListener(this);
 		
-		mLightSensorCallback = new LightSensorCallback(this);
+		// Create the sensor callback objects
+		mLightSensor0Callback = new LightSensor0Callback(this);
+		mLightSensor1Callback = new LightSensor1Callback(this);
 		mUVSensorCallback = new UVSensorCallback(this);
 		
 		mIsStreaming = false;
@@ -144,9 +203,15 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 	{
 		super.onDestroy();
 		
-		if(mLightSensor != null)
+		// Unregister the sensors when the Activity is destroyed if they are active
+		if(mLightSensor0 != null)
 		{
-			mLightSensor.unregister();
+			mLightSensor0.unregister();
+		}
+		
+		if(mLightSensor1 != null)
+		{
+			mLightSensor1.unregister();
 		}
 		
 		if(mUVSensor != null)
@@ -162,19 +227,46 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		{
 			case R.id.loadSensor_btn:
 			{
+				// Get the handle on the sensor and load their serial drivers from the 
+				// UsbSensorManager.
+				
+				// Get the UV and light sensors that the UsbSensorManager recognizes
 				List<IUVSensor> uvSensor_list = mUsbSensorManager.getUVSensorList();
 				List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
 				
+				// Make sure that the lists aren't empty
 				if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
 				{
 					Toast.makeText(this, "ERROR: Sensor hardware not detected", Toast.LENGTH_LONG).show();
 					return;
 				}
 				
-				mLightSensor = lightSensor_list.get(0);
+				// Grab the first light sensor object.  On an Android phone there really shouldn't 
+				// be more than one
+				mLightSensor0 = lightSensor_list.get(0);
+				
+				// @NOTE: We need to grab a new list of sensors since Java must create a new sensor 
+				//    	  object.  Otherwise, they'll refer to the same sensor object and invoking 
+				// 		  the register() method will overwrite the original callback object.
+				// 		  Another way to think about it is the getLightSensorList() method is like a 
+				// 		  factory that returns light sensor objects so we need it to create a new 
+				// 		  object for us.
+				lightSensor_list = mUsbSensorManager.getLightSensorList();
+				
+				// Check again to make sure that the light sensor list is not empty
+				if(lightSensor_list.isEmpty())
+				{
+					Toast.makeText(this, "ERROR: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+					return;
+				}
+				
+				// Grab the handle to the UV sensor and second light sensor objects
+				mLightSensor1 = lightSensor_list.get(0);
 				mUVSensor = uvSensor_list.get(0);
 				
-				mLightSensor.init(Constants.PULSE_ID_LIGHT_0);
+				// Initialize the UV sensor and light sensor objects
+				mLightSensor0.init(Constants.PULSE_ID_LIGHT_0);
+				mLightSensor1.init(Constants.PULSE_ID_LIGHT_1);
 				mUVSensor.init(Constants.PULSE_ID_UV_0);
 				
 				Toast.makeText(this, "Initialized sensor hardware!", Toast.LENGTH_LONG).show();
@@ -182,7 +274,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 			}
 			case R.id.toggleStream_btn:
 			{
-				if(mLightSensor == null || mUVSensor == null)
+				if(mLightSensor0 == null || mLightSensor1 == null || mUVSensor == null)
 				{
 					Toast.makeText(this, "ERROR: Sensor hardware not initialized", Toast.LENGTH_LONG).show();
 					return;
@@ -190,7 +282,10 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				
 				if(!mIsStreaming)
 				{
-					mLightSensor.register(mLightSensorCallback);
+					// Register the respective callback objects with the sensor objects.
+					// Ideally, you should do some error checking here...
+					mLightSensor0.register(mLightSensor0Callback);
+					mLightSensor1.register(mLightSensor1Callback);
 					mUVSensor.register(mUVSensorCallback);
 					
 					mIsStreaming = true;
@@ -198,7 +293,9 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				}
 				else
 				{
-					mLightSensor.unregister();
+					// Unregister the callback objects to stop the streaming functionality
+					mLightSensor0.unregister();
+					mLightSensor1.unregister();
 					mUVSensor.unregister();
 					
 					mIsStreaming = false;
@@ -209,20 +306,21 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 			}
 			case R.id.instantSample_btn:
 			{
-				if(mLightSensor == null || mUVSensor == null)
+				if(mLightSensor0 == null || mLightSensor1 == null || mUVSensor == null)
 				{
 					Toast.makeText(this, "ERROR: Sensor hardware not initialized", Toast.LENGTH_LONG).show();
 					return;
 				}
 				
-				lightSensor0_text.setText("iLUX: " + mLightSensor.getLuminosity());
-				uvSensor0_text.setText("iUV: " + mUVSensor.getUV());
+				// Update the screen to show the instantaneous sensor values
+				uvSensor0_text.setText("iUV0: " + mUVSensor.getUV());
+				lightSensor0_text.setText("iLUX0: " + mLightSensor0.getLuminosity());
+				lightSensor1_text.setText("iLUX1: " + mLightSensor1.getLuminosity());
 				
 				break;
 			}
 			default:
 			{
-				
 			}
 		}
 	}

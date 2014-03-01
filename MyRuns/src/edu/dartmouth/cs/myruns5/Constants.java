@@ -10,5 +10,5 @@ public class Constants
 	
 	public static final int PULSE_ID_UV_0 = 0;
 	public static final int PULSE_ID_LIGHT_0 = 1;
-	public static final int PULSE_ID_LIGHT1 = 2;
+	public static final int PULSE_ID_LIGHT_1 = 2;
 }

@@ -5,13 +5,13 @@
 
 const size_t BUF_SIZE = 260;
 
-int32_t lux = 0;
-int32_t uv = 0;
-
 void setup()
 {
   Serial.begin(Constants::BAUD_RATE);
   Serial.setTimeout(0);
+  
+  pinMode(7, OUTPUT);
+  digitalWrite(7, HIGH);
 }
 
 void loop()
@@ -32,13 +32,17 @@ void loop()
   
   if(pkt.isFieldSet(Constants::PULSE_ID_UV_0))
   {
-    pkt.setField(Constants::PULSE_ID_UV_0, uv);
-    uv++;
+    pkt.setField(Constants::PULSE_ID_UV_0, analogRead(A0));
   }
   
   if(pkt.isFieldSet(Constants::PULSE_ID_LIGHT_0))
   {
-    pkt.setField(Constants::PULSE_ID_LIGHT_0, analogRead(A0));
+    pkt.setField(Constants::PULSE_ID_LIGHT_0, analogRead(A1));
+  }
+  
+  if(pkt.isFieldSet(Constants::PULSE_ID_LIGHT_1))
+  {
+    pkt.setField(Constants::PULSE_ID_LIGHT_1, analogRead(A2));
   }
   
   if(pkt.serialize(buffer, bufferSize) != ErrorCode::NO_ERROR)
