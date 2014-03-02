@@ -40,9 +40,14 @@ void loop()
     pkt.setField(Constants::PULSE_ID_LIGHT_0, analogRead(A1));
   }
   
+  if(pkt.isFieldSet(Constants::PULSE_ID_UV_1))
+  {
+    pkt.setField(Constants::PULSE_ID_UV_1, analogRead(A2));
+  }
+    
   if(pkt.isFieldSet(Constants::PULSE_ID_LIGHT_1))
   {
-    pkt.setField(Constants::PULSE_ID_LIGHT_1, analogRead(A2));
+    pkt.setField(Constants::PULSE_ID_LIGHT_1, analogRead(A3));
   }
   
   if(pkt.serialize(buffer, bufferSize) != ErrorCode::NO_ERROR)
