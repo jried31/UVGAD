@@ -1,10 +1,13 @@
 package edu.dartmouth.cs.myruns5;
 
+import java.util.Date;
 import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.IntentSender;
 import android.content.res.Resources;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -12,7 +15,14 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class SerialConsoleActivity extends Activity implements OnClickListener
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient;
+import com.google.android.gms.location.LocationClient;
+import com.parse.ParseGeoPoint;
+
+import edu.dartmouth.cs.myruns5.util.uv.ParseUVReading;
+
+public class SerialConsoleActivity extends Activity implements OnClickListener,GooglePlayServicesClient.ConnectionCallbacks,GooglePlayServicesClient.OnConnectionFailedListener 
 {
 	// This is the callback object for the first light sensor
 	private class LightSensor0Callback implements ILightSensor.Callback
@@ -145,6 +155,11 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		}
 	}
 	
+
+	public void onSampleClicked(View v){
+		location = this.mLocationClient.getLastLocation();
+		
+	}
 	private Context mContext;
 	private Resources mResources;
 	private UsbSensorManager mUsbSensorManager;
@@ -156,6 +171,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 	private Button loadSensor_btn;
 	private Button toggleStream_btn;
 	private Button instantSample_btn;
+	private Button sampleUVBtn;
 	
 	private ILightSensor mLightSensor0;
 	private ILightSensor mLightSensor1;
@@ -166,13 +182,19 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 	private UVSensorCallback mUVSensorCallback;
 	
 	private boolean mIsStreaming;
+	private Location location = null;
+	private LocationClient mLocationClient; 
+	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_serial_console);
-		
+
+        mLocationClient = new LocationClient(this, this, this);
+
 		mContext = this;
 		mResources = getResources();
 		mUsbSensorManager = MyRunsApplication.getUsbSensorManager();
@@ -184,10 +206,12 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		loadSensor_btn = (Button) findViewById(R.id.loadSensor_btn);
 		toggleStream_btn = (Button) findViewById(R.id.toggleStream_btn);
 		instantSample_btn = (Button) findViewById(R.id.instantSample_btn);
+		sampleUVBtn = (Button) findViewById(R.id.sampleUVBtn);
 		
 		loadSensor_btn.setOnClickListener(this);
 		toggleStream_btn.setOnClickListener(this);
 		instantSample_btn.setOnClickListener(this);
+		sampleUVBtn.setOnClickListener(this);
 		
 		// Create the sensor callback objects
 		mLightSensor0Callback = new LightSensor0Callback(this);
@@ -198,6 +222,35 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		toggleStream_btn.setText(mResources.getString(R.string.startStreaming));
 	}
 	
+	
+	@Override
+	public void onResume() {
+	    super.onResume();
+        mLocationClient.connect();
+	}
+	@Override
+	public void onPause() {
+	    super.onPause();
+        mLocationClient.disconnect();
+	}
+    /*
+     * Called when the Activity becomes visible.
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Connect the client.
+        mLocationClient.connect();
+    }
+    /*
+     * Called when the Activity is no longer visible.
+     */
+    @Override
+    protected void onStop() {
+        // Disconnecting the client invalidates it.
+        mLocationClient.disconnect();
+        super.onStop();
+    }
 	@Override
 	public void onDestroy()
 	{
@@ -218,6 +271,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		{
 			mUVSensor.unregister();
 		}
+        mLocationClient.disconnect();
 	}
 	
 	@Override
@@ -319,9 +373,81 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				
 				break;
 			}
+			case R.id.sampleUVBtn:
+			{
+				if(mUVSensor == null)
+				{
+					Toast.makeText(this, "ERROR: Sensor hardware not initialized", Toast.LENGTH_LONG).show();
+					return;
+				}
+				
+				int uv = mUVSensor.getUV();
+				uvSensor0_text.setText("iUV0: " +uv);
+				
+				location = this.mLocationClient.getLastLocation();
+				Date timestamp = new Date();
+				
+				ParseUVReading reading = new ParseUVReading();
+				reading.setUVI(uv);
+				reading.setLocation(new ParseGeoPoint(location.getLatitude(),location.getLongitude()));
+				reading.setTimestamp(timestamp);
+				reading.saveInBackground();
+			}
 			default:
 			{
 			}
 		}
 	}
+	/*
+     * Called by Location Services when the request to connect the
+     * client finishes successfully. At this point, you can
+     * request the current location or start periodic updates
+     */
+    @Override
+    public void onConnected(Bundle dataBundle) {
+        // Display the connection status
+        Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
+    }
+    /*
+     * Called by Location Services if the connection to the
+     * location client drops because of an error.
+     */
+    @Override
+    public void onDisconnected() {
+        // Display the connection status
+        Toast.makeText(this, "Disconnected. Please re-connect.",Toast.LENGTH_SHORT).show();
+    }
+    /*
+     * Called by Location Services if the attempt to
+     * Location Services fails.
+     */
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        /*
+         * Google Play services can resolve some errors it detects.
+         * If the error has a resolution, try sending an Intent to
+         * start a Google Play services activity that can resolve
+         * error.
+         */
+        if (connectionResult.hasResolution()) {
+            try {
+                // Start an Activity that tries to resolve the error
+                connectionResult.startResolutionForResult(this,CONNECTION_FAILURE_RESOLUTION_REQUEST);
+                /*
+                 * Thrown if Google Play services canceled the original
+                 * PendingIntent
+                 */
+            } catch (IntentSender.SendIntentException e) {
+                // Log the error
+                e.printStackTrace();
+            }
+        } else {
+            /*
+             * If no resolution is available, display a dialog to the
+             * user with the error.
+             */
+            Toast.makeText(this, connectionResult.getErrorCode(),Toast.LENGTH_SHORT).show();
+        }
+    }
+
 }

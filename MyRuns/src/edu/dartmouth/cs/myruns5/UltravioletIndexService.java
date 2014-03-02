@@ -46,6 +46,8 @@ import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 
+import edu.dartmouth.cs.myruns5.util.uv.ParseUVReading;
+
 public class UltravioletIndexService extends Service implements LocationListener {
 
 	private LocationManager myTracksLocationManager;
@@ -157,27 +159,32 @@ public class UltravioletIndexService extends Service implements LocationListener
 			});
 
 			ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("UVData");
-			query.orderByDescending("createdAt");
+			query.orderByDescending("timestamp");
+			query.setLimit(30);
+			
 			query.findInBackground(new FindCallback<ParseObject>() {
 				public void done(List<ParseObject> objectList, ParseException e) {
-					Date now = new Date();
-					Date refer;
-					int sum = 0, num = 0;
-					long time1, time2;
-					time1 = now.getTime();
+					
 					if (e == null) {
-						for (ParseObject obj : objectList) {
-							refer = obj.getUpdatedAt();
-							time2 = refer.getTime();
+						long time1, time2;
+						Date now = new Date();
+						time1 = now.getTime();
+						double meanUVI = 0;
+						for (int i = 0;i < objectList.size();i++) {
+							ParseUVReading obj = (ParseUVReading) objectList.get(i);
+							Date timestamp = obj.getTimestamp();
+					
+							int uvi = obj.getUVI();
+						    
+							time2 = timestamp.getTime();
 							if (time1 - time2 <= 120000) {
-								num++;
-								sum += obj.getInt("UV_index");
-							} else
-								break;
+								if(i <= 1)
+									meanUVI = uvi;
+				                else
+				                	meanUVI = (uvi + meanUVI*(i-1))/i;
+							}
 						}
-						if (num > 0)
-							sum /= num;
-						setUVI(sum);
+						setUVI((int)meanUVI);
 
 						hasData = true;
 					} else {

@@ -1,7 +1,5 @@
 package edu.dartmouth.cs.myruns5;
 
-import com.parse.Parse;
-
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.Activity;
@@ -18,6 +16,11 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.Spinner;
+
+import com.parse.Parse;
+import com.parse.ParseObject;
+
+import edu.dartmouth.cs.myruns5.util.uv.ParseUVReading;
 
 public class MainActivity extends Activity {
 	public static final String KEY_TAB_INDEX = "tab index";
@@ -39,6 +42,7 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 
 
+        ParseObject.registerSubclass(ParseUVReading.class);
 		Parse.initialize(this, "WbDp7JEI27askcOboEqer63TlIPGKLmNZQM92ivU","B6lwzPTXqLJOxPUtutKngW7rNKZeNVKuIRLtJZRJ");
 		
 		sp = this.getPreferences(MODE_PRIVATE);
@@ -200,6 +204,11 @@ public class MainActivity extends Activity {
 		startActivity(intent);
 	}
 	
+
+	public void onSampleClicked(View view) {
+		Intent i = new Intent(this,SerialConsoleActivity.class);
+		startActivity(i);
+	}
 	public void onStartClicked(View view) {
 		new AlertDialog.Builder(this)
         .setIcon(android.R.drawable.ic_dialog_alert)
