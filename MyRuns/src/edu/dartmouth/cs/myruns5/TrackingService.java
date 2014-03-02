@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedSet;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import weka.core.Attribute;
 import weka.core.Instance;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -44,7 +46,23 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
+import edu.dartmouth.cs.myruns5.SerialConsoleActivity.LightSensor0Callback;
+import edu.dartmouth.cs.myruns5.SerialConsoleActivity.LightSensor1Callback;
+import edu.dartmouth.cs.myruns5.SerialConsoleActivity.LightSensorCallback;
+import edu.dartmouth.cs.myruns5.SerialConsoleActivity.UVSensor0Callback;
+import edu.dartmouth.cs.myruns5.SerialConsoleActivity.UVSensor1Callback;
+import edu.dartmouth.cs.myruns5.SerialConsoleActivity.UVSensorCallback;
 import edu.dartmouth.cs.myruns5.util.LocationUtils;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.res.Resources;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 
 import org.apache.http.*;
@@ -52,9 +70,227 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
+
 public class TrackingService extends Service
 	implements LocationListener, SensorEventListener
 	{
+	
+	
+	//Classes for connecting to Arduino light sensor
+
+	private TextView uvSensor0_text;
+	private TextView lightSensor0_text;
+	private boolean mIsStreaming;
+
+	private ILightSensor mLightSensor0;
+	private ILightSensor mLightSensor1;
+	private LightSensor0Callback mLightSensor0Callback;
+	private LightSensor1Callback mLightSensor1Callback;
+	
+	private IUVSensor mUVSensor0;
+	private IUVSensor mUVSensor1;
+	private UVSensor0Callback mUVSensor0Callback;
+	private UVSensor1Callback mUVSensor1Callback;
+	
+	private UsbSensorManager mUsbSensorManager;
+	
+	// This is the callback object for the first light sensor
+		public class LightSensor0Callback implements ILightSensor.Callback
+		{
+			private final Activity mActivity;
+			
+			LightSensor0Callback(Activity activity)
+			{
+				mActivity = activity;
+			}
+			
+			public LightSensor0Callback(TrackingService trackingService) {
+				// TODO Auto-generated constructor stub
+			}
+
+			@Override
+			public void onSensorUpdate(final int updateLux)
+			{
+				// This callback method is invoked when the light sensor gets a new light reading data
+				
+				// All UI updates MUST occur on the main thread (a.k.a. UI thread) so we update the
+				// light sensor TextView object using this Runnable
+				mActivity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						lightSensor0_text.setText("LUX0: " + updateLux);
+					}
+				});
+			}
+
+			@Override
+			public void onSensorEjected()
+			{
+				// This function is run when the sensor is forcibly ejected while this callback object 
+				// is active and registered with the sensor
+				
+				mActivity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						//Toast.makeText(mContext, "Light sensor ejected!", Toast.LENGTH_SHORT).show();
+					}
+				});
+				
+				mLightSensor0 = null;
+			}
+		}
+		
+		// This is the callback object for the second light sensor
+		private class LightSensor1Callback implements ILightSensor.Callback
+		{
+			private final Activity mActivity;
+			
+			LightSensor1Callback(Activity activity)
+			{
+				mActivity = activity;
+			}
+			
+			public LightSensor1Callback(TrackingService trackingService) {
+				// TODO Auto-generated constructor stub
+			}
+
+			@Override
+			public void onSensorUpdate(final int updateLux)
+			{
+				mActivity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						//lightSensor1_text.setText("LUX1: " + updateLux);
+					}
+				});
+			}
+
+			@Override
+			public void onSensorEjected()
+			{
+				mActivity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						//Toast.makeText(mContext, "Light sensor ejected!", Toast.LENGTH_SHORT).show();
+					}
+				});
+				
+				mLightSensor1 = null;
+			}
+		}
+		
+		// This is the callback object for the first UV sensor
+		public class UVSensor0Callback implements IUVSensor.Callback
+		{
+			private final Activity mActivity;
+			
+			UVSensor0Callback(Activity activity)
+			{
+				mActivity = activity;
+			}
+			
+			public UVSensor0Callback(TrackingService trackingService) {
+				// TODO Auto-generated constructor stub
+			}
+
+			@Override
+			public void onSensorUpdate(final int updateUV)
+			{
+				// This callback method is invoked when the UV sensor gets a new UV reading data
+				
+				// All UI updates MUST occur on the main thread (a.k.a. UI thread) so we update the
+				// UV sensor TextView object using this Runnable
+				mActivity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						//uvSensor0_text.setText("UV0: " + updateUV);
+					}
+				});
+			}
+
+			@Override
+			public void onSensorEjected()
+			{
+				// This function is run when the sensor is forcibly ejected while this callback object 
+				// is active and registered with the sensor
+				
+				mActivity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						//Toast.makeText(mContext, "UV sensor ejected!", Toast.LENGTH_SHORT).show();
+					}
+				});
+				
+				mUVSensor0 = null;
+			}
+		}
+		
+		// This is the callback object for the second UV sensor
+		private class UVSensor1Callback implements IUVSensor.Callback
+		{
+			private final Activity mActivity;
+			
+			UVSensor1Callback(Activity activity)
+			{
+				mActivity = activity;
+			}
+			
+			public UVSensor1Callback(TrackingService trackingService) {
+				// TODO Auto-generated constructor stub
+			}
+
+			@Override
+			public void onSensorUpdate(final int updateUV)
+			{
+				// This callback method is invoked when the UV sensor gets a new UV reading data
+				
+				// All UI updates MUST occur on the main thread (a.k.a. UI thread) so we update the
+				// UV sensor TextView object using this Runnable
+				mActivity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						//uvSensor1_text.setText("UV1: " + updateUV);
+					}
+				});
+			}
+
+			@Override
+			public void onSensorEjected()
+			{
+				// This function is run when the sensor is forcibly ejected while this callback object 
+				// is active and registered with the sensor
+				
+				mActivity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						//Toast.makeText(mContext, "UV sensor ejected!", Toast.LENGTH_SHORT).show();
+					}
+				});
+				
+				mUVSensor1 = null;
+				mIsStreaming = false;
+			}
+		}
+		
+	//End of Arduino light sensor required block
+	
+
 	private File mWekaClassificationFile;
 	private Attribute mClassNameForData,meanAttribute,stdAttribute,maxAttribute,minAttribute,meanAbsDeviationAttribute;
 	
@@ -136,6 +372,67 @@ public class TrackingService extends Service
 		dataCollector = new Timer();
 		dataCollector.scheduleAtFixedRate(dataCollectorTask, Globals.DATA_COLLECTOR_START_DELAY, Globals.DATA_COLLECTOR_INTERVAL);
 		
+		//In here, create an instance of Daniel's sensor callback. Put that clas down in the bottom of this file and use it here
+		mUsbSensorManager = MyRunsApplication.getUsbSensorManager();
+
+		List<IUVSensor> uvSensor_list = mUsbSensorManager.getUVSensorList();
+		List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
+		
+		if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
+		{
+			Toast.makeText(this, "ERROR: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+			return;
+		}
+		// Create the sensor callback objects
+		mLightSensor0Callback = new LightSensor0Callback(this);
+		mLightSensor1Callback = new LightSensor1Callback(this);
+		mUVSensor0Callback = new UVSensor0Callback(this);
+		mUVSensor1Callback = new UVSensor1Callback(this);
+		
+		mIsStreaming = false;
+		
+		// Get the UV and light sensors that the UsbSensorManager recognizes
+		List<IUVSensor> uvSensor_list = mUsbSensorManager.getUVSensorList();
+		List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
+		
+		// Make sure that the lists aren't empty
+		if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
+		{
+			Toast.makeText(this, "ERROR: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+			return;
+		}
+		
+		// Grab the first pair of sensor objects.  On an Android phone there really shouldn't 
+		// be more than one
+		mLightSensor0 = lightSensor_list.get(0);
+		mUVSensor0 = uvSensor_list.get(0);
+		
+		// @NOTE: We need to grab a new list of sensors since Java must create a new sensor 
+		//    	  object.  Otherwise, they'll refer to the same sensor object and invoking 
+		// 		  the register() method will overwrite the original callback object.
+		// 		  Another way to think about it is the getLightSensorList() method is like a 
+		// 		  factory that returns light sensor objects so we need it to create a new 
+		// 		  object for us.
+		lightSensor_list = mUsbSensorManager.getLightSensorList();
+		
+		// Make sure that the lists aren't empty
+		if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
+		{
+			Toast.makeText(this, "ERROR: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+			return;
+		}
+		
+		// Grab the handle to the UV sensor and second light sensor objects
+		mLightSensor1 = lightSensor_list.get(0);
+		mUVSensor1 = uvSensor_list.get(0);
+		
+		// Initialize the UV sensor and light sensor objects
+		mLightSensor0.init(Constants.PULSE_ID_LIGHT_0);
+		mLightSensor1.init(Constants.PULSE_ID_LIGHT_1);
+		mUVSensor0.init(Constants.PULSE_ID_UV_0);
+		mUVSensor1.init(Constants.PULSE_ID_UV_1);
+		
+		Toast.makeText(this, "Initialized sensor hardware!", Toast.LENGTH_LONG).show();
 	}
 
 	@Override
@@ -334,59 +631,66 @@ public class TrackingService extends Service
 	      if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
 	    	  //JERRID: Light Sensor Reading
 	         
-	    	  if (mGravity != null && mGeomagnetic != null)
-	          {
-	              float R[] = new float[9];
-	              float I[] = new float[9];
-	              boolean success = android.hardware.SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-	              if (success) 
-	              {
-	                  float orientation[] = new float[3];
-	                  android.hardware.SensorManager.getOrientation(R, orientation); 
-		              pitchReading[0] = Math.round(Math.abs((orientation[0]*180)/Math.PI));
-		              pitchReading[1] = Math.round(Math.abs((orientation[1]*180)/Math.PI));
-		              pitchReading[2] = Math.round(Math.abs((orientation[2]*180)/Math.PI));
-	                  float uvi = 0;
-	                  LumenDataPoint intensityReading = new LumenDataPoint(event.timestamp, pitchReading, event.values[0], uvi);
-	                    
-	                  try {
-	                      //JERRID: Add the magnitude reading to the buffer
-	                      mLightIntensityReadingBuffer.add(intensityReading);
-	                      File dir = new File (android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/accelerometer");
-	                      dir.mkdirs();
-	                      FileWriter sunClassificationFile = new FileWriter(dir.getAbsolutePath()+"/"+Globals.LIGHT_INTENSITY_FILE_NAME, true);                       
-                          try {                  
-                        	  String out = (System.currentTimeMillis() + "\t" + event.values[0] + "\t" + pitchReading[0] +  "\t" + pitchReading[1] + "\t" + pitchReading[2] +"\n");         
-                        	  //Log.e("LIGHT DATA: ", out);
-                        	  sunClassificationFile.append(out);           
-                          } catch (IOException ex){
-                          }
-                          finally{
-                        	  sunClassificationFile.flush();
-                        	  sunClassificationFile.close();
-                          }
-	                         
-	                      
-	                  } catch (IllegalStateException e) {
-	                
-	                      // Exception happens when reach the capacity.
-	                      // Doubling the buffer. ListBlockingQueue has no such issue,
-	                      // But generally has worse performance
-	                      ArrayBlockingQueue<LumenDataPoint> newBuf = new ArrayBlockingQueue<LumenDataPoint>( mLightIntensityReadingBuffer.size() * 2);
-	                      mLightIntensityReadingBuffer.drainTo(newBuf);
-	                      mLightIntensityReadingBuffer = newBuf;
-	                      mLightIntensityReadingBuffer.add(intensityReading);
-	                  } catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-	              }
-	          }
+	    	  gotLightSensorData(event);
+	    	  return;
 //			Toast.makeText(getApplicationContext(), String.valueOf(mAccBuffer.size()), Toast.LENGTH_SHORT).show();
 		}
 	}
 
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+	
+//SEND IN timestamp as long and then luxvalue as float
+	public void gotLightSensorData(SensorEvent event) {
+		if (mGravity != null && mGeomagnetic != null)
+        {
+            float R[] = new float[9];
+            float I[] = new float[9];
+            boolean success = android.hardware.SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+            if (success) 
+            {
+                float orientation[] = new float[3];
+                android.hardware.SensorManager.getOrientation(R, orientation); 
+	              pitchReading[0] = Math.round(Math.abs((orientation[0]*180)/Math.PI));
+	              pitchReading[1] = Math.round(Math.abs((orientation[1]*180)/Math.PI));
+	              pitchReading[2] = Math.round(Math.abs((orientation[2]*180)/Math.PI));
+                float uvi = 0;
+                LumenDataPoint intensityReading = new LumenDataPoint(event.timestamp, pitchReading, event.values[0], uvi);
+                  
+                try {
+                    //JERRID: Add the magnitude reading to the buffer
+                    mLightIntensityReadingBuffer.add(intensityReading);
+                    File dir = new File (android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/accelerometer");
+                    dir.mkdirs();
+                    FileWriter sunClassificationFile = new FileWriter(dir.getAbsolutePath()+"/"+Globals.LIGHT_INTENSITY_FILE_NAME, true);                       
+                    try {                  
+                  	  String out = (System.currentTimeMillis() + "\t" + event.values[0] + "\t" + pitchReading[0] +  "\t" + pitchReading[1] + "\t" + pitchReading[2] +"\n");         
+                  	  //Log.e("LIGHT DATA: ", out);
+                  	  sunClassificationFile.append(out);           
+                    } catch (IOException ex){
+                    }
+                    finally{
+                  	  sunClassificationFile.flush();
+                  	  sunClassificationFile.close();
+                    }
+                       
+                    
+                } catch (IllegalStateException e) {
+              
+                    // Exception happens when reach the capacity.
+                    // Doubling the buffer. ListBlockingQueue has no such issue,
+                    // But generally has worse performance
+                    ArrayBlockingQueue<LumenDataPoint> newBuf = new ArrayBlockingQueue<LumenDataPoint>( mLightIntensityReadingBuffer.size() * 2);
+                    mLightIntensityReadingBuffer.drainTo(newBuf);
+                    mLightIntensityReadingBuffer = newBuf;
+                    mLightIntensityReadingBuffer.add(intensityReading);
+                } catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+            }
+        }
+		return;
+	}
 
 
 	/************ AsyncTask **************/

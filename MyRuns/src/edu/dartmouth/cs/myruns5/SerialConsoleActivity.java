@@ -15,7 +15,7 @@ import android.widget.Toast;
 public class SerialConsoleActivity extends Activity implements OnClickListener
 {
 	// This is the callback object for the first light sensor
-	private class LightSensor0Callback implements ILightSensor.Callback
+	public class LightSensor0Callback implements ILightSensor.Callback
 	{
 		private final Activity mActivity;
 		
@@ -100,7 +100,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 	}
 	
 	// This is the callback object for the first UV sensor
-	private class UVSensor0Callback implements IUVSensor.Callback
+	public class UVSensor0Callback implements IUVSensor.Callback
 	{
 		private final Activity mActivity;
 		
