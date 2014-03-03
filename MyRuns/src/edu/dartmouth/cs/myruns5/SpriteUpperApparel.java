@@ -19,7 +19,7 @@ public class SpriteUpperApparel {
 	Context context;
 	UpperApparelType upperApparel;
 	
-	private enum UpperApparelType {
+	public enum UpperApparelType {
 		NONE(0), TANK_TOP_MALE(1), TANK_TOP_FEMALE(2), TEESHIRT_LONGSLEEVE_MALE(3), TEESHIRT_LONGSLEEVE_FEMALE(4),
 		TEESHIRT_SHORTSLEEVE_MALE(5), TEESHIRT_SHORTSLEEVE_FEMALE(6), SPORTS_BRA_FEMALE(7);
 		
@@ -150,7 +150,7 @@ public class SpriteUpperApparel {
 				defaultWidth : upperApparelMap.get(upperApparel.getValue()).getWidth();
 		
 		x = ov.getWidth()/2 - width/2;
-		y = ov.getHeight()/3 - height/2 + 12; // TODO: Use a member variable from SpritePerson
+		y = personSprite.getY() + (int)(personSprite.getHeight()*0.3) - (int)(height*0.4);
 		saveHeadApparelPreferences();
 	}
 	

@@ -45,7 +45,12 @@ public class ExerciseEntryHelper {
 		Log.d(null, "writing climb to values");
 		values.put(HistoryTable.KEY_CLIMB, mData.getClimb());
 		Log.d(null, "wrote climb to values");
-
+		
+		values.put(HistoryTable.KEY_SKIN_TONE, mData.getSkinTone());
+		values.put(HistoryTable.KEY_SPF, mData.getSPF());
+		values.put(HistoryTable.KEY_HEAD_APPAREL, mData.getHeadApparel().getValue());
+		values.put(HistoryTable.KEY_UPPER_APPAREL, mData.getUpperApparel().getValue());
+		values.put(HistoryTable.KEY_LOWER_APPAREL, mData.getLowerApparel().getValue());
 
 		values.put(HistoryTable.KEY_UV_EXPOSURE, mData.getUVExposureCumulative());
 		values.put(HistoryTable.KEY_VITAMIN_D, mData.getVitaminDExposureCumulative());
@@ -60,7 +65,7 @@ public class ExerciseEntryHelper {
 		Log.d(null, "writing track...");
 
 		ArrayList<Location> tmpList = mData.getLocationList();
-		if (tmpList!=null){
+		if (tmpList!=null) {
 			Location[] tmp = (Location[]) tmpList.toArray(new Location[0]);
 			values.put(HistoryTable.KEY_TRACK, Utils.fromLocationArrayToByteArray(tmp));
 		}
@@ -204,5 +209,23 @@ public class ExerciseEntryHelper {
 		return mData.getInputType();
 	}
 	
-
+	public int getSkinTone() {
+		return mData.getSkinTone();
+	}
+	
+	public int getSPF() {
+		return mData.getSPF();
+	}
+	
+	public SpriteHeadApparel.HeadApparelType getHeadApparel() {
+		return mData.getHeadApparel();
+	}
+	
+	public SpriteUpperApparel.UpperApparelType getUpperApparel() {
+		return mData.getUpperApparel();
+	}
+	
+	public SpriteLowerApparel.LowerApparelType getLowerApparel() {
+		return mData.getLowerApparel();
+	}
 }

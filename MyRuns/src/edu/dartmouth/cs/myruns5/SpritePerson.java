@@ -36,6 +36,19 @@ public class SpritePerson {
 	public Gender gender;
 	Context context;
 	
+	int getX() {
+		return x;
+	}
+	int getY() {
+		return y;
+	}
+	int getWidth() {
+		return width;
+	}
+	int getHeight() {
+		return height;
+	}
+	
 	public SpritePerson(OurView ourView) {
 		ov = ourView;
 		x = y = 0;
@@ -54,6 +67,7 @@ public class SpritePerson {
 			width = width*9/10;
 			scale *= 9.0/10.0;
 		}
+		
 		personMap.put(Gender.MALE.getValue(), Bitmap.createScaledBitmap(
 				BitmapFactory.decodeResource(context.getResources(),R.drawable.male_body_sprite), width, height, false));
 		personMap.put(Gender.FEMALE.getValue(), Bitmap.createScaledBitmap(

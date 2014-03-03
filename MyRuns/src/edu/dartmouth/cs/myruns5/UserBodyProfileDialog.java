@@ -154,14 +154,14 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 			
 			// Update clothing toggling
 			lowerApparelSprite.onDraw(canvas);
-			lowerApparelRegion.set(lowerApparelSprite.getX(), lowerApparelSprite.getY(), 
-					lowerApparelSprite.getX() + lowerApparelSprite.getWidth(), lowerApparelSprite.getY() + lowerApparelSprite.getHeight());
+			//lowerApparelRegion.set(lowerApparelSprite.getX(), lowerApparelSprite.getY(), 
+			//		lowerApparelSprite.getX() + lowerApparelSprite.getWidth(), lowerApparelSprite.getY() + lowerApparelSprite.getHeight());
 			upperApparelSprite.onDraw(canvas);
-			upperApparelRegion.set(upperApparelSprite.getX(), upperApparelSprite.getY(), 
-					upperApparelSprite.getX() + upperApparelSprite.getWidth(), upperApparelSprite.getY() + upperApparelSprite.getHeight());
+			//upperApparelRegion.set(upperApparelSprite.getX(), upperApparelSprite.getY(), 
+			//		upperApparelSprite.getX() + upperApparelSprite.getWidth(), upperApparelSprite.getY() + upperApparelSprite.getHeight());
 			headApparelSprite.onDraw(canvas);
-			headApparelRegion.set(headApparelSprite.getX(), headApparelSprite.getY(), 
-					headApparelSprite.getX() + headApparelSprite.getWidth(), headApparelSprite.getY() + headApparelSprite.getHeight());
+			//headApparelRegion.set(headApparelSprite.getX(), headApparelSprite.getY(), 
+			//		headApparelSprite.getX() + headApparelSprite.getWidth(), headApparelSprite.getY() + headApparelSprite.getHeight());
 			
 			canvas.drawBitmap(arrowBitmap,x - arrowBitmap.getWidth()/2,y - arrowBitmap.getHeight()/2, null);//draws ball
 		}

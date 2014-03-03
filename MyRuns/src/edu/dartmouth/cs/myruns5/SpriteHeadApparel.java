@@ -20,7 +20,7 @@ public class SpriteHeadApparel {
 	HeadApparelType headApparel;
 	
 	// Enumeration for the types of head apparel
-	private static enum HeadApparelType {
+	public static enum HeadApparelType {
 		NONE(0), BASEBALLCAP(1);
 		
 		int value;
@@ -100,7 +100,7 @@ public class SpriteHeadApparel {
 		}
 		
 		x = ov.getWidth()/2 - width/2;
-		y = ov.getHeight()/15 - height/2; // TODO: Use a member variable from SpritePerson
+		y = personSprite.getY() - height/4;
 		saveHeadApparelPreferences();
 	}
 	

@@ -19,7 +19,7 @@ public class SpriteLowerApparel {
 	Context context;
 	LowerApparelType lowerApparel;
 	
-	private enum LowerApparelType {
+	public enum LowerApparelType {
 		NONE(0), SHORTS_MALE(1), SHORTS_FEMALE(2);
 		
 		int value;
@@ -110,7 +110,7 @@ public class SpriteLowerApparel {
 				defaultWidth : lowerApparelMap.get(lowerApparel.getValue()).getWidth();
 		
 		x = ov.getWidth()/2 - width/2;
-		y = ov.getHeight()*5/9 - height/2; // TODO: Use a member variable from SpritePerson
+		y = personSprite.getY() + (int)(personSprite.getHeight()*0.45);
 		saveHeadApparelPreferences();
 	}
 	

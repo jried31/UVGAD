@@ -23,7 +23,11 @@ public class ExerciseEntry {
 	private int heartrate;
 	private double uvExposureCum;
 	private double vitaminDExposureCum;
-
+	private int skinTone;
+	private int spf;
+	private SpriteHeadApparel.HeadApparelType headApparel;
+	private SpriteUpperApparel.UpperApparelType upperApparel;
+	private SpriteLowerApparel.LowerApparelType lowerApparel;
 
 	private String comment;
     private Location[] myTrack; // Location array
@@ -45,6 +49,11 @@ public class ExerciseEntry {
 		this.vitaminDExposureCum=0;
 		this.uvExposureCum=0;
 		this.comment = "";
+		this.skinTone = 0;
+		this.spf = 0;
+		this.headApparel = SpriteHeadApparel.HeadApparelType.NONE;
+		this.upperApparel = SpriteUpperApparel.UpperApparelType.NONE;
+		this.lowerApparel = SpriteLowerApparel.LowerApparelType.NONE;
 	}
 	public Location[] getTrack(){ return myTrack;}
 	public void setTrack(Location[] track){myTrack = track;}
@@ -176,7 +185,47 @@ public class ExerciseEntry {
 	public void setComment(String comment) {
 		this.comment = comment;
 	}
+	
+	public int getSkinTone() {
+		return skinTone;
+	}
+	
+	public void setSkinTone(int skinTone) {
+		this.skinTone = skinTone;
+	}
+	
+	public int getSPF() {
+		return spf;
+	}
+	
+	public void setSPF(int spf) {
+		this.spf = spf;
+	}
+	
+	public SpriteHeadApparel.HeadApparelType getHeadApparel() {
+		return headApparel;
+	}
+	
+	public void setHeadApparel(SpriteHeadApparel.HeadApparelType headApparel) {
+		this.headApparel = headApparel;
+	}
 
+	public SpriteUpperApparel.UpperApparelType getUpperApparel() {
+		return upperApparel;
+	}
+	
+	public void setUpperApparel(SpriteUpperApparel.UpperApparelType upperApparel) {
+		this.upperApparel = upperApparel;
+	}
+	
+	public SpriteLowerApparel.LowerApparelType getLowerApparel() {
+		return lowerApparel;
+	}
+	
+	public void setLowerApparel(SpriteLowerApparel.LowerApparelType lowerApparel) {
+		this.lowerApparel = lowerApparel;
+	}
+	
 	@Override
 	public String toString() {
 		return super.toString();

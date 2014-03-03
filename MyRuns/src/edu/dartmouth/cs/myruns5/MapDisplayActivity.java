@@ -1,6 +1,14 @@
 package edu.dartmouth.cs.myruns5;
 
+import java.io.InputStream;
 import java.util.ArrayList;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.FragmentManager;
@@ -10,6 +18,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.location.Location;
@@ -17,6 +26,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.Settings.Secure;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -113,6 +123,11 @@ public class MapDisplayActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_map_display);
 		
+		Button sendButton = (Button) findViewById(R.id.button_send_data);
+		sendButton.setVisibility(View.GONE);
+		sendButton.setClickable(false);
+		
+		
 		// initialize member variables
 		mBound = false;
 		mLatLngList = new ArrayList<LatLng>();
@@ -173,6 +188,10 @@ public class MapDisplayActivity extends Activity {
 			saveButton.setVisibility(View.GONE);
 			Button cancelButton = (Button) findViewById(R.id.button_map_cancel);
 			cancelButton.setVisibility(View.GONE);
+			
+			// Add send data button
+			sendButton.setVisibility(View.VISIBLE);
+			sendButton.setClickable(true);
 
 			// Read track from database
 			intent = getIntent();
@@ -231,7 +250,10 @@ public class MapDisplayActivity extends Activity {
 			curspeedStats.setText(curSpeed);
 			climbStats.setText(climb);
 			caloriesStats.setText(calories);
-			distanceStats.setText(distance);
+			//distanceStats.setText(distance);
+			// TODO: Display clothing coverage
+			System.out.println(intent.getStringExtra(HistoryFragment.HEAD_APPAREL));
+			Log.d(null, intent.getStringExtra(HistoryFragment.HEAD_APPAREL));
 			
 			break;
 		default:
@@ -283,7 +305,6 @@ public class MapDisplayActivity extends Activity {
 	
 	/******************* button listeners ******************/
 	public void onSaveClicked(View v) {
-
 		// disable the button
 		Button button = (Button) findViewById(R.id.button_map_save);
 		button.setClickable(false);
@@ -299,8 +320,23 @@ public class MapDisplayActivity extends Activity {
 		mEntry.setActivityType(mInferredActivityType);
 		mEntry.setSweatRate(mSweatRate);
 		
+		SharedPreferences sharedPref = mContext.getSharedPreferences(Globals.TAG, Context.MODE_PRIVATE);
+		mEntry.setSkinTone(sharedPref.getInt(mContext.getString(R.string.data_SkinTone), 0));
+		mEntry.setSPF(sharedPref.getInt(mContext.getString(R.string.data_SPF), 0));
+		
+		int clothingValue = sharedPref.getInt(
+				mContext.getString(R.string.data_Hat), SpriteHeadApparel.HeadApparelType.NONE.getValue());
+		mEntry.setHeadApparel(SpriteHeadApparel.HeadApparelType.getTypeFromValue(clothingValue));
+		
+		clothingValue = sharedPref.getInt(
+				mContext.getString(R.string.data_ApparelTop), SpriteUpperApparel.UpperApparelType.NONE.getValue());
+		mEntry.setUpperApparel(SpriteUpperApparel.UpperApparelType.getTypeFromValue(clothingValue));
+		clothingValue = sharedPref.getInt(
+				mContext.getString(R.string.data_ApparelBottom), SpriteLowerApparel.LowerApparelType.NONE.getValue());
+		mEntry.setLowerApparel(SpriteLowerApparel.LowerApparelType.getTypeFromValue(clothingValue));
+		
 		mEntryHelper = new ExerciseEntryHelper(mEntry);
-		id = mEntryHelper.insertToDB(this);		
+		id = mEntryHelper.insertToDB(this);
 		if (id > 0) 
 			Toast.makeText(getApplicationContext(), "Entry #" + id + " saved.",
 					Toast.LENGTH_SHORT).show();
@@ -326,6 +362,45 @@ public class MapDisplayActivity extends Activity {
 		}
 		stopService(intent);
 		// notification has flag auto_cancel set
+		finish();
+	}
+	
+	public void onSendData(View v) {
+		int val;
+		
+		Intent intent = getIntent();
+		JSONObject json = new JSONObject();
+		try {
+			json.put("id", intent.getIntExtra(HistoryFragment.ROW_ID, 0));
+			
+			json.put("androidId", Secure.getString(getApplicationContext().getContentResolver(), Secure.ANDROID_ID));
+			
+			json.put(Globals.KEY_ACTIVITY_TYPE, intent.getStringExtra(HistoryFragment.ACTIVITY_TYPE));
+			
+			json.put(Globals.KEY_DISTANCE, Double.parseDouble(intent.getStringExtra(HistoryFragment.DISTANCE)));
+			
+			json.put(Globals.KEY_DURATION, Double.parseDouble(intent.getStringExtra(HistoryFragment.DURATION)));
+			
+			//json.put(Globals.KEY_SWEATRATE, Double.parseDouble(intent.getStringExtra(HistoryFragment.SWEATRATE)));
+			
+			json.put(Globals.KEY_SKIN_TONE, intent.getIntExtra(HistoryFragment.SKIN_TONE, 0));
+			
+			json.put(Globals.KEY_SPF, intent.getIntExtra(HistoryFragment.SPF, 0));
+			
+			val = Integer.parseInt(intent.getStringExtra(HistoryFragment.HEAD_APPAREL));
+			json.put(Globals.KEY_HEAD_APPAREL, SpriteHeadApparel.HeadApparelType.getTypeFromValue(val).name());
+			
+			val = Integer.parseInt(intent.getStringExtra(HistoryFragment.UPPER_APPAREL));
+			json.put(Globals.KEY_UPPER_APPAREL, SpriteUpperApparel.UpperApparelType.getTypeFromValue(val).name());
+			
+			val = Integer.parseInt(intent.getStringExtra(HistoryFragment.LOWER_APPAREL));
+			json.put(Globals.KEY_LOWER_APPAREL, SpriteLowerApparel.LowerApparelType.getTypeFromValue(val).name());
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		new HTTPSender().execute(json);
+		
 		finish();
 	}
 	
