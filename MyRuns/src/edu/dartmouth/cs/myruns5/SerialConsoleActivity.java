@@ -12,6 +12,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +26,7 @@ import edu.dartmouth.cs.myruns5.util.uv.ParseUVReading;
 
 public class SerialConsoleActivity extends Activity implements OnClickListener,GooglePlayServicesClient.ConnectionCallbacks,GooglePlayServicesClient.OnConnectionFailedListener 
 {
+	int uv1=-1,uv2=-1,uv=0;
 	// This is the callback object for the first light sensor
 	private class LightSensor0Callback implements ILightSensor.Callback
 	{
@@ -131,6 +134,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener,G
 				@Override
 				public void run()
 				{
+					uv1=updateUV;
 					uvSensor0_text.setText("UV0: " + updateUV);
 				}
 			});
@@ -177,6 +181,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener,G
 				@Override
 				public void run()
 				{
+					uv2=updateUV;
 					uvSensor1_text.setText("UV1: " + updateUV);
 				}
 			});
@@ -202,11 +207,20 @@ public class SerialConsoleActivity extends Activity implements OnClickListener,G
 		}
 	}
 	
-
-	public void onSampleClicked(View v){
-		location = this.mLocationClient.getLastLocation();
-		
+	public void uploadSample(View v){
+		uv=Math.max(uv1, uv2);
+		if(uv > 0){
+			location = this.mLocationClient.getLastLocation();
+			Date timestamp = new Date();
+			
+			ParseUVReading reading = new ParseUVReading();
+			reading.setUVI(uv);
+			reading.setLocation(new ParseGeoPoint(location.getLatitude(),location.getLongitude()));
+			reading.setTimestamp(timestamp);
+			reading.saveInBackground();
+		}
 	}
+
 	private Context mContext;
 	private Resources mResources;
 	private UsbSensorManager mUsbSensorManager;
@@ -220,6 +234,10 @@ public class SerialConsoleActivity extends Activity implements OnClickListener,G
 	private Button toggleStream_btn;
 	private Button instantSample_btn;
 	private Button sampleUVBtn;
+	private RadioGroup radioGroup;
+	private final RadioButton[] radioBtns = new RadioButton[5];
+	private final String[] mLabels = {Globals.CLASS_LABEL_IN_SHADE,Globals.CLASS_LABEL_IN_SUN,Globals.CLASS_LABEL_IN_CLOUD,Globals.CLASS_LABEL_OTHER};
+
 	
 	private ILightSensor mLightSensor0;
 	private ILightSensor mLightSensor1;
@@ -258,6 +276,12 @@ public class SerialConsoleActivity extends Activity implements OnClickListener,G
 		toggleStream_btn = (Button) findViewById(R.id.toggleStream_btn);
 		instantSample_btn = (Button) findViewById(R.id.instantSample_btn);
 		sampleUVBtn = (Button) findViewById(R.id.sampleUVBtn);
+
+		radioGroup = (RadioGroup) findViewById(R.id.radioGroupLabels);
+		radioBtns[0] = (RadioButton) findViewById(R.id.radioShade);
+		radioBtns[1] = (RadioButton) findViewById(R.id.radioSun);
+		radioBtns[2] = (RadioButton) findViewById(R.id.radioCloud);
+		radioBtns[3] = (RadioButton) findViewById(R.id.radioOther);
 		
 		loadSensor_btn.setOnClickListener(this);
 		toggleStream_btn.setOnClickListener(this);
@@ -437,14 +461,18 @@ public class SerialConsoleActivity extends Activity implements OnClickListener,G
 			}
 			case R.id.sampleUVBtn:
 			{
-				if(mUVSensor == null)
+				if(mUVSensor0 == null || mUVSensor1 == null)
 				{
 					Toast.makeText(this, "ERROR: Sensor hardware not initialized", Toast.LENGTH_LONG).show();
 					return;
 				}
 				
-				int uv = mUVSensor.getUV();
-				uvSensor0_text.setText("iUV0: " +uv);
+				int uv1 = mUVSensor0.getUV(),uv2 = mUVSensor1.getUV(),uv = Math.max(uv1,uv2);
+				uvSensor0_text.setText("iUV0: " +uv1);
+				uvSensor1_text.setText("iUV1: " +uv2);
+
+				int acvitivtyId = radioGroup.indexOfChild(findViewById(radioGroup.getCheckedRadioButtonId()));
+				String environment = mLabels[acvitivtyId];
 				
 				location = this.mLocationClient.getLastLocation();
 				Date timestamp = new Date();
@@ -453,6 +481,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener,G
 				reading.setUVI(uv);
 				reading.setLocation(new ParseGeoPoint(location.getLatitude(),location.getLongitude()));
 				reading.setTimestamp(timestamp);
+				reading.setEnvironment(environment);
 				reading.saveInBackground();
 			}
 			default:

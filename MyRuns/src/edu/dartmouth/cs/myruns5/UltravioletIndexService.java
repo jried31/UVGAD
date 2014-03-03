@@ -159,6 +159,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 			});
 
 			ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("UVData");
+			query.whereEqualTo(ParseUVReading.ENVIRONMENT, Globals.CLASS_LABEL_IN_SUN);
 			query.orderByDescending("timestamp");
 			query.setLimit(30);
 			
@@ -177,14 +178,14 @@ public class UltravioletIndexService extends Service implements LocationListener
 							int uvi = obj.getUVI();
 						    
 							time2 = timestamp.getTime();
-							if (time1 - time2 <= 120000) {
+							//if (time1 - time2 <= 120000) {
 								if(i <= 1)
 									meanUVI = uvi;
 				                else
 				                	meanUVI = (uvi + meanUVI*(i-1))/i;
-							}
+							//}
 						}
-						setUVI((int)meanUVI);
+						setUVI((int)(meanUVI));
 
 						hasData = true;
 					} else {
@@ -363,40 +364,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 	private void setLocation(Location loc) {
 		location = loc;
 	}
-
-	/*
-	 * private static float getCurrentUVI() { float currUVI = 0; Calendar now =
-	 * Calendar.getInstance(); int hour = now.get(Calendar.HOUR_OF_DAY);// 24 hr
-	 * format int nextHour = hour + 1;
-	 * 
-	 * if (hour < 6)// Hr < 6am return currUVI; else if (hour > 18)// Hr > 6pm
-	 * return currUVI; else {
-	 * 
-	 * long currTime = now.getTimeInMillis(); Calendar prevHr =
-	 * Calendar.getInstance(); prevHr.set(now.get(Calendar.YEAR),
-	 * now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH), hour, 0, 0);
-	 * 
-	 * Calendar currHr = Calendar.getInstance();
-	 * currHr.set(now.get(Calendar.YEAR), now.get(Calendar.MONTH),
-	 * now.get(Calendar.DATE), hour, 0);
-	 * 
-	 * Calendar nextHr = Calendar.getInstance();
-	 * nextHr.set(now.get(Calendar.YEAR), now.get(Calendar.MONTH),
-	 * now.get(Calendar.DATE), nextHour, 0);
-	 * 
-	 * float dtime = (currTime - prevHr.getTimeInMillis()) /
-	 * (nextHr.getTimeInMillis() - prevHr.getTimeInMillis());
-	 * 
-	 * // y=mx+b assuming linear scale time increase hour -= 6; nextHour -= 6;
-	 * // simple correction for the last index if (nextHour ==
-	 * HOURLY_UVI_FORECAST.length) nextHour = hour;
-	 * 
-	 * if (HOURLY_UVI_FORECAST[nextHour] > HOURLY_UVI_FORECAST[hour]) return
-	 * dtime (HOURLY_UVI_FORECAST[nextHour] - HOURLY_UVI_FORECAST[hour]) +
-	 * HOURLY_UVI_FORECAST[hour]; else return HOURLY_UVI_FORECAST[hour] - dtime
-	 * (HOURLY_UVI_FORECAST[hour] - HOURLY_UVI_FORECAST[nextHour]); } }
-	 */
-
+	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent == null)

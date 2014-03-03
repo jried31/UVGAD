@@ -10,7 +10,8 @@ import com.parse.ParseObject;
 public class ParseUVReading extends ParseObject{
 	public static final String UVI = "uvi",
 			LOCATION = "location",
-			TIMESTAMP = "timestamp";
+			TIMESTAMP = "timestamp",
+			ENVIRONMENT = "environment";
 	
 	public ParseUVReading() {
 	}
@@ -37,5 +38,13 @@ public class ParseUVReading extends ParseObject{
 	
 	public void setTimestamp(Date timestamp){
 		put(TIMESTAMP,timestamp);
+	}
+
+	public String getEnvironment(){
+		return this.getString(ENVIRONMENT);
+	} 
+	
+	public void setEnvironment(String environment) {
+		put(ENVIRONMENT, environment);
 	}
 }

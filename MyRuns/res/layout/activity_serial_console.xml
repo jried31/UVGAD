@@ -53,7 +53,7 @@
 		        android:layout_width="match_parent"
 		        android:layout_height="wrap_content"
 		        android:text="UV0 : 0"
-		        android:textSize="24sp"
+		        android:textSize="14sp"
 		        android:textStyle="bold"
 		        android:paddingBottom="10dp"
 	        />
@@ -62,7 +62,7 @@
 		        android:layout_width="match_parent"
 		        android:layout_height="wrap_content"
 		        android:text="LUX0 : 0"
-		        android:textSize="24sp"
+		        android:textSize="14sp"
 		        android:textStyle="bold"
 		        android:paddingBottom="10dp"
 		    />
@@ -71,7 +71,7 @@
 		        android:layout_width="match_parent"
 		        android:layout_height="wrap_content"
 		        android:text="UV1 : 0"
-		        android:textSize="24sp"
+		        android:textSize="14sp"
 		        android:textStyle="bold"
 		        android:paddingBottom="10dp"
 	        />
@@ -80,17 +80,51 @@
 		        android:layout_width="match_parent"
 		        android:layout_height="wrap_content"
 		        android:text="LUX1 : 0"
-		        android:textSize="24sp"
+		        android:textSize="14sp"
 		        android:textStyle="bold"
 		        android:paddingBottom="10dp"
 		    />
-		            
+		   
+    <RadioGroup
+        android:id="@+id/radioGroupLabels"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="30dp" >
+
+        <RadioButton
+            android:id="@+id/radioShade"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:checked="true"
+            android:text="@string/ui_collector_radio_shade_title" />
+
+        <RadioButton
+            android:id="@+id/radioSun"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_sun_title" />
+        <RadioButton
+            android:id="@+id/radioCloud"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_cloud_title" />
+        <RadioButton
+            android:id="@+id/radioOther"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_other_title" />
+    </RadioGroup>     
 		   <Button
             android:id="@+id/sampleUVBtn"
             android:text="Sample UV"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:onClick="uploadSample()"/>
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>
