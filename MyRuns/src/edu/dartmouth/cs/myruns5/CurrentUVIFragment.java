@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Messenger;
 import android.support.v4.app.NotificationCompat;
 import android.view.LayoutInflater;
@@ -24,6 +25,7 @@ public class CurrentUVIFragment extends Fragment {
 	Messenger myService = null;
 	boolean isBound;
 	private Timer timer;
+	private Handler handler;
 	private UVIBroadcastReciever reciever;
 	private IntentFilter filter;
 	private View v;
@@ -59,9 +61,18 @@ public class CurrentUVIFragment extends Fragment {
 					.getRecommendFragment(), 1));
 
 		updateDisplay(v);
+		
+		handler=new Handler();
+		handler.post(updateUVIRunnable);
+		
 		return v;
 	}
-
+	private Runnable updateUVIRunnable =new Runnable(){
+	    public void run() {
+	    	updateUVIWidget(); 
+			handler.postDelayed(updateUVIRunnable,10000);
+	    }
+	}; 
 	private TimerTask updateUVITask = new TimerTask() {
 		@Override
 		public void run() {
@@ -159,12 +170,14 @@ public class CurrentUVIFragment extends Fragment {
 	@Override
 	public void onResume() {
 		super.onResume();
+		handler.post(this.updateUVIRunnable);
 		registerReciever();
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
+		handler.removeCallbacks(this.updateUVIRunnable);
 		if (reciever != null) {
 			getActivity().unregisterReceiver(reciever);
 			reciever = null;
@@ -175,11 +188,11 @@ public class CurrentUVIFragment extends Fragment {
 	@Override
 	public void onStop() {
 		super.onStop();
+		handler.removeCallbacks(this.updateUVIRunnable);
 		if (reciever != null) {
 			getActivity().unregisterReceiver(reciever);
 			reciever = null;
 			filter = null;
 		}
 	}
-
 }
