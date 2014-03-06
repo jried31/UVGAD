@@ -76,7 +76,8 @@ public class TrackingService extends Service
 	
 	
 	private SensorManager mSensorManager;
-	private Sensor mAccelerometer,mLightSensor,mMagnetSensor,mGravitySensor;
+	private Sensor mAccelerometer;
+	private Sensor mLightSensor;
 	
 	private float[] mGeomagnetic;
 	private static ArrayBlockingQueue<Double> mAccBuffer;
@@ -88,19 +89,15 @@ public class TrackingService extends Service
 	private final IBinder mBinder = new TrackingBinder();
 
 	private float[] mGravity;
-	private double []pitchReading={0,0,0};
+
+	private long pitchReading;
+	
 
 	
 	public static final String LOCATION_UPDATE = "location update";
 	public static final int NEW_LOCATION_AVAILABLE = 400;
 	
 	// broadcast 
-	public static final String ACTION_MOTION_UPDATE = "motion update";
-	public static final String CURRENT_MOTION_TYPE = "new motion type";
-	public static final String VOTED_MOTION_TYPE = "voted motion type";
-	public static final String ACTION_TRACKING = "tracking action";
-	public static final String CURRENT_SWEAT_RATE_INTERVAL = "sweat rate Interval";
-	public static final String FINAL_SWEAT_RATE_AVERAGE = "average sweat rate";
 
 	private static final String TAG = "TrackingService";
 	
@@ -123,9 +120,9 @@ public class TrackingService extends Service
 	public void onCreate() {
 		mLocationList = new ArrayList<Location>();
 		mLocationUpdateBroadcast = new Intent();
-		mLocationUpdateBroadcast.setAction(ACTION_TRACKING);
+		mLocationUpdateBroadcast.setAction(Globals.ACTION_TRACKING);
 		mMotionUpdateBroadcast = new Intent();
-		mMotionUpdateBroadcast.setAction(ACTION_MOTION_UPDATE);
+		mMotionUpdateBroadcast.setAction(Globals.ACTION_MOTION_UPDATE);
 		mLightIntensityReadingBuffer = new ArrayBlockingQueue<LumenDataPoint>(Globals.LIGHT_BUFFER_CAPACITY);
 		mAccBuffer = new ArrayBlockingQueue<Double>(Globals.ACCELEROMETER_BUFFER_CAPACITY);
 		mAccelerometerActivityClassificationTask = new AccelerometerActivityClassificationTask();
@@ -175,19 +172,14 @@ public class TrackingService extends Service
 	    	// init sensor manager
 	    	mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 	    
-	    	mGravitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-	    	mSensorManager.registerListener(this, mGravitySensor, SensorManager.SENSOR_DELAY_FASTEST);
-	    	
-	    	mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+	    	mAccelerometer = mSensorManager .getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+	    	// register listener
 	    	mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 	    	mAccelerometerActivityClassificationTask.execute();
 	    	
 	    	//JERRID: Register light Sensor
 			mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 			mSensorManager.registerListener(this, mLightSensor,SensorManager.SENSOR_DELAY_FASTEST);
-			
-			mMagnetSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-			mSensorManager.registerListener(this, mMagnetSensor,SensorManager.SENSOR_DELAY_FASTEST);
 			}
 	    
 		// Using pending intent to bring back the MapActivity from notification center.
@@ -312,13 +304,13 @@ public class TrackingService extends Service
 		
 	      if (event.sensor.getType() == android.hardware.Sensor.TYPE_MAGNETIC_FIELD){
 	           mGeomagnetic = event.values;
-	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_GRAVITY){
-	    	  mGravity = event.values;
 	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_LINEAR_ACCELERATION ){
-              double x = event.values[0];
-              double y = event.values[1];
+	    	  
+              mGravity = event.values;
+              double x = mGravity[0];
+              double y = mGravity[1];
               //Jerrid: Dont care about z component (for now)
-              double z = event.values[2];				
+              double z = mGravity[2];				
               double m = Math.sqrt(x*x + y*y + z*z);
 	
               // Add m to the mAccBuffer one by one.
@@ -333,8 +325,7 @@ public class TrackingService extends Service
 	      }else
 	      if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
 	    	  //JERRID: Light Sensor Reading
-	         
-	    	  if (mGravity != null && mGeomagnetic != null)
+	          if (mGravity != null && mGeomagnetic != null)
 	          {
 	              float R[] = new float[9];
 	              float I[] = new float[9];
@@ -342,31 +333,15 @@ public class TrackingService extends Service
 	              if (success) 
 	              {
 	                  float orientation[] = new float[3];
-	                  android.hardware.SensorManager.getOrientation(R, orientation); 
-		              pitchReading[0] = Math.round(Math.abs((orientation[0]*180)/Math.PI));
-		              pitchReading[1] = Math.round(Math.abs((orientation[1]*180)/Math.PI));
-		              pitchReading[2] = Math.round(Math.abs((orientation[2]*180)/Math.PI));
+	                  android.hardware.SensorManager.getOrientation(R, orientation);             
+	                  pitchReading = Math.round(Math.abs((orientation[1]*180)/Math.PI));
+	         
 	                  float uvi = 0;
 	                  LumenDataPoint intensityReading = new LumenDataPoint(event.timestamp, pitchReading, event.values[0], uvi);
 	                    
 	                  try {
 	                      //JERRID: Add the magnitude reading to the buffer
 	                      mLightIntensityReadingBuffer.add(intensityReading);
-	                      File dir = new File (android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/accelerometer");
-	                      dir.mkdirs();
-	                      FileWriter sunClassificationFile = new FileWriter(dir.getAbsolutePath()+"/"+Globals.LIGHT_INTENSITY_FILE_NAME, true);                       
-                          try {                  
-                        	  String out = (System.currentTimeMillis() + "\t" + event.values[0] + "\t" + pitchReading[0] +  "\t" + pitchReading[1] + "\t" + pitchReading[2] +"\n");         
-                        	  //Log.e("LIGHT DATA: ", out);
-                        	  sunClassificationFile.append(out);           
-                          } catch (IOException ex){
-                          }
-                          finally{
-                        	  sunClassificationFile.flush();
-                        	  sunClassificationFile.close();
-                          }
-	                         
-	                      
 	                  } catch (IllegalStateException e) {
 	                
 	                      // Exception happens when reach the capacity.
@@ -376,10 +351,7 @@ public class TrackingService extends Service
 	                      mLightIntensityReadingBuffer.drainTo(newBuf);
 	                      mLightIntensityReadingBuffer = newBuf;
 	                      mLightIntensityReadingBuffer.add(intensityReading);
-	                  } catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+	                  }
 	              }
 	          }
 //			Toast.makeText(getApplicationContext(), String.valueOf(mAccBuffer.size()), Toast.LENGTH_SHORT).show();
@@ -469,17 +441,16 @@ public class TrackingService extends Service
 	                      double prediction = wrapper.classifyInstance(featureInstance);
 	                      String classification = featureInstance.classAttribute().value((int) prediction);
 	                      
-	                      /*File dir = new File (android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/accelerometer");
+	                      File dir = new File (android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/accelerometer");
 	                      dir.mkdirs();
 	                      FileWriter sunClassificationFile=null;
 	                  
 	                      try {
-	                          sunClassificationFile = new FileWriter(dir.getAbsolutePath()+"/"+Globals.LIGHT_INTENSITY_FILE_NAME, true);                       
+	                          sunClassificationFile = new FileWriter(dir.getAbsolutePath()+"/"+Globals.LIGHT_INTENSITY_FILE_NAME, true);                 
+	      
 	                          try {                                  
 	                        	  long uviReading=0;
-	                        	  String out = (System.currentTimeMillis() +"\t" + classification + "\t" + uviReading + "\t" + pitchReading[0] +  "\t" + pitchReading[1] + "\t" + pitchReading[2] +"\n");         
-	                        	  Log.e("LIGHT DATA: ", out);
-	                        	  sunClassificationFile.append(out);           
+								sunClassificationFile.append(System.currentTimeMillis() +"\t" + classification + "\t" + uviReading + pitchReading + "\n");           
 	                          } catch (IOException ex){
 	                          }
 	                          finally{
@@ -490,7 +461,7 @@ public class TrackingService extends Service
 	                      } catch (IOException e) {
 	                          e.printStackTrace();
 	                      }
-	                      */
+	                      
 	                      
 	                      //Reset the Values
 	                      blockSize = 0;
@@ -562,8 +533,8 @@ public class TrackingService extends Service
 			} catch (Exception e) {
 				e.printStackTrace();
 			}			
-			// Create the timer task implementor class object with an intial state.
-			// The various state values are required so that the timer task impelmentor can judiciously determine the dominant activity as per the latest trend.
+			// Create the timer task implementor class object with an initial state.
+			// The various state values are required so that the timer task implementor can judiciously determine the dominant activity as per the latest trend.
 			UpdateFinalTypeTask updateTask = new UpdateFinalTypeTask(
 					mFinalInferredActivityTypeMap,
 					mActivityVsDurationMap,
@@ -778,9 +749,9 @@ public class TrackingService extends Service
 		                // new code
 						mInferredActivityType = Globals.INFERENCE_MAPPING[currentTrend == -1 ? value : currentTrend];//maxIndex];
 						int currentActivity = Globals.INFERENCE_MAPPING[value];
-						mMotionUpdateBroadcast.putExtra(CURRENT_MOTION_TYPE, currentActivity);
+						mMotionUpdateBroadcast.putExtra(Globals.CURRENT_MOTION_TYPE, currentActivity);
 						int sweatRateIndex = GetSweatRateIndexForActivity(currentActivity);
-						mMotionUpdateBroadcast.putExtra(CURRENT_SWEAT_RATE_INTERVAL,sweatRateIndex);
+						mMotionUpdateBroadcast.putExtra(Globals.CURRENT_SWEAT_RATE_INTERVAL,sweatRateIndex);
 						updateTask.SetCurrentType(currentActivity);
 						updateTask.SetSweatRateIndex(sweatRateIndex);
 
@@ -895,7 +866,7 @@ class UpdateFinalTypeTask extends TimerTask {
 	// map used by the worker to choose and set the final sweat rate.
 	// Set api is required as the duration of each activity would change over a course of time.
 	public void SetActivityDurationMap(Map<Integer,Double> activityVsDurationMap) {
-		mActivityVsDurationMap = activityVsDurationMap;
+		mActivityVsDurationMap = activityVsDurationMap;		
 	}
 	
 	// Sets the activity vs count map.
@@ -928,18 +899,7 @@ class UpdateFinalTypeTask extends TimerTask {
 	public void SetSweatRateIndex(int sweatRateIndex) {
 		mSweatRateIndex = sweatRateIndex;
 	}
-
-	// Constant element required to update the final type.
-	public static final String VOTED_MOTION_TYPE = "voted motion type";
 	
-	// Constant element to calculate the average sweat rate.
-	public static final String FINAL_SWEAT_RATE_AVERAGE = "average sweat rate";
-	
-	// Constant element required to update the current type.
-	public static final String CURRENT_MOTION_TYPE = "new motion type";
-	
-	// Constant element required to update the sweat rate interval prediction.
-	public static final String CURRENT_SWEAT_RATE_INTERVAL = "sweat rate Interval";
 	
 	// Keeps track of the number of times this worker has been executed
 
@@ -974,46 +934,43 @@ class UpdateFinalTypeTask extends TimerTask {
 				}			
 			}
 			// Set the current type.
-			mMotionUpdateBroadcast.putExtra(CURRENT_MOTION_TYPE, mCurrentType);
+			mMotionUpdateBroadcast.putExtra(Globals.CURRENT_MOTION_TYPE, mCurrentType);
 			// set the current sweat rate.
-			mMotionUpdateBroadcast.putExtra(CURRENT_SWEAT_RATE_INTERVAL, mSweatRateIndex);
+			mMotionUpdateBroadcast.putExtra(Globals.CURRENT_SWEAT_RATE_INTERVAL, mSweatRateIndex);
 			// Set the final type.
-			mMotionUpdateBroadcast.putExtra(VOTED_MOTION_TYPE, finalInferredType);
-			Double sweatRateMeasure = 0.0;
-			Double activityDuration = 0.0;
+			mMotionUpdateBroadcast.putExtra(Globals.VOTED_MOTION_TYPE, finalInferredType);
+			double sweatRateMeasure = 0.0;
+			double activityDuration = 0.0;
 			if(finalInferredType == Globals.ACTIVITY_TYPE_STANDING) {
-				// Get the activity duration in seconds. 				
-				activityDuration = mActivityVsDurationMap.get(0);
+				// Get the activity duration in seconds. 
+				Double v = mActivityVsDurationMap.get(0);
+				activityDuration = v == null ? activityDuration:v;
 				
 				// Calculate the total amount of sweat lost.
-				if(activityDuration != null ){
-					sweatRateMeasure = (standWalkingHourlySweatRate * activityDuration)/3600;
-				}				
+				sweatRateMeasure = (standWalkingHourlySweatRate * activityDuration)/3600;				
 			} else if(finalInferredType == Globals.ACTIVITY_TYPE_WALKING) {
 				// Get the activity duration in seconds. 
-				activityDuration = mActivityVsDurationMap.get(1);
-				if(activityDuration != null ){
-					sweatRateMeasure = (standWalkingHourlySweatRate * activityDuration)/3600;
-				}
+				Double v = mActivityVsDurationMap.get(1);
+				activityDuration = v == null ? activityDuration:v;
+				sweatRateMeasure = (standWalkingHourlySweatRate * activityDuration)/3600;
 			}
 			else if(finalInferredType == Globals.ACTIVITY_TYPE_JOGGING) {
 				// Get the activity duration in seconds. 
-				activityDuration = mActivityVsDurationMap.get(2);
+				Double v = mActivityVsDurationMap.get(2);
+				activityDuration = v == null ? activityDuration:v;
 				// Calculate the total amount of sweat lost.
-				if(activityDuration != null ){
-					sweatRateMeasure = (joggingHourlySweatRate * activityDuration)/3600;
-				}
+				sweatRateMeasure = (joggingHourlySweatRate * activityDuration)/3600;
 			} else if(finalInferredType == Globals.ACTIVITY_TYPE_RUNNING) {
-				// Get the activity duration in seconds. 
-				activityDuration = mActivityVsDurationMap.get(3);
+				// Get the activity duration in seconds.
+				Double v = mActivityVsDurationMap.get(3);
+				activityDuration = v == null ? activityDuration:v;
 				// Calculate the total amount of sweat lost.
-				if(activityDuration != null ){
-					sweatRateMeasure = (runningHourlySweatRate * activityDuration)/3600;
-				}
+				sweatRateMeasure = (runningHourlySweatRate * activityDuration)/3600;
 			}
 			
 			// set the final sweat rate.
-			mMotionUpdateBroadcast.putExtra(FINAL_SWEAT_RATE_AVERAGE,sweatRateMeasure + " milli liters");
+			mMotionUpdateBroadcast.putExtra(Globals.FINAL_SWEAT_RATE_AVERAGE,sweatRateMeasure + " milli liters");
+			mMotionUpdateBroadcast.putExtra(Globals.CURR_SWEAT_RATE_AVERAGE, sweatRateMeasure);
 			
 			// Send the broad cast. It updates the UI.
 			mAppContext.sendBroadcast(mMotionUpdateBroadcast);

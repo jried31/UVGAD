@@ -104,6 +104,7 @@ public abstract class Globals {
 		"Mountain Biking", "Wheelchair", "Elliptical", "Other",  "Standing" , "Jogging" , "Unknown"};
 	
 	public static final String[] SWEAT_RATE_INTERVALS = { "Low(1-1.5 Liter/hour)","Medium(1.5-2 Liter/hour)", "High(2 - 3 Liter/hour)"};
+	public static final double SWEAT_REAPPLY = 10.0; // TEMP: notification when sweat total is 10ml
 	
 	// Int encoded activity types
 	public static final int ACTIVITY_TYPE_ERROR = -1;
@@ -143,8 +144,8 @@ public abstract class Globals {
 	public static final String CUR_SPEED_STATS = "Cur speed: ";
 	public static final String CLIMB_STATS = "Climb: ";
 	public static final String CALORIES_STATS = "Calories: ";
-	public static final String DISTANCE_STATS = "Diatance: ";
-	public static final String SWEAT_STATS = "Sweat Rate:";
+	public static final String DISTANCE_STATS = "Distance: ";
+	public static final String SWEAT_STATS = "Sweat Rate: ";
 	
 	public static final int[] INFERENCE_MAPPING = {ACTIVITY_TYPE_STANDING, ACTIVITY_TYPE_WALKING, ACTIVITY_TYPE_JOGGING, ACTIVITY_TYPE_RUNNING};
 	public static final String[] INFERENCE_LIST = {"Standing", "Walking" , "Jogging" , "Sprinting" ,"Other"};
@@ -176,5 +177,15 @@ public abstract class Globals {
 	
 	public static final int NOTIFICATION_ID = 1;
 	//---------------
+
+	// TrackingService broadcast
+	public static final String ACTION_MOTION_UPDATE = "motion update";
+	public static final String CURRENT_MOTION_TYPE = "new motion type";
+	public static final String VOTED_MOTION_TYPE = "voted motion type";
+	public static final String ACTION_TRACKING = "tracking action";
+	public static final String CURRENT_SWEAT_RATE_INTERVAL = "sweat rate Interval";
+	public static final String FINAL_SWEAT_RATE_AVERAGE = "average sweat rate";
+	public static final String CURR_SWEAT_RATE_AVERAGE = "current sweat rate";
+
 	
 }
