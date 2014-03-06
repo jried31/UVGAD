@@ -858,16 +858,7 @@ class UpdateFinalTypeTask extends TimerTask {
 	private int mCurrentType = 13;
 	
 	// Used to predict the current sweat rate.
-	private int mSweatRateIndex = 0;
-	
-	// Average sweat rate while standing and walking is 1.5 liter per hour
-	private int standWalkingHourlySweatRate = 1500;
-	
-	// Average sweat rate while standing and walking is 2 liters per hour
-	private int joggingHourlySweatRate = 2000;
-	
-	// Average sweat rate while running is 3 liters per hour
-	private int runningHourlySweatRate = 3000;
+	public static int mSweatRateIndex = 0;
 		
 	// Maximum number of calls that can be done in a minute.
 	private int mNoOfMaxCalls;
@@ -987,13 +978,13 @@ class UpdateFinalTypeTask extends TimerTask {
 				
 				// Calculate the total amount of sweat lost.
 				if(activityDuration != null ){
-					sweatRateMeasure = (standWalkingHourlySweatRate * activityDuration)/3600;
+					sweatRateMeasure = (Globals.SWEAT_RATE_HOURLY_STANDING * activityDuration)/3600;
 				}				
 			} else if(finalInferredType == Globals.ACTIVITY_TYPE_WALKING) {
 				// Get the activity duration in seconds. 
 				activityDuration = mActivityVsDurationMap.get(1);
 				if(activityDuration != null ){
-					sweatRateMeasure = (standWalkingHourlySweatRate * activityDuration)/3600;
+					sweatRateMeasure = (Globals.SWEAT_RATE_HOURLY_WALKING * activityDuration)/3600;
 				}
 			}
 			else if(finalInferredType == Globals.ACTIVITY_TYPE_JOGGING) {
@@ -1001,14 +992,14 @@ class UpdateFinalTypeTask extends TimerTask {
 				activityDuration = mActivityVsDurationMap.get(2);
 				// Calculate the total amount of sweat lost.
 				if(activityDuration != null ){
-					sweatRateMeasure = (joggingHourlySweatRate * activityDuration)/3600;
+					sweatRateMeasure = (Globals.SWEAT_RATE_HOURLY_JOGGING * activityDuration)/3600;
 				}
 			} else if(finalInferredType == Globals.ACTIVITY_TYPE_RUNNING) {
 				// Get the activity duration in seconds. 
 				activityDuration = mActivityVsDurationMap.get(3);
 				// Calculate the total amount of sweat lost.
 				if(activityDuration != null ){
-					sweatRateMeasure = (runningHourlySweatRate * activityDuration)/3600;
+					sweatRateMeasure = (Globals.SWEAT_RATE_HOURLY_RUNNING * activityDuration)/3600;
 				}
 			}
 			

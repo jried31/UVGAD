@@ -46,6 +46,7 @@ public class ExerciseEntry {
 		this.uvExposureCum=0;
 		this.comment = "";
 	}
+	
 	public Location[] getTrack(){ return myTrack;}
 	public void setTrack(Location[] track){myTrack = track;}
 	public ArrayList<Location> getLocationList(){return mLocationList;}
