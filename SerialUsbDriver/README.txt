@@ -49,12 +49,16 @@ public class MyRunsCollectorApplication extends Application
         
         * ID: This is the primary key of the table and must be a unique value.
         * VENDOR_ID: The vendor ID of the USB device.  This can be determined 
-                     using the 'lsusb' utility.  See details online.
+                     using the 'lsusb' utility.  See details online.  Note that 
+                     'lsusb' will return the hex value while the table requires 
+                     decimal values.
         * PRODUCT_ID: The product ID of the USB device.  This can be determined 
-                      using the 'lsusb' utility.  See details online.
+                      using the 'lsusb' utility.  See details online.  Note that 
+                      'lsusb' will return the hex value while the table requires 
+                      decimal values.
         * PROTOCOL: This field is used to dynamically determine which USB driver
                     should be loaded.  The values should match what is found in 
-                    SerialUsbDriver/src/Sensor.java
+                    SerialUsbDriver/src/edu/repo/ucla/serialusbdriver/Sensor.java
         * BAUD: The default baud rate that the device should use.  Most devices 
                 with a 16MHz clock have shown good results with 57600.
 3. Uninstall the application completely from the device and then reinstall it.
