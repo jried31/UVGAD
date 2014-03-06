@@ -46,12 +46,6 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
-import edu.dartmouth.cs.myruns5.SerialConsoleActivity.LightSensor0Callback;
-import edu.dartmouth.cs.myruns5.SerialConsoleActivity.LightSensor1Callback;
-import edu.dartmouth.cs.myruns5.SerialConsoleActivity.LightSensorCallback;
-import edu.dartmouth.cs.myruns5.SerialConsoleActivity.UVSensor0Callback;
-import edu.dartmouth.cs.myruns5.SerialConsoleActivity.UVSensor1Callback;
-import edu.dartmouth.cs.myruns5.SerialConsoleActivity.UVSensorCallback;
 import edu.dartmouth.cs.myruns5.util.LocationUtils;
 
 import android.app.Activity;
@@ -97,11 +91,11 @@ public class TrackingService extends Service
 	// This is the callback object for the first light sensor
 		public class LightSensor0Callback implements ILightSensor.Callback
 		{
-			private final Activity mActivity;
+			//private final Activity mActivity;
 			
-			LightSensor0Callback(Activity activity)
+			LightSensor0Callback()
 			{
-				mActivity = activity;
+				//mActivity = activity;
 			}
 			
 			public LightSensor0Callback(TrackingService trackingService) {
@@ -111,18 +105,20 @@ public class TrackingService extends Service
 			@Override
 			public void onSensorUpdate(final int updateLux)
 			{
+				
+				Toast.makeText(getApplicationContext(), "Initialized sensor hardware! " + updateLux, Toast.LENGTH_LONG).show();
 				// This callback method is invoked when the light sensor gets a new light reading data
 				
 				// All UI updates MUST occur on the main thread (a.k.a. UI thread) so we update the
 				// light sensor TextView object using this Runnable
-				mActivity.runOnUiThread(new Runnable()
+				/*mActivity.runOnUiThread(new Runnable()
 				{
 					@Override
 					public void run()
 					{
 						lightSensor0_text.setText("LUX0: " + updateLux);
 					}
-				});
+				});*/
 			}
 
 			@Override
@@ -131,14 +127,14 @@ public class TrackingService extends Service
 				// This function is run when the sensor is forcibly ejected while this callback object 
 				// is active and registered with the sensor
 				
-				mActivity.runOnUiThread(new Runnable()
+				/*mActivity.runOnUiThread(new Runnable()
 				{
 					@Override
 					public void run()
 					{
-						//Toast.makeText(mContext, "Light sensor ejected!", Toast.LENGTH_SHORT).show();
+						Toast.makeText(getApplicationContext(), "Light sensor ejected!", Toast.LENGTH_SHORT).show();
 					}
-				});
+				});*/
 				
 				mLightSensor0 = null;
 			}
@@ -147,11 +143,11 @@ public class TrackingService extends Service
 		// This is the callback object for the second light sensor
 		private class LightSensor1Callback implements ILightSensor.Callback
 		{
-			private final Activity mActivity;
+			//private final Activity mActivity;
 			
-			LightSensor1Callback(Activity activity)
+			LightSensor1Callback()
 			{
-				mActivity = activity;
+				//mActivity = activity;
 			}
 			
 			public LightSensor1Callback(TrackingService trackingService) {
@@ -161,27 +157,27 @@ public class TrackingService extends Service
 			@Override
 			public void onSensorUpdate(final int updateLux)
 			{
-				mActivity.runOnUiThread(new Runnable()
+				/*mActivity.runOnUiThread(new Runnable()
 				{
 					@Override
 					public void run()
 					{
 						//lightSensor1_text.setText("LUX1: " + updateLux);
 					}
-				});
+				});*/
 			}
 
 			@Override
 			public void onSensorEjected()
 			{
-				mActivity.runOnUiThread(new Runnable()
+				/*mActivity.runOnUiThread(new Runnable()
 				{
 					@Override
 					public void run()
 					{
-						//Toast.makeText(mContext, "Light sensor ejected!", Toast.LENGTH_SHORT).show();
+						Toast.makeText(getApplicationContext(), "Light sensor ejected!", Toast.LENGTH_SHORT).show();
 					}
-				});
+				});*/
 				
 				mLightSensor1 = null;
 			}
@@ -190,11 +186,11 @@ public class TrackingService extends Service
 		// This is the callback object for the first UV sensor
 		public class UVSensor0Callback implements IUVSensor.Callback
 		{
-			private final Activity mActivity;
+			//private final Activity mActivity;
 			
-			UVSensor0Callback(Activity activity)
+			UVSensor0Callback()
 			{
-				mActivity = activity;
+				//mActivity = activity;
 			}
 			
 			public UVSensor0Callback(TrackingService trackingService) {
@@ -208,14 +204,14 @@ public class TrackingService extends Service
 				
 				// All UI updates MUST occur on the main thread (a.k.a. UI thread) so we update the
 				// UV sensor TextView object using this Runnable
-				mActivity.runOnUiThread(new Runnable()
+				/*mActivity.runOnUiThread(new Runnable()
 				{
 					@Override
 					public void run()
 					{
 						//uvSensor0_text.setText("UV0: " + updateUV);
 					}
-				});
+				});*/
 			}
 
 			@Override
@@ -224,14 +220,14 @@ public class TrackingService extends Service
 				// This function is run when the sensor is forcibly ejected while this callback object 
 				// is active and registered with the sensor
 				
-				mActivity.runOnUiThread(new Runnable()
+				/*mActivity.runOnUiThread(new Runnable()
 				{
 					@Override
 					public void run()
 					{
 						//Toast.makeText(mContext, "UV sensor ejected!", Toast.LENGTH_SHORT).show();
 					}
-				});
+				});*/
 				
 				mUVSensor0 = null;
 			}
@@ -240,11 +236,11 @@ public class TrackingService extends Service
 		// This is the callback object for the second UV sensor
 		private class UVSensor1Callback implements IUVSensor.Callback
 		{
-			private final Activity mActivity;
+			//private final Activity mActivity;
 			
-			UVSensor1Callback(Activity activity)
+			UVSensor1Callback()
 			{
-				mActivity = activity;
+				//mActivity = activity;
 			}
 			
 			public UVSensor1Callback(TrackingService trackingService) {
@@ -258,14 +254,14 @@ public class TrackingService extends Service
 				
 				// All UI updates MUST occur on the main thread (a.k.a. UI thread) so we update the
 				// UV sensor TextView object using this Runnable
-				mActivity.runOnUiThread(new Runnable()
+				/*mActivity.runOnUiThread(new Runnable()
 				{
 					@Override
 					public void run()
 					{
 						//uvSensor1_text.setText("UV1: " + updateUV);
 					}
-				});
+				});*/
 			}
 
 			@Override
@@ -274,14 +270,14 @@ public class TrackingService extends Service
 				// This function is run when the sensor is forcibly ejected while this callback object 
 				// is active and registered with the sensor
 				
-				mActivity.runOnUiThread(new Runnable()
+				/*mActivity.runOnUiThread(new Runnable()
 				{
 					@Override
 					public void run()
 					{
 						//Toast.makeText(mContext, "UV sensor ejected!", Toast.LENGTH_SHORT).show();
 					}
-				});
+				});*/
 				
 				mUVSensor1 = null;
 				mIsStreaming = false;
@@ -309,7 +305,6 @@ public class TrackingService extends Service
 	public int mInferredActivityType;
 	
 	private FileOutputStream trackFile;
-	
 	
 	private SensorManager mSensorManager;
 	private Sensor mAccelerometer,mLightSensor,mMagnetSensor,mGravitySensor;
@@ -374,15 +369,7 @@ public class TrackingService extends Service
 		
 		//In here, create an instance of Daniel's sensor callback. Put that clas down in the bottom of this file and use it here
 		mUsbSensorManager = MyRunsApplication.getUsbSensorManager();
-
-		List<IUVSensor> uvSensor_list = mUsbSensorManager.getUVSensorList();
-		List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
 		
-		if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
-		{
-			Toast.makeText(this, "ERROR: Sensor hardware not detected", Toast.LENGTH_LONG).show();
-			return;
-		}
 		// Create the sensor callback objects
 		mLightSensor0Callback = new LightSensor0Callback(this);
 		mLightSensor1Callback = new LightSensor1Callback(this);
@@ -431,6 +418,9 @@ public class TrackingService extends Service
 		mLightSensor1.init(Constants.PULSE_ID_LIGHT_1);
 		mUVSensor0.init(Constants.PULSE_ID_UV_0);
 		mUVSensor1.init(Constants.PULSE_ID_UV_1);
+		
+
+		//mLightSensor0.register(mLightSensor0Callback);
 		
 		Toast.makeText(this, "Initialized sensor hardware!", Toast.LENGTH_LONG).show();
 	}
