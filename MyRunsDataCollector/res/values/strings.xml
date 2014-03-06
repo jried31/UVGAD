@@ -23,10 +23,16 @@
     <string name="ui_sensor_service_toast_success_file_created">Data file created.</string>
     <string name="ui_sensor_service_toast_error_file_saving_failed">Failed saving the file. Check your storage.</string>
     
-   <string name="sdefault">4</string>
+    <string name="sdefault">4</string>
     <string name="current_uvi_title">Current UVI</string>
     <string name="current_uvi_description">UVI Scale</string>
     
+        
+    <string name="loadSensor">Load Sensor</string>
+    <string name="instantSample">Instant Sample</string>
+    
+    <string name="startStreaming">Start Streaming</string>
+    <string name="stopStreaming">Stop Streaming</string>
     
     
 </resources>

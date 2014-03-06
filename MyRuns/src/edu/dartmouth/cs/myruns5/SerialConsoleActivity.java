@@ -24,6 +24,8 @@ import com.parse.ParseGeoPoint;
 
 import edu.dartmouth.cs.myruns5.util.uv.ParseUVReading;
 
+import edu.repo.ucla.serialusbdriver.*;
+
 public class SerialConsoleActivity extends Activity implements OnClickListener,GooglePlayServicesClient.ConnectionCallbacks,GooglePlayServicesClient.OnConnectionFailedListener 
 {
 	int uv1=-1,uv2=-1,uv=0;
@@ -265,7 +267,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener,G
 
 		mContext = this;
 		mResources = getResources();
-		mUsbSensorManager = MyRunsApplication.getUsbSensorManager();
+		mUsbSensorManager = UsbSensorManager.getManager();
 		
 		uvSensor0_text = (TextView) findViewById(R.id.uvSensor0_text);
 		uvSensor1_text = (TextView) findViewById(R.id.uvSensor1_text);
@@ -386,7 +388,8 @@ public class SerialConsoleActivity extends Activity implements OnClickListener,G
 				// 		  the register() method will overwrite the original callback object.
 				// 		  Another way to think about it is the getLightSensorList() method is like a 
 				// 		  factory that returns light sensor objects so we need it to create a new 
-				// 		  object for us.
+				// 		  object for us.  The same applies to the UV sensor list.
+				uvSensor_list = mUsbSensorManager.getUVSensorList();
 				lightSensor_list = mUsbSensorManager.getLightSensorList();
 				
 				// Make sure that the lists aren't empty
