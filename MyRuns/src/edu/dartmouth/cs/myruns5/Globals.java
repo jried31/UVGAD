@@ -105,6 +105,18 @@ public abstract class Globals {
 	
 	public static final String[] SWEAT_RATE_INTERVALS = { "Low(1-1.5 Liter/hour)","Medium(1.5-2 Liter/hour)", "High(2 - 3 Liter/hour)"};
 	
+
+	// Average sweat rate while standing and walking is X liter per hour
+	public static int SWEAT_RATE_HOURLY_STANDING = 375;
+	
+	// Average sweat rate while standing and walking is 1.5 liter per hour
+	public static int SWEAT_RATE_HOURLY_WALKING = 1500;
+	
+	// Average sweat rate while standing and walking is 2 liters per hour
+	public static int SWEAT_RATE_HOURLY_JOGGING = 2000;
+	
+	// Average sweat rate while running is 3 liters per hour
+	public static  int SWEAT_RATE_HOURLY_RUNNING = 3000;
 	// Int encoded activity types
 	public static final int ACTIVITY_TYPE_ERROR = -1;
 	public static final int ACTIVITY_TYPE_RUNNING = 0;
