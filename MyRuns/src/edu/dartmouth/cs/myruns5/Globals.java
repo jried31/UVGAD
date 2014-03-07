@@ -40,11 +40,13 @@ public abstract class Globals {
 	public static final String KEY_PRIVACY = "privacy";
 	public static final String KEY_GPS_DATA = "gps_data";
 	public static final String KEY_TRACK = "track";
+	public static final String KEY_GENDER = "gender";
 	public static final String KEY_SKIN_TONE = "skin_tone";
 	public static final String KEY_SPF = "spf";
-	public static final String KEY_HEAD_APPAREL = "head_apparel";
-	public static final String KEY_UPPER_APPAREL = "upper_apparel";
-	public static final String KEY_LOWER_APPAREL = "lower_apparel";
+	public static final String KEY_CLOTHING_COVER = "clothing_cover";
+	//public static final String KEY_HEAD_APPAREL = "head_apparel";
+	//public static final String KEY_UPPER_APPAREL = "upper_apparel";
+	//public static final String KEY_LOWER_APPAREL = "lower_apparel";
 	
 	//Time Related Constants
 	  // One second in milliseconds

@@ -190,11 +190,13 @@ public class HistoryProvider extends ContentProvider {
 									HistoryTable.KEY_INPUT_TYPE,
 									HistoryTable.KEY_PRIVACY,
 									HistoryTable.KEY_TRACK,
+									HistoryTable.KEY_GENDER,
 									HistoryTable.KEY_SKIN_TONE,
 									HistoryTable.KEY_SPF,
-									HistoryTable.KEY_HEAD_APPAREL,
-									HistoryTable.KEY_UPPER_APPAREL,
-									HistoryTable.KEY_LOWER_APPAREL,
+									HistoryTable.KEY_CLOTHING_COVER,
+									//HistoryTable.KEY_HEAD_APPAREL,
+									//HistoryTable.KEY_UPPER_APPAREL,
+									//HistoryTable.KEY_LOWER_APPAREL,
 									};
 			if (projection != null) {
 				HashSet<String> requestedColumns = new HashSet<String>(

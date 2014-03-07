@@ -3,6 +3,7 @@ package edu.dartmouth.cs.myruns5;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -80,18 +81,17 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 					skinTypeSprite.onTouch();
 					break;
 				}
-				if (headApparelRegion.contains((int)x, (int)y)) {
+				
+				if (headApparelRegion.contains((int)x, (int)y))
 					headApparelSprite.toggle();
-					break;
-				}
-				if (upperApparelRegion.contains((int)x, (int)y)) {
+				if (upperApparelRegion.contains((int)x, (int)y))
 					upperApparelSprite.toggle();
-					break;
-				}
-				if (lowerApparelRegion.contains((int)x, (int)y)) {
+				if (lowerApparelRegion.contains((int)x, (int)y))
 					lowerApparelSprite.toggle();
-					break;
-				}
+				
+				SpriteClothing.saveClothingCover(v.getContext(), 
+						headApparelSprite.headApparel, upperApparelSprite.upperApparel, lowerApparelSprite.lowerApparel);
+				break;
 			case MotionEvent.ACTION_UP:
 			case MotionEvent.ACTION_MOVE:
 		
@@ -131,8 +131,8 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 					upperApparelSprite.getX() + upperApparelSprite.getWidth(), upperApparelSprite.getY() + upperApparelSprite.getHeight());
 			
 			lowerApparelSprite = new SpriteLowerApparel(this, personSprite);
-			lowerApparelRegion = new Region(lowerApparelSprite.getX(), lowerApparelSprite.getY(), 
-					lowerApparelSprite.getX() + lowerApparelSprite.getWidth(), lowerApparelSprite.getY() + lowerApparelSprite.getHeight());
+			lowerApparelRegion = new Region(lowerApparelSprite.getX(), personSprite.getY() + (int)(personSprite.getHeight()*0.55), 
+					lowerApparelSprite.getX() + lowerApparelSprite.getWidth(), personSprite.getY() + (int)(personSprite.getHeight()*0.55) + lowerApparelSprite.getHeight());
 			
 			while(isItOk){//If the surface (holder) view is NOT valid don't render
 				if(!holder.getSurface().isValid()){

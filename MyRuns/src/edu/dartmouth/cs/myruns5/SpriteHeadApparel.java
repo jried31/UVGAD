@@ -6,113 +6,83 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.util.SparseArray;
 import edu.dartmouth.cs.myruns5.UserBodyProfileDialog.OurView;
 
-public class SpriteHeadApparel {
+public class SpriteHeadApparel extends SpriteClothing {
 	final int defaultHeight = 60;
 	final int defaultWidth = 60;
-	private int x, y, height, width;
-	SpritePerson personSprite;
-	SparseArray<Bitmap> headApparelMap;
-	OurView ov;
-	Context context;
 	HeadApparelType headApparel;
 	
 	// Enumeration for the types of head apparel
 	public static enum HeadApparelType {
-		NONE(0), BASEBALLCAP(1);
+		NONE(0f), BASEBALLCAP(0.05f);
 		
-		int value;
-		HeadApparelType(int value) {
-			this.value = value;
+		float cover;
+		HeadApparelType(float cover) {
+			this.cover = cover;
 		}
+
+		public float getCover() {
+			return cover;
+		}
+
+	}
 		
-		public int getValue() {
-			return value;
-		}
+	public SpriteHeadApparel(OurView ourView, SpritePerson person) {
+		super(ourView, person);
 		
-		public static HeadApparelType getTypeFromValue(int value) {
-			if (value == HeadApparelType.NONE.getValue())
-				return HeadApparelType.NONE;
-			else if (value == HeadApparelType.BASEBALLCAP.getValue())
-				return HeadApparelType.BASEBALLCAP;
-			return HeadApparelType.NONE;
-		}
-	}
-	
-	public int getX() {
-		return x;
-	}
-
-	public int getY() {
-		return y;
-	}
-
-	public int getHeight() {
-		return height;
-	}
-
-	public int getWidth() {
-		return width;
-	}
-	
-	public SpriteHeadApparel(OurView ourView,SpritePerson person) {
-		ov = ourView;
-		personSprite = person;
-		context = ov.getContext();
-		headApparelMap = new SparseArray<Bitmap>();
-		headApparelMap.put(HeadApparelType.NONE.getValue(), null);
-		headApparelMap.put(HeadApparelType.BASEBALLCAP.getValue(), 
-				BitmapFactory.decodeResource(context.getResources(),R.drawable.baseball_cap));
+		clothingMap.put(HeadApparelType.NONE.name(), null);
+		
+		double scale = person.getScale();
+		Bitmap b = BitmapFactory.decodeResource(context.getResources(),R.drawable.baseball_cap); 
+		clothingMap.put(HeadApparelType.BASEBALLCAP.name(), 
+				Bitmap.createScaledBitmap(b, (int)(b.getWidth()*scale), (int)(b.getHeight()*scale), false));
 		
 		SharedPreferences sharedPref = context.getSharedPreferences(Globals.TAG,Context.MODE_PRIVATE);
-		int value = sharedPref.getInt(context.getString(R.string.data_Hat), HeadApparelType.NONE.getValue());
-		headApparel = HeadApparelType.getTypeFromValue(value);
+		String value = sharedPref.getString(context.getString(R.string.data_Hat), HeadApparelType.NONE.name());
+		headApparel = HeadApparelType.valueOf(value);
 		height = headApparel == HeadApparelType.NONE ? 
-				defaultHeight : headApparelMap.get(headApparel.getValue()).getHeight();
+				defaultHeight : clothingMap.get(headApparel.name()).getHeight();
 		width = headApparel == HeadApparelType.NONE ? 
-				defaultWidth : headApparelMap.get(headApparel.getValue()).getWidth();
+				defaultWidth : clothingMap.get(headApparel.name()).getWidth();
 		x = ov.getWidth()/2 - width/2;
 		y = ov.getHeight()/15 - height/2; // TODO: Use a member variable from SpritePerson
+		
+		display = new Rect(x, y, x + width, y + height);
 	}
 	
+	@Override
 	public void onDraw(Canvas canvas) {
-		if (headApparel != HeadApparelType.NONE) {
-			Rect dst = new Rect(x, y, x + width, y + height);
-			canvas.drawBitmap(headApparelMap.get(headApparel.getValue()), null, dst, null);
-		}
+		if (headApparel != HeadApparelType.NONE)
+			canvas.drawBitmap(clothingMap.get(headApparel.name()), null, display, null);
 	}
 
 	//Method invoked to toggle head apparel for male/female sprite
+	@Override
 	public void toggle() {
 		switch (headApparel) {
 			case NONE: // Switch to baseball cap
 				headApparel = HeadApparelType.BASEBALLCAP;
-				height = headApparelMap.get(headApparel.getValue()).getHeight();
-				width = headApparelMap.get(headApparel.getValue()).getWidth();
 				break;
 			case BASEBALLCAP: // Switch to none
 			default:
 				headApparel = HeadApparelType.NONE;
-				height = defaultHeight;
-				width = defaultWidth;
 		}
+		
+		height = headApparel == HeadApparelType.NONE ? 
+				defaultHeight : clothingMap.get(headApparel.name()).getHeight();
+		width = headApparel == HeadApparelType.NONE ? 
+				defaultWidth : clothingMap.get(headApparel.name()).getWidth();
 		
 		x = ov.getWidth()/2 - width/2;
 		y = personSprite.getY() - height/4;
-		saveHeadApparelPreferences();
+		
+		display = new Rect(x, y, x + width, y + height);
+		
+		super.saveClothingOptions(R.string.data_Hat, headApparel.name());
 	}
 	
-	private void saveHeadApparelPreferences() {
-		if (context != null) {
-			SharedPreferences sharedPref = context.getSharedPreferences(Globals.TAG,Context.MODE_PRIVATE);
-			SharedPreferences.Editor editor = sharedPref.edit();
-			editor.putInt(context.getString(R.string.data_Hat), headApparel.getValue());
-			editor.commit();
-		}
-	}
-	
+	@Override
 	public void reset() {
 		headApparel = HeadApparelType.NONE;
 	}

@@ -19,6 +19,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.location.Location;
@@ -26,6 +29,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.provider.Settings.Secure;
 import android.util.Log;
 import android.view.Menu;
@@ -47,6 +51,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.VisibleRegion;
 
 import edu.dartmouth.cs.myruns5.TrackingService.TrackingBinder;
+
 
 public class MapDisplayActivity extends Activity {
 
@@ -250,10 +255,11 @@ public class MapDisplayActivity extends Activity {
 			curspeedStats.setText(curSpeed);
 			climbStats.setText(climb);
 			caloriesStats.setText(calories);
-			//distanceStats.setText(distance);
+			distanceStats.setText(distance);
 			// TODO: Display clothing coverage
-			System.out.println(intent.getStringExtra(HistoryFragment.HEAD_APPAREL));
-			Log.d(null, intent.getStringExtra(HistoryFragment.HEAD_APPAREL));
+			
+			ArrayList<Parcelable> f = intent.getParcelableArrayListExtra(HistoryFragment.TRACK);
+			System.out.println("AAAA: " + f.size());
 			
 			break;
 		default:
@@ -321,19 +327,22 @@ public class MapDisplayActivity extends Activity {
 		mEntry.setSweatRate(mSweatRate);
 		
 		SharedPreferences sharedPref = mContext.getSharedPreferences(Globals.TAG, Context.MODE_PRIVATE);
-		mEntry.setSkinTone(sharedPref.getInt(mContext.getString(R.string.data_SkinTone), 0));
-		mEntry.setSPF(sharedPref.getInt(mContext.getString(R.string.data_SPF), 0));
+		mEntry.setGender(sharedPref.getInt(mContext.getString(R.string.data_Gender), 0));
+		mEntry.setSkinTone(SpriteSkinType.positionToSkinType[sharedPref.getInt(mContext.getString(R.string.data_SkinTone), 0)]);
+		mEntry.setSPF(SpriteSPF.positionToSPF[sharedPref.getInt(mContext.getString(R.string.data_SPF), 0)]);
+		mEntry.setClothingCover(sharedPref.getFloat(mContext.getString(R.string.data_ClothingCover), 0.0f));
 		
-		int clothingValue = sharedPref.getInt(
-				mContext.getString(R.string.data_Hat), SpriteHeadApparel.HeadApparelType.NONE.getValue());
-		mEntry.setHeadApparel(SpriteHeadApparel.HeadApparelType.getTypeFromValue(clothingValue));
-		
-		clothingValue = sharedPref.getInt(
-				mContext.getString(R.string.data_ApparelTop), SpriteUpperApparel.UpperApparelType.NONE.getValue());
-		mEntry.setUpperApparel(SpriteUpperApparel.UpperApparelType.getTypeFromValue(clothingValue));
-		clothingValue = sharedPref.getInt(
-				mContext.getString(R.string.data_ApparelBottom), SpriteLowerApparel.LowerApparelType.NONE.getValue());
-		mEntry.setLowerApparel(SpriteLowerApparel.LowerApparelType.getTypeFromValue(clothingValue));
+		/*
+		String clothingValue = sharedPref.getString(
+				mContext.getString(R.string.data_Hat), SpriteHeadApparel.HeadApparelType.NONE.name());
+		mEntry.setHeadApparel(SpriteHeadApparel.HeadApparelType.valueOf(clothingValue));
+		clothingValue = sharedPref.getString(
+				mContext.getString(R.string.data_ApparelTop), SpriteUpperApparel.UpperApparelType.NONE.name());
+		mEntry.setUpperApparel(SpriteUpperApparel.UpperApparelType.valueOf(clothingValue));
+		clothingValue = sharedPref.getString(
+				mContext.getString(R.string.data_ApparelBottom), SpriteLowerApparel.LowerApparelType.NONE.name());
+		mEntry.setLowerApparel(SpriteLowerApparel.LowerApparelType.valueOf(clothingValue));
+		*/
 		
 		mEntryHelper = new ExerciseEntryHelper(mEntry);
 		id = mEntryHelper.insertToDB(this);
@@ -372,34 +381,31 @@ public class MapDisplayActivity extends Activity {
 		JSONObject json = new JSONObject();
 		try {
 			json.put("id", intent.getIntExtra(HistoryFragment.ROW_ID, 0));
-			
-			json.put("androidId", Secure.getString(getApplicationContext().getContentResolver(), Secure.ANDROID_ID));
-			
+			json.put("android_id", Secure.getString(getApplicationContext().getContentResolver(), Secure.ANDROID_ID));
+			json.put(Globals.KEY_DATE_TIME, intent.getStringExtra(HistoryFragment.DATE_TIME));
 			json.put(Globals.KEY_ACTIVITY_TYPE, intent.getStringExtra(HistoryFragment.ACTIVITY_TYPE));
-			
-			json.put(Globals.KEY_DISTANCE, Double.parseDouble(intent.getStringExtra(HistoryFragment.DISTANCE)));
-			
-			json.put(Globals.KEY_DURATION, Double.parseDouble(intent.getStringExtra(HistoryFragment.DURATION)));
-			
-			//json.put(Globals.KEY_SWEATRATE, Double.parseDouble(intent.getStringExtra(HistoryFragment.SWEATRATE)));
-			
-			json.put(Globals.KEY_SKIN_TONE, intent.getIntExtra(HistoryFragment.SKIN_TONE, 0));
-			
+			json.put(Globals.KEY_GENDER, intent.getIntExtra(HistoryFragment.GENDER, 0));
+			json.put(Globals.KEY_DISTANCE, intent.getStringExtra(HistoryFragment.DISTANCE));
+			json.put(Globals.KEY_DURATION, intent.getStringExtra(HistoryFragment.DURATION));
+			json.put(Globals.KEY_CLOTHING_COVER, intent.getFloatExtra(HistoryFragment.CLOTHING_COVER, 0.0f));
+			json.put(Globals.KEY_SKIN_TONE, intent.getIntExtra(HistoryFragment.SKIN_TONE, 1));
 			json.put(Globals.KEY_SPF, intent.getIntExtra(HistoryFragment.SPF, 0));
 			
+			/* TODO:FIXME; REPLACE WITH JUST CLOTHING COVER
 			val = Integer.parseInt(intent.getStringExtra(HistoryFragment.HEAD_APPAREL));
-			json.put(Globals.KEY_HEAD_APPAREL, SpriteHeadApparel.HeadApparelType.getTypeFromValue(val).name());
+			json.put(Globals.KEY_HEAD_APPAREL, SpriteHeadApparel.HeadApparelType.valueOf(val).name());
 			
 			val = Integer.parseInt(intent.getStringExtra(HistoryFragment.UPPER_APPAREL));
 			json.put(Globals.KEY_UPPER_APPAREL, SpriteUpperApparel.UpperApparelType.getTypeFromValue(val).name());
 			
 			val = Integer.parseInt(intent.getStringExtra(HistoryFragment.LOWER_APPAREL));
 			json.put(Globals.KEY_LOWER_APPAREL, SpriteLowerApparel.LowerApparelType.getTypeFromValue(val).name());
+			*/
 			
+			new HTTPSender().execute(json);
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
-		new HTTPSender().execute(json);
 		
 		finish();
 	}

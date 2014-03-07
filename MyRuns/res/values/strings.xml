@@ -238,6 +238,7 @@
     <string name="data_Hat">hat</string>
     <string name="data_ApparelTop">apparel_top</string>
     <string name="data_ApparelBottom">apparel_bottom</string>
+    <string name="data_ClothingCover">clothing_cover</string>
     
     <string-array name="MajorHints">
         <item>African and African American Studies</item>
