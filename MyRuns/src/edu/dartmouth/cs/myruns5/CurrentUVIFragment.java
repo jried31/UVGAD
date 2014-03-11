@@ -21,7 +21,7 @@ public class CurrentUVIFragment extends Fragment {
 	private UVIBroadcastReciever reciever;
 	private IntentFilter filter;
 	private View v;
-	private float currentUVI = 0;
+	private double currentUVI = 0;
 	private float[] data;
 	private Context context;
 	private NotificationManager nm;
@@ -53,8 +53,10 @@ public class CurrentUVIFragment extends Fragment {
 
 	private void updateDisplay(View v) {
 		TextView currentUVIView = (TextView) v.findViewById(R.id.current_uvi);
-		currentUVIView.setText(Float.toString(currentUVI));
-		switch ((int) currentUVI) {
+		int valInt = (int)currentUVI;
+		String val = Integer.toString(valInt);
+		currentUVIView.setText(val);
+		switch (valInt) {
 		case 0:
 		case 1:
 		case 2:
@@ -110,7 +112,7 @@ public class CurrentUVIFragment extends Fragment {
 	class UVIBroadcastReciever extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context arg0, Intent arg1) {
-			currentUVI = arg1.getExtras().getFloat(UltravioletIndexService.CURRENT_UV_INDEX);
+			currentUVI = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX);
 			data = arg1.getExtras().getFloatArray(UltravioletIndexService.WEB_UVI);
 			updateDisplay(v);
 		}
