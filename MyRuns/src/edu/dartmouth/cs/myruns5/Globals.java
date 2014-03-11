@@ -70,8 +70,8 @@ public abstract class Globals {
 	//Weka Attributes
 	//JERRID: ******************************
 	public static final int FEAT_NUMBER_FEATURES=6;
-	public static final int LIGHT_BUFFER_CAPACITY = 2048;
-	public static final int LIGHT_BLOCK_CAPACITY = 256;
+	public static final int LIGHT_BUFFER_CAPACITY = 20;
+	public static final int LIGHT_BLOCK_CAPACITY = 18;
 	
 
 	public static final String ACTION_LIGHT_SENSOR_UPDATED = "MYRUNS_LIGHT_SENSOR_UPDATED";
@@ -92,6 +92,8 @@ public abstract class Globals {
 	public static final String FEATURE_LIGHT_FILE_NAME = "lightFeatures.arff";
 
 	public static final String LIGHT_INTENSITY_FILE_NAME = "lightClassification.txt";
+
+	public static final String LIGHT_TYPE_HEADER = "Lighting Condition:";
 	//*************************************
 	
 	

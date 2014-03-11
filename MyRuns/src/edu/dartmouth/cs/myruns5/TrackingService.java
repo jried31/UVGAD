@@ -301,6 +301,8 @@ public class TrackingService extends Service
 	private Intent mLocationUpdateBroadcast;
 	private Intent mMotionUpdateBroadcast;
 	
+	private Intent mLightingClassificationBroadcast;
+	
 	private int mInputType;
 	public int mInferredActivityType;
 	
@@ -332,8 +334,24 @@ public class TrackingService extends Service
 	public static final String ACTION_TRACKING = "tracking action";
 	public static final String CURRENT_SWEAT_RATE_INTERVAL = "sweat rate Interval";
 	public static final String FINAL_SWEAT_RATE_AVERAGE = "average sweat rate";
-
+	
+	public static final String LIGHTING_CLASS_UPDATE = "lighting class update";
+	public static String  CUR_LIGHT_CONDITION = "lighting consition";
+	
 	private static final String TAG = "TrackingService";
+	
+	//Pulled from light sensor asynch task!
+	int blockSize = 0;
+	LumenDataPoint[] lightIntensityDataBlock = new LumenDataPoint[Globals.LIGHT_BLOCK_CAPACITY];
+	public static double maxLightMagnitude = Double.MIN_VALUE,
+			minLightMagnitude = Double.MAX_VALUE,
+			meanLightIntensity = 0,
+			varianceIntensity = 0,
+			stdLightMagnitude = 0,
+			meanAbsoluteDeveationLightIntensity = 0,
+			intensityReading = 0,
+			maxIntensityThisBuffer = -1,
+			lastMaxIntensityBuffer = -1;
 	
 	
 	private static Timer dataCollector;
@@ -357,10 +375,14 @@ public class TrackingService extends Service
 		mLocationUpdateBroadcast.setAction(ACTION_TRACKING);
 		mMotionUpdateBroadcast = new Intent();
 		mMotionUpdateBroadcast.setAction(ACTION_MOTION_UPDATE);
+		
+		//mLightingClassificationBroadcast = new Intent();
+		//mLightingClassificationBroadcast.setAction(ACTION_MOTION_UPDATE);
+		
 		mLightIntensityReadingBuffer = new ArrayBlockingQueue<LumenDataPoint>(Globals.LIGHT_BUFFER_CAPACITY);
 		mAccBuffer = new ArrayBlockingQueue<Double>(Globals.ACCELEROMETER_BUFFER_CAPACITY);
 		mAccelerometerActivityClassificationTask = new AccelerometerActivityClassificationTask();
-		mLightSensorActivityClassificationTask = new LightSensorActivityClassificationTask();
+		//mLightSensorActivityClassificationTask = new LightSensorActivityClassificationTask();
 		mInferredActivityType = Globals.ACTIVITY_TYPE_STANDING;
 		
 		//Start the timer for data collection
@@ -468,6 +490,8 @@ public class TrackingService extends Service
 	    	mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 	    	mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 	    	mAccelerometerActivityClassificationTask.execute();
+
+	    	//mLightSensorActivityClassificationTask.execute();
 	    	
 	    	//JERRID: Register light Sensor
 			mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
@@ -517,6 +541,7 @@ public class TrackingService extends Service
 	    
 	    // cancel task
 	    mAccelerometerActivityClassificationTask.cancel(true);
+	    //mLightSensorActivityClassificationTask.cancel(true);
 	}
 	
 	public class TrackingBinder extends Binder{
@@ -620,7 +645,6 @@ public class TrackingService extends Service
 	      }else
 	      if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
 	    	  //JERRID: Light Sensor Reading
-	         
 	    	  gotLightSensorData(event);
 	    	  return;
 //			Toast.makeText(getApplicationContext(), String.valueOf(mAccBuffer.size()), Toast.LENGTH_SHORT).show();
@@ -631,6 +655,111 @@ public class TrackingService extends Service
 	
 //SEND IN timestamp as long and then luxvalue as float
 	public void gotLightSensorData(SensorEvent event) {
+
+		double pitchTemp[] = new double[3];
+		pitchTemp[0] = 0; pitchTemp[1] = 0; pitchTemp[2] = 0;
+		float uvi = 0;
+        LumenDataPoint intensityReading = new LumenDataPoint(event.timestamp, pitchTemp, event.values[0], uvi);
+        
+        
+        try {
+            //JERRID: Add the magnitude reading to the buffer
+            mLightIntensityReadingBuffer.add(intensityReading);
+            
+            
+        } catch (IllegalStateException e) {
+      
+            // Exception happens when reach the capacity.
+            // Doubling the buffer. ListBlockingQueue has no such issue,
+            // But generally has worse performance
+            ArrayBlockingQueue<LumenDataPoint> newBuf = new ArrayBlockingQueue<LumenDataPoint>( mLightIntensityReadingBuffer.size() * 2);
+            mLightIntensityReadingBuffer.drainTo(newBuf);
+            mLightIntensityReadingBuffer = newBuf;
+            mLightIntensityReadingBuffer.add(intensityReading);
+        } 
+		
+     // JERRID: Pops the "head" element from the Blocking Queue one at a time
+        try
+        {
+	        LumenDataPoint dataPoint = mLightIntensityReadingBuffer.take();
+	        double intensityPopped = dataPoint.getIntensity();
+	        //lightIntensityDataBlock[blockSize++] = dataPoint;
+	        //only want max, don't store buffer
+	        blockSize++;
+	        
+	        if(intensityPopped > maxIntensityThisBuffer)
+	        	maxIntensityThisBuffer = intensityPopped;
+	     
+	        
+	        //JERRID: Once 16 readings are found, identify the MIN, MAX, magnitude
+	        if (blockSize == Globals.LIGHT_BLOCK_CAPACITY) 
+	        {
+	
+	            //Compute the Mean Absolute Deviation since we have a full buffer=
+	        	/*
+	            for (LumenDataPoint dp : lightIntensityDataBlock) {
+	                //find mean absolute deviation
+	                double val = dp.getIntensity();
+	                double diff = val - meanLightIntensity;
+	                varianceIntensity += diff * diff;
+	                meanAbsoluteDeveationLightIntensity += Math.abs(diff);
+	                
+	                //Calculate the MIN/MAX (seen so far)
+	                if (maxLightMagnitude < intensityReading) {
+	                    maxLightMagnitude = intensityReading;
+	                }
+	                
+	                //find the min intensity
+	                if (minLightMagnitude > intensityReading) {
+	                    minLightMagnitude = intensityReading;
+	                }
+	            }
+	            
+	            varianceIntensity = varianceIntensity/Globals.LIGHT_BLOCK_CAPACITY;
+	            stdLightMagnitude = Math.sqrt(varianceIntensity);
+	            meanAbsoluteDeveationLightIntensity = meanAbsoluteDeveationLightIntensity / Globals.LIGHT_BLOCK_CAPACITY;
+	        
+	            featureInstance.setValue(minAttribute,minLightMagnitude);
+	            featureInstance.setValue(maxAttribute,maxLightMagnitude);
+	            featureInstance.setValue(meanAttribute,meanLightIntensity);
+	            featureInstance.setValue(stdAttribute,stdLightMagnitude);
+	            featureInstance.setValue(meanAbsDeviationAttribute,meanAbsoluteDeveationLightIntensity);
+	            
+	            //Classifier
+	            WekaWrapper wrapper = new WekaWrapper();
+	            double prediction = wrapper.classifyInstance(featureInstance);
+	            String classification = featureInstance.classAttribute().value((int) prediction);
+	            */
+	        	
+	        	//set CURR_LIGHT_CLASSIFICATION
+	        	if(maxIntensityThisBuffer > 0)
+	        	{
+	        		if(maxIntensityThisBuffer > 1500)
+	        			CUR_LIGHT_CONDITION = "Bright";
+	        		else
+	        			CUR_LIGHT_CONDITION = "Dim";
+	        	
+	        		lastMaxIntensityBuffer = maxIntensityThisBuffer;
+	        	}
+	            
+	            
+	            //Reset the Values
+	            blockSize = 0;
+	            // time = System.currentTimeMillis();
+	            maxLightMagnitude = Double.MIN_VALUE;
+	            minLightMagnitude = Double.MAX_VALUE;
+	            stdLightMagnitude = 0;
+	            varianceIntensity = 0;
+	            meanAbsoluteDeveationLightIntensity = 0;
+	            meanLightIntensity = 0;
+	            maxIntensityThisBuffer = -1;
+	        }
+	 } catch (Exception e) {
+         e.printStackTrace();
+     }
+    
+    
+		/* Don't use these things anymore because we know that orientation is not useful!
 		if (mGravity != null && mGeomagnetic != null)
         {
             float R[] = new float[9];
@@ -638,6 +767,8 @@ public class TrackingService extends Service
             boolean success = android.hardware.SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
             if (success) 
             {
+            	
+            	
                 float orientation[] = new float[3];
                 android.hardware.SensorManager.getOrientation(R, orientation); 
 	              pitchReading[0] = Math.round(Math.abs((orientation[0]*180)/Math.PI));
@@ -679,6 +810,7 @@ public class TrackingService extends Service
 				}
             }
         }
+        */
 		return;
 	}
 
@@ -719,6 +851,9 @@ public class TrackingService extends Service
 	                  double intensityReading = dataPoint.getIntensity();
 	                  lightIntensityDataBlock[blockSize++] = dataPoint;
 	                  
+
+        	    	  Toast.makeText(getApplicationContext(), "HELLO!", Toast.LENGTH_SHORT).show();
+	                  
 	                  //Calculate Mean Intensity Value
 	                  if(blockSize <= 1)
 	                      meanLightIntensity = intensityReading;
@@ -729,6 +864,7 @@ public class TrackingService extends Service
 	                  //JERRID: Once 16 readings are found, identify the MIN, MAX, magnitude
 	                  if (blockSize == Globals.LIGHT_BLOCK_CAPACITY) 
 	                  {
+
 	                      //Compute the Mean Absolute Deviation since we have a full buffer=
 	                      for (LumenDataPoint dp : lightIntensityDataBlock) {
 	                          //find mean absolute deviation
@@ -1092,6 +1228,9 @@ public class TrackingService extends Service
 						 
 						 // Used to update the current type.
 						 sendBroadcast(mMotionUpdateBroadcast);
+
+			        	  mLightingClassificationBroadcast.putExtra(CUR_LIGHT_CONDITION, 10);
+			        	  sendBroadcast(mLightingClassificationBroadcast);
 						
 						//Reset the max value
 						max = Double.MIN_VALUE;

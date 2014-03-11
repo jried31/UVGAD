@@ -48,12 +48,14 @@ public class MapDisplayActivity extends Activity {
 	
 	private TrackingServiceReceiver receiver = new TrackingServiceReceiver();
 	private MotionUpdateReceiver mMotionUpdateReceiver = new MotionUpdateReceiver();
+	//private LightingClassificationReceiver mLightingClassReceiver = new LightingClassificationReceiver();
 	
 	private GoogleMap mMap;
 
 	public Context mContext;
 	
 	public TextView typeStats;
+	public TextView lightingType;
 	public TextView avgspeedStats;
 	public TextView curspeedStats;
 	public TextView climbStats;
@@ -121,6 +123,7 @@ public class MapDisplayActivity extends Activity {
 		
 		// mark: init views here
 		typeStats = (TextView) findViewById(R.id.type_stats);
+		lightingType = (TextView) findViewById(R.id.lightingType);
 		avgspeedStats = (TextView) findViewById(R.id.avg_speed_stats);
 		curspeedStats = (TextView) findViewById(R.id.cur_speed_stats);
 		climbStats = (TextView) findViewById(R.id.climb_stats_stats);
@@ -216,7 +219,8 @@ public class MapDisplayActivity extends Activity {
 			
 			// read stats
 			intent = getIntent();
-			String type = Globals.TYPE_STATS + intent.getStringExtra(HistoryFragment.ACTIVITY_TYPE);
+			String type  = Globals.TYPE_STATS + intent.getStringExtra(HistoryFragment.ACTIVITY_TYPE);
+			String light = Globals.LIGHT_TYPE_HEADER + "I made a string!";
 			String avgSpeed = Globals.AVG_SPEED_STATS + String.format("%1$.2f", 
 					Double.parseDouble(intent.getStringExtra(HistoryFragment.AVG_SPEED))) + " meters / sec";
 			String curSpeed = Globals.CUR_SPEED_STATS + "0" + " meters / sec";
@@ -227,6 +231,7 @@ public class MapDisplayActivity extends Activity {
 					Double.parseDouble(intent.getStringExtra(HistoryFragment.DISTANCE))) + " meters";
 			
 			typeStats.setText(type);
+			lightingType.setText(light);
 			avgspeedStats.setText(avgSpeed);
 			curspeedStats.setText(curSpeed);
 			climbStats.setText(climb);
@@ -258,7 +263,11 @@ public class MapDisplayActivity extends Activity {
 		if (mTaskType == Globals.TASK_TYPE_NEW){
 			unregisterReceiver(receiver);
 			if (mInputType == Globals.INPUT_TYPE_AUTOMATIC)
+			{
 				unregisterReceiver(mMotionUpdateReceiver);
+				//unregisterReceiver(mLightingClassReceiver);
+			}
+			
 		}
 		super.onPause();
 	
@@ -277,6 +286,9 @@ public class MapDisplayActivity extends Activity {
 				intentFilter = new IntentFilter();
 				intentFilter.addAction(TrackingService.ACTION_MOTION_UPDATE);
 				registerReceiver(mMotionUpdateReceiver, intentFilter);
+				//IntentFilter intentFilter2 = new IntentFilter();
+				//intentFilter2.addAction(TrackingService.LIGHTING_CLASS_UPDATE);
+				//registerReceiver(mLightingClassReceiver, intentFilter);
 			}
 		}
 	}
@@ -476,8 +488,13 @@ public class MapDisplayActivity extends Activity {
 			String type = Globals.TYPE_STATS + Globals.ACTIVITY_TYPES[currentActivity];
 			String sweatRate = Globals.SWEAT_STATS + Globals.SWEAT_RATE_INTERVALS[sweatRateIndex];
 			typeStats.setText(type + "\n" + sweatRate);
+			
+			lightingType.setText( Globals.LIGHT_TYPE_HEADER + TrackingService.CUR_LIGHT_CONDITION + ", Last Max: " + TrackingService.lastMaxIntensityBuffer);
+
 		}
 	}
+	
+	
 		private boolean isMapNeedRecenter(LatLng latlng) {
 		
 			VisibleRegion vr = mMap.getProjection().getVisibleRegion();
