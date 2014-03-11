@@ -28,6 +28,13 @@ public class HistoryTable{
 			public static final String KEY_VITAMIN_D = Globals.KEY_VITAMIN_D;
 			public static final String KEY_UV_EXPOSURE = Globals.KEY_UV_EXPOSURE;
 			public static final String KEY_TRACK = Globals.KEY_TRACK;
+			public static final String KEY_GENDER = Globals.KEY_GENDER;
+			public static final String KEY_SKIN_TONE = Globals.KEY_SKIN_TONE;
+			public static final String KEY_SPF = Globals.KEY_SPF;
+			public static final String KEY_CLOTHING_COVER = Globals.KEY_CLOTHING_COVER;
+			//public static final String KEY_HEAD_APPAREL = Globals.KEY_HEAD_APPAREL;
+			//public static final String KEY_UPPER_APPAREL = Globals.KEY_UPPER_APPAREL;
+			//public static final String KEY_LOWER_APPAREL = Globals.KEY_LOWER_APPAREL;
 
 			// SQL query to create the table for the first time
 			// Data types are defined below
@@ -50,7 +57,15 @@ public class HistoryTable{
 					+ KEY_HEARTRATE + " INTEGER, "
 					+ KEY_COMMENT + " TEXT, "
 					+ KEY_PRIVACY + " INTEGER, " 
-					+ KEY_TRACK + " BLOB " + ");";
+					+ KEY_TRACK + " BLOB, " 
+					+ KEY_GENDER + " INTEGER, "
+					+ KEY_SKIN_TONE + " INTEGER, "
+					+ KEY_SPF + " INTEGER, "
+					+ KEY_CLOTHING_COVER + " FLOAT "
+					//+ KEY_HEAD_APPAREL + " INTEGER, "
+					//+ KEY_UPPER_APPAREL + " INTEGER, "
+					//+ KEY_LOWER_APPAREL + " INTEGER "
+					+ ");";
 			
 			public static void onCreate(SQLiteDatabase database) {
 			    database.execSQL(CREATE_TABLE_ENTRIES);
