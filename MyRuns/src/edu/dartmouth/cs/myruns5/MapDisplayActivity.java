@@ -2,12 +2,14 @@ package edu.dartmouth.cs.myruns5;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.app.Activity;
@@ -256,11 +258,6 @@ public class MapDisplayActivity extends Activity {
 			climbStats.setText(climb);
 			caloriesStats.setText(calories);
 			distanceStats.setText(distance);
-			// TODO: Display clothing coverage
-			
-			ArrayList<Parcelable> f = intent.getParcelableArrayListExtra(HistoryFragment.TRACK);
-			System.out.println("AAAA: " + f.size());
-			
 			break;
 		default:
 			Toast.makeText(getApplicationContext(), "should not happen", Toast.LENGTH_SHORT).show();
@@ -391,7 +388,27 @@ public class MapDisplayActivity extends Activity {
 			json.put(Globals.KEY_SKIN_TONE, intent.getIntExtra(HistoryFragment.SKIN_TONE, 1));
 			json.put(Globals.KEY_SPF, intent.getIntExtra(HistoryFragment.SPF, 0));
 			
-			/* TODO:FIXME; REPLACE WITH JUST CLOTHING COVER
+			ArrayList<Location> locations = intent.getParcelableArrayListExtra(HistoryFragment.TRACK);
+			// FAKE DATA
+			Location tempA = new Location("");
+			tempA.setLongitude(44.56);
+			tempA.setLatitude(36.33);
+			locations.add(tempA);
+			Location tempB = new Location("");
+			tempB.setLongitude(66.14);
+			tempB.setLatitude(39.04);
+			locations.add(tempB);
+			
+			ArrayList<JSONObject> locationData = new ArrayList<JSONObject>();
+			for (Location loc : locations) {
+				JSONObject map = new JSONObject();
+				map.put("longitude", loc.getLongitude());
+				map.put("latitude", loc.getLatitude());
+				locationData.add(map);
+			}
+			json.put("tracking_data", new JSONArray(locationData));
+			
+			/*
 			val = Integer.parseInt(intent.getStringExtra(HistoryFragment.HEAD_APPAREL));
 			json.put(Globals.KEY_HEAD_APPAREL, SpriteHeadApparel.HeadApparelType.valueOf(val).name());
 			
@@ -404,7 +421,7 @@ public class MapDisplayActivity extends Activity {
 			
 			new HTTPSender().execute(json);
 		} catch (Exception e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 		}
 		
 		finish();

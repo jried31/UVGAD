@@ -10,12 +10,13 @@ import org.json.JSONObject;
 import android.os.AsyncTask;
 
 public class HTTPSender extends AsyncTask<JSONObject, Void, Boolean>{
-	final String SERVER_URI = "http://192.168.0.192/";
+	final String SERVER_URI = "http://192.168.0.190/";
 	
 	@Override
 	protected Boolean doInBackground(JSONObject... jsonObjs) {
 		HttpClient httpClient = new DefaultHttpClient();
         HttpPost httpPost = new HttpPost(SERVER_URI);
+        httpPost.setHeader("Content-type", "application/json; charset=UTF-8");
         
         for (int i = 0; i < jsonObjs.length; i++) {
         	JSONObject json = jsonObjs[i];
