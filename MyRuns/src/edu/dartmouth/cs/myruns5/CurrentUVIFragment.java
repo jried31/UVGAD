@@ -1,10 +1,5 @@
 package edu.dartmouth.cs.myruns5;
 
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import android.app.Fragment;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -13,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Messenger;
 import android.support.v4.app.NotificationCompat;
 import android.view.LayoutInflater;
@@ -24,13 +18,10 @@ import android.widget.TextView;
 public class CurrentUVIFragment extends Fragment {
 	Messenger myService = null;
 	boolean isBound;
-	private Timer timer;
-	private Handler handler;
 	private UVIBroadcastReciever reciever;
 	private IntentFilter filter;
 	private View v;
 	private float currentUVI = 0;
-	private ExecutorService executorService;
 	private float[] data;
 	private Context context;
 	private NotificationManager nm;
@@ -38,20 +29,11 @@ public class CurrentUVIFragment extends Fragment {
 	private long[] vibrate = {400, 1000, 400, 1000, 400, 1000};
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
 		context = this.getActivity();
 		nm = ( NotificationManager ) context.getSystemService(Context.NOTIFICATION_SERVICE);
-		executorService = Executors.newSingleThreadExecutor();
-		executorService.submit(new Runnable() {
-			@Override
-			public void run() {
-				updateUVIWidget();
-			}
-		});
 
-		v = inflater.inflate(R.layout.uvg_fragment_current_uvi, container,
-				false);
+		v = inflater.inflate(R.layout.uvg_fragment_current_uvi, container,false);
 		if (v == null)
 			System.out.println("View is null!");
 		else
@@ -60,41 +42,16 @@ public class CurrentUVIFragment extends Fragment {
 					.getChartFragment(), ((MainActivity) context)
 					.getRecommendFragment(), 1));
 
+		registerReciever();
 		updateDisplay(v);
-		
-		handler=new Handler();
-		handler.post(updateUVIRunnable);
-		
 		return v;
 	}
-	private Runnable updateUVIRunnable =new Runnable(){
-	    public void run() {
-	    	updateUVIWidget(); 
-			handler.postDelayed(updateUVIRunnable,10000);
-	    }
-	}; 
-	private TimerTask updateUVITask = new TimerTask() {
-		@Override
-		public void run() {
-			// Call the UVI Service to grab the current UVI
-			updateUVIWidget();
-		}
-	};
-	final int updateInterval = 15;// minutes
 
 	public UVIBroadcastReciever getReceiver() {
 		return reciever;
 	}
 
-	private void updateUVIWidget() {
-		final Intent currentUVIIntent = new Intent(getActivity(),
-				UltravioletIndexService.class);
-		currentUVIIntent.setAction(UltravioletIndexService.CURRENT_UV_INDEX);
-		getActivity().startService(currentUVIIntent);
-	}
-
 	private void updateDisplay(View v) {
-		//currentUVI = 11;
 		TextView currentUVIView = (TextView) v.findViewById(R.id.current_uvi);
 		currentUVIView.setText(Float.toString(currentUVI));
 		switch ((int) currentUVI) {
@@ -153,10 +110,8 @@ public class CurrentUVIFragment extends Fragment {
 	class UVIBroadcastReciever extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context arg0, Intent arg1) {
-			currentUVI = arg1.getExtras().getFloat(
-					UltravioletIndexService.CURRENT_UV_INDEX);
-			data = arg1.getExtras().getFloatArray(
-					UltravioletIndexService.WEB_UVI);
+			currentUVI = arg1.getExtras().getFloat(UltravioletIndexService.CURRENT_UV_INDEX);
+			data = arg1.getExtras().getFloatArray(UltravioletIndexService.WEB_UVI);
 			updateDisplay(v);
 		}
 	}
@@ -170,14 +125,12 @@ public class CurrentUVIFragment extends Fragment {
 	@Override
 	public void onResume() {
 		super.onResume();
-		handler.post(this.updateUVIRunnable);
 		registerReciever();
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
-		handler.removeCallbacks(this.updateUVIRunnable);
 		if (reciever != null) {
 			getActivity().unregisterReceiver(reciever);
 			reciever = null;
@@ -188,7 +141,6 @@ public class CurrentUVIFragment extends Fragment {
 	@Override
 	public void onStop() {
 		super.onStop();
-		handler.removeCallbacks(this.updateUVIRunnable);
 		if (reciever != null) {
 			getActivity().unregisterReceiver(reciever);
 			reciever = null;

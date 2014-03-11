@@ -17,7 +17,7 @@ public abstract class Globals {
 	public static final String TAG = "MyRuns";
 	
 	//JERRID: ******************************
-	public static final int FEAT_NUMBER_FEATURES=3;
+	public static final int FEAT_NUMBER_FEATURES=2;
 	public static final int LIGHT_BUFFER_CAPACITY = 2048;
 	public static final int LIGHT_BLOCK_CAPACITY = 256;
 	public static final String LIGHT_INTENSITY_FILE_NAME = "lightClassification.txt";

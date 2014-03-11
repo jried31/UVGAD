@@ -69,7 +69,7 @@ public abstract class Globals {
 	
 	//Weka Attributes
 	//JERRID: ******************************
-	public static final int FEAT_NUMBER_FEATURES=6;
+	public static final int FEAT_NUMBER_FEATURES=3;
 	public static final int LIGHT_BUFFER_CAPACITY = 2048;
 	public static final int LIGHT_BLOCK_CAPACITY = 256;
 	
