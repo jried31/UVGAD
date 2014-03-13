@@ -594,10 +594,12 @@ public class MapDisplayActivity extends Activity {
 			if(Globals.FOUND_ARDUINO)
 			{
 				
-				lightingType_Arduino.setText( Globals.LIGHT_TYPE_HEADER_ARDUINO +  intent.getIntExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO, -1)  );
+				lightingType_Arduino.setText(" "+ Globals.LIGHT_TYPE_HEADER_ARDUINO +  intent.getStringExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO) 
+						+ " " + intent.getIntExtra(Globals.LIGHT_TYPE_HEADER, -1)  );
+				
 			}
 			else
-				lightingType_Arduino.setText( Globals.LIGHT_TYPE_HEADER_ARDUINO + "Sensor Not Detected"  );
+				lightingType_Arduino.setText(" "+ Globals.LIGHT_TYPE_HEADER_ARDUINO + "Sensor Not Detected"  );
 				
 		}
 	}

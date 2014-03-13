@@ -348,7 +348,8 @@ public class TrackingService extends Service
 	public static final String FINAL_SWEAT_RATE_AVERAGE = "average sweat rate";
 	
 	public static final String LIGHTING_CLASS_UPDATE = "lighting class update";
-	public static String  CUR_LIGHT_CONDITION = "lighting consition";
+	public static String  CUR_LIGHT_CONDITION = "lighting condition";
+	public static String  CUR_LIGHT_CONDITION_ARDUINO = "lighting consition";
 	
 	private static final String TAG = "TrackingService";
 	
@@ -1128,8 +1129,20 @@ public class TrackingService extends Service
 						 updateTask.SetIntent(mMotionUpdateBroadcast);
 						 updateTask.SetContext(getApplicationContext());
 						 
-						 //Adding light values
-						 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO, Math.max(light0,light1));
+						 //Adding light value classification
+						 int ardVal = Math.max(light0,light1);
+						 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER, ardVal);
+						 if(ardVal > 2000)
+						 {
+
+							 CUR_LIGHT_CONDITION_ARDUINO = Globals.CLASS_LABEL_IN_SUN;
+							 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO, Globals.CLASS_LABEL_IN_SUN);
+						 }
+						 else
+						 {
+							 CUR_LIGHT_CONDITION_ARDUINO = Globals.CLASS_LABEL_IN_SHADE;
+							 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO, Globals.CLASS_LABEL_IN_SHADE);
+						 }
 						 // Used to update the current type.
 						 sendBroadcast(mMotionUpdateBroadcast);
 
