@@ -206,7 +206,7 @@ public class MainActivity extends Activity {
 	
 
 	public void onSampleClicked(View view) {
-		Intent i = new Intent(this,SerialConsoleActivity.class);
+		Intent i = new Intent(this,SampleUVActivity.class);
 		startActivity(i);
 	}
 	public void onStartClicked(View view) {

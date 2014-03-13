@@ -169,6 +169,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 			ParseQuery<ParseObject> querySun = new ParseQuery<ParseObject>("UVData"),
 					queryShade = new ParseQuery<ParseObject>("UVData"),
 					queryCloud = new ParseQuery<ParseObject>("UVData");
+			
 			querySun.whereEqualTo(ParseUVReading.ENVIRONMENT, Globals.CLASS_LABEL_IN_SUN);
 			querySun.orderByDescending("timestamp");
 			querySun.setLimit(30);
