@@ -631,6 +631,9 @@ public class MapDisplayActivity extends Activity {
 
 			typeStats.setText(type + "\n" + sweatRate + "\n" + "Total amount sweat:" + mSweatRate);
 			
+			// TODO: Do UI update here...
+			//add a text thing in activitymapdisplay xml whatever blah blah blah
+			
 			lightingType.setText( Globals.LIGHT_TYPE_HEADER + TrackingService.CUR_LIGHT_CONDITION + ", Last Max: " + TrackingService.lastMaxIntensityBuffer);
 			if(Globals.FOUND_ARDUINO)
 			{
@@ -651,9 +654,11 @@ public class MapDisplayActivity extends Activity {
 	
 	class UVIBroadcastReciever extends BroadcastReceiver {
 		@Override
-		public void onReceive(Context arg0, Intent arg1) {
+		public void onReceive(Context ctx, Intent arg1) {
 			double currentUVISun = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SUN);
 			double currentUVIShade = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SHADE);
+			
+			//Take these UVI readings and make them into a global accessible from Tracking Service
 			
 			uviStats.setText("UVI Sun: "+ currentUVISun + " UVI Shade: "+ currentUVIShade+"\n");
 			System.out.println("abcd "+currentUVISun);

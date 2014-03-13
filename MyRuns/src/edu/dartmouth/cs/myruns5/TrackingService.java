@@ -1148,16 +1148,43 @@ public class TrackingService extends Service
 						 //Adding light value classification
 						 int ardVal = Math.max(light0,light1);
 						 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER, ardVal);
-						 if(ardVal > 2000)
+						 if(Globals.FOUND_ARDUINO)
 						 {
-							 CUR_LIGHT_CONDITION_ARDUINO = Globals.CLASS_LABEL_IN_SUN;
-			        			environmentClassification = Globals.CLASS_LABEL_IN_SUN;
+							 if(ardVal > 2000)
+							 {
+								 CUR_LIGHT_CONDITION_ARDUINO = Globals.CLASS_LABEL_IN_SUN;
+				        			environmentClassification = Globals.CLASS_LABEL_IN_SUN;
+							 }
+							 else
+							 {
+								 CUR_LIGHT_CONDITION_ARDUINO = Globals.CLASS_LABEL_IN_SHADE;
+								 environmentClassification = Globals.CLASS_LABEL_IN_SHADE;
+							 }
 						 }
-						 else
-						 {
-							 CUR_LIGHT_CONDITION_ARDUINO = Globals.CLASS_LABEL_IN_SHADE;
-							 environmentClassification = Globals.CLASS_LABEL_IN_SHADE;
-						 }
+						 //THIS IS WHERE YOU DO THE UV INTEGRATION CHECK SINCE IT RUNS ON A CLOCK ALREADY
+						 //FROM FILLING THE ACCEL BUFFER
+						 //Check if found arduino
+						 //See if it's sun or shade (or just go to environmentClassificaion)
+						 // Grab the appropriate UV for shade or sun (which is now a global and you have access to
+						 //Above - in this task - there is a 'timeElapsed' variable. I think this measures the total time
+						 //inbetween each trigger of this asynch task. You can use this as your change in time for the UV exposure
+						 //So: currentUVI <-- whichever the correct UV is based on lighting
+						 // changeInTime <-- timeElapsed OR (currentSystemTime-lastSystemTime) depending on what
+						 // timeElapsed actually measures. Not sure from when I last looked at the code
+						 // If timeElapsed is the change in system time between now and the last time this handler was called,
+						 // then that is excactly what we want. If this is the case, it will be equal to
+						 //(lastSystemTimeWhenThisHandlerRan - currentSystemTimeThatThisHasRun)
+						 // now: totalUV += currentUVI * changeInTime
+						 // GOTCHA! Units have to work out! Jerrid sent an email about this.
+						 // total uv exposure is [J/m^2]
+						 // time should be in seconds (NOT nano or miliseconds)
+						 // UV Irradiance should be in [W/m^2] = [J/(s*m^2)]
+						 // Then, if you do UVI * [seconds] you get the right units out! 
+						 // display totalUV - put it in this broadcast (mMotionUpdateBroadcast) intent anddoisplay it along with the other shennaniganry in
+						 // the broadcast receiver in MapDisplayActivity
+						 // go grab a beer or a shot of rum.
+						 
+						 
 
 						 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO,environmentClassification);
 						 // Used to update the current type.
