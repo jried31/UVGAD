@@ -350,6 +350,7 @@ public class TrackingService extends Service
 	public static final String LIGHTING_CLASS_UPDATE = "lighting class update";
 	public static String  CUR_LIGHT_CONDITION = "no_data";
 	public static String  CUR_LIGHT_CONDITION_ARDUINO = "no_data";
+	private static String environmentClassification="no_data";
 	
 	private static final String TAG = "TrackingService";
 	
@@ -385,9 +386,9 @@ public class TrackingService extends Service
 	public void onCreate() {
 		mLocationList = new ArrayList<Location>();
 		mLocationUpdateBroadcast = new Intent();
-		mLocationUpdateBroadcast.setAction(ACTION_TRACKING);
+		mLocationUpdateBroadcast.setAction(Globals.ACTION_TRACKING);
 		mMotionUpdateBroadcast = new Intent();
-		mMotionUpdateBroadcast.setAction(ACTION_MOTION_UPDATE);
+		mMotionUpdateBroadcast.setAction(Globals.ACTION_MOTION_UPDATE);
 		
 		//mLightingClassificationBroadcast = new Intent();
 		//mLightingClassificationBroadcast.setAction(ACTION_MOTION_UPDATE);
@@ -418,7 +419,7 @@ public class TrackingService extends Service
 		
 		String option = intent.getAction();
 		//Option to retrieve Envirnment Context from Light Sensor
-		if (option.equals(Globals.ENVIRONMENT_CLASSIFICATION)) {
+		if (option != null && option.equals(Globals.ENVIRONMENT_CLASSIFICATION)) {
 			Intent i;
 			if(Globals.FOUND_ARDUINO)
 				i = new Intent(Globals.ENVIRONMENT_CLASSIFICATION).putExtra(Globals.ENVIRONMENT_CLASSIFICATION, CUR_LIGHT_CONDITION_ARDUINO);
@@ -766,11 +767,13 @@ public class TrackingService extends Service
 	        	//set CURR_LIGHT_CLASSIFICATION
 	        	if(maxIntensityThisBuffer > 0)
 	        	{
-	        		if(maxIntensityThisBuffer > 1500)
+	        		if(maxIntensityThisBuffer > 1500){
 	        			CUR_LIGHT_CONDITION = Globals.CLASS_LABEL_IN_SUN;
-	        		else
+	        			environmentClassification = Globals.CLASS_LABEL_IN_SUN;
+	        		}else{
 	        			CUR_LIGHT_CONDITION = Globals.CLASS_LABEL_IN_SHADE;
-	        	
+        				environmentClassification = Globals.CLASS_LABEL_IN_SHADE;
+	        		}
 	        		lastMaxIntensityBuffer = maxIntensityThisBuffer;
 	        	}
 	            
@@ -1125,9 +1128,9 @@ public class TrackingService extends Service
 		                // new code
 						mInferredActivityType = Globals.INFERENCE_MAPPING[currentTrend == -1 ? value : currentTrend];//maxIndex];
 						int currentActivity = Globals.INFERENCE_MAPPING[value];
-						mMotionUpdateBroadcast.putExtra(CURRENT_MOTION_TYPE, currentActivity);
+						mMotionUpdateBroadcast.putExtra(Globals.CURRENT_MOTION_TYPE, currentActivity);
 						int sweatRateIndex = GetSweatRateIndexForActivity(currentActivity);
-						mMotionUpdateBroadcast.putExtra(CURRENT_SWEAT_RATE_INTERVAL,sweatRateIndex);
+						mMotionUpdateBroadcast.putExtra(Globals.CURRENT_SWEAT_RATE_INTERVAL,sweatRateIndex);
 						updateTask.SetCurrentType(currentActivity);
 						updateTask.SetSweatRateIndex(sweatRateIndex);
 						// send broadcast with the CURRENT activity type
@@ -1146,15 +1149,16 @@ public class TrackingService extends Service
 						 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER, ardVal);
 						 if(ardVal > 2000)
 						 {
-
 							 CUR_LIGHT_CONDITION_ARDUINO = Globals.CLASS_LABEL_IN_SUN;
-							 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO, Globals.CLASS_LABEL_IN_SUN);
+			        			environmentClassification = Globals.CLASS_LABEL_IN_SUN;
 						 }
 						 else
 						 {
 							 CUR_LIGHT_CONDITION_ARDUINO = Globals.CLASS_LABEL_IN_SHADE;
-							 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO, Globals.CLASS_LABEL_IN_SHADE);
+							 environmentClassification = Globals.CLASS_LABEL_IN_SHADE;
 						 }
+
+						 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO,environmentClassification);
 						 // Used to update the current type.
 						 sendBroadcast(mMotionUpdateBroadcast);
 
@@ -1176,16 +1180,16 @@ public class TrackingService extends Service
 			switch(currentActivityIndex) {
 			case Globals.ACTIVITY_TYPE_STANDING:
 			case Globals.ACTIVITY_TYPE_WALKING:
-				sweatRateIndex = 0;
-				break;
-			case Globals.ACTIVITY_TYPE_JOGGING :
 				sweatRateIndex = 1;
 				break;
-			case Globals.ACTIVITY_TYPE_RUNNING:
+			case Globals.ACTIVITY_TYPE_JOGGING :
 				sweatRateIndex = 2;
 				break;
+			case Globals.ACTIVITY_TYPE_RUNNING:
+				sweatRateIndex = 3;
+				break;
 				default:
-					sweatRateIndex = 3;
+					sweatRateIndex = 4;
 					break;
 			}
 		
@@ -1278,18 +1282,6 @@ class UpdateFinalTypeTask extends TimerTask {
 	public void SetSweatRateIndex(int sweatRateIndex) {
 		mSweatRateIndex = sweatRateIndex;
 	}
-
-	// Constant element required to update the final type.
-	public static final String VOTED_MOTION_TYPE = "voted motion type";
-	
-	// Constant element to calculate the average sweat rate.
-	public static final String FINAL_SWEAT_RATE_AVERAGE = "average sweat rate";
-	
-	// Constant element required to update the current type.
-	public static final String CURRENT_MOTION_TYPE = "new motion type";
-	
-	// Constant element required to update the sweat rate interval prediction.
-	public static final String CURRENT_SWEAT_RATE_INTERVAL = "sweat rate Interval";
 	
 	// Keeps track of the number of times this worker has been executed
 
@@ -1324,13 +1316,14 @@ class UpdateFinalTypeTask extends TimerTask {
 				}			
 			}
 			// Set the current type.
-			mMotionUpdateBroadcast.putExtra(CURRENT_MOTION_TYPE, mCurrentType);
+			mMotionUpdateBroadcast.putExtra(Globals.CURRENT_MOTION_TYPE, mCurrentType);
 			// set the current sweat rate.
-			mMotionUpdateBroadcast.putExtra(CURRENT_SWEAT_RATE_INTERVAL, mSweatRateIndex);
+			mMotionUpdateBroadcast.putExtra(Globals.CURRENT_SWEAT_RATE_INTERVAL, mSweatRateIndex);
 			// Set the final type.
-			mMotionUpdateBroadcast.putExtra(VOTED_MOTION_TYPE, finalInferredType);
+			mMotionUpdateBroadcast.putExtra(Globals.VOTED_MOTION_TYPE, finalInferredType);
 			Double sweatRateMeasure = 0.0;
 			Double activityDuration = 0.0;
+			double uvExposureMeasure = 1.0;
 			if(finalInferredType == Globals.ACTIVITY_TYPE_STANDING) {
 				// Get the activity duration in seconds. 				
 				activityDuration = mActivityVsDurationMap.get(0);
@@ -1363,8 +1356,11 @@ class UpdateFinalTypeTask extends TimerTask {
 			}
 			
 			// set the final sweat rate.
-			mMotionUpdateBroadcast.putExtra(FINAL_SWEAT_RATE_AVERAGE,sweatRateMeasure + " milli liters");
-			
+			double sweatRateMeasureStr = Math.floor(sweatRateMeasure*100)/100;
+			mMotionUpdateBroadcast.putExtra(Globals.FINAL_SWEAT_RATE_AVERAGE,sweatRateMeasureStr + " milli liters");
+			mMotionUpdateBroadcast.putExtra(Globals.CURR_SWEAT_RATE_AVERAGE, sweatRateMeasure);
+			mMotionUpdateBroadcast.putExtra(Globals.CURR_UV_EXPOSURE, uvExposureMeasure);
+
 			// Send the broad cast. It updates the UI.
 			mAppContext.sendBroadcast(mMotionUpdateBroadcast);
 	   }	   

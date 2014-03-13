@@ -1,19 +1,14 @@
 package edu.dartmouth.cs.myruns5;
 
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -21,17 +16,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
-import android.os.Parcelable;
 import android.provider.Settings.Secure;
 import android.util.Log;
 import android.view.Menu;
@@ -65,7 +55,10 @@ public class MapDisplayActivity extends Activity {
 	
 	private TrackingServiceReceiver receiver = new TrackingServiceReceiver();
 	private MotionUpdateReceiver mMotionUpdateReceiver = new MotionUpdateReceiver();
+
 	//private LightingClassificationReceiver mLightingClassReceiver = new LightingClassificationReceiver();
+
+	private UVIBroadcastReciever mUVReceiver = new UVIBroadcastReciever();
 	
 	private GoogleMap mMap;
 
@@ -79,6 +72,7 @@ public class MapDisplayActivity extends Activity {
 	public TextView climbStats;
 	public TextView caloriesStats;
 	public TextView distanceStats;
+	public TextView uviStats;
 	PolylineOptions rectOptions;
 	Polyline polyline;
 
@@ -93,6 +87,7 @@ public class MapDisplayActivity extends Activity {
 	private int mInputType;
 	private int mInferredActivityType;
 	private String mSweatRate;
+	private double mUvExposure;
 	
 	public static final int MENU_ID_DELETE = 0;
 	
@@ -108,6 +103,8 @@ public class MapDisplayActivity extends Activity {
     private double mDuration;
     
     public LatLng firstLatLng;
+    
+    public int sweatIteration = 1;
 
 
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -125,11 +122,25 @@ public class MapDisplayActivity extends Activity {
 		}
 	};
 
-	
+
+	Handler uviHandler;
+	Runnable uviRunnable = new Runnable() {
+        @Override
+        public void run() {
+        	final Intent currentUVIIntent = new Intent(getApplicationContext(), UltravioletIndexService.class);
+        	currentUVIIntent.setAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
+        	startService(currentUVIIntent);
+
+    		uviHandler.postDelayed(uviRunnable, Globals.UVI_UPDATE_RATE);
+        	
+        }
+    };
+
+
 	/******************* methods ********************/
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_map_display);
 		
@@ -153,6 +164,7 @@ public class MapDisplayActivity extends Activity {
 		climbStats = (TextView) findViewById(R.id.climb_stats_stats);
 		caloriesStats = (TextView) findViewById(R.id.calories_stats);
 		distanceStats = (TextView) findViewById(R.id.distance_stats);
+		uviStats = (TextView) findViewById(R.id.uviType);
 		
 		mEntryHelper = new ExerciseEntryHelper();
 		// Get extras from intent and set the mTaskType, InputType, Row Id and ActivityType
@@ -171,12 +183,14 @@ public class MapDisplayActivity extends Activity {
 		mStartTime = 0;
 		mClimb = 0;
 		mDuration = 0;
+		mUvExposure = 0.0;
 		
 		// init mEntry
 		mEntry = new ExerciseEntry();
 		mEntry.setActivityType(mInferredActivityType);
 		mEntry.setSweatRate(mSweatRate);
 		mEntry.setInputType(mInputType);
+		mEntry.setUvExposureCumulative(mUvExposure);
 		
 		FragmentManager myFragmentManager = getFragmentManager();
 		MapFragment mMapFragment = (MapFragment)myFragmentManager.findFragmentById(R.id.map);
@@ -194,7 +208,7 @@ public class MapDisplayActivity extends Activity {
 
 		case Globals.TASK_TYPE_HISTORY:
 			Log.d(null, "history 1");
-
+			
 			// remove buttons
 			Button saveButton = (Button) findViewById(R.id.button_map_save);
 			saveButton.setVisibility(View.GONE);
@@ -272,6 +286,14 @@ public class MapDisplayActivity extends Activity {
 			finish(); // Should never happen.
 			return;
 		}
+		
+		//Stephanie: Code here to display the UV 
+    	IntentFilter filter = new IntentFilter();
+    	filter.addAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
+    	registerReceiver(mUVReceiver, filter);
+    	
+		uviHandler = new Handler();
+		uviHandler.postDelayed(uviRunnable, Globals.UVI_UPDATE_RATE);
 	}
 	
 	@Override
@@ -285,8 +307,6 @@ public class MapDisplayActivity extends Activity {
 	
 	@Override
 	public void onPause(){
-		
-		
 		
 		if (mTaskType == Globals.TASK_TYPE_NEW){
 			unregisterReceiver(receiver);
@@ -304,21 +324,38 @@ public class MapDisplayActivity extends Activity {
 	@Override
 	public void onResume(){
 		super.onResume();
-		
 		if (mTaskType == Globals.TASK_TYPE_NEW){
 			IntentFilter intentFilter = new IntentFilter();
-			intentFilter.addAction(TrackingService.ACTION_TRACKING);
+			intentFilter.addAction(Globals.ACTION_TRACKING);
 			registerReceiver(receiver, intentFilter);
 			
 			if(mInputType == Globals.INPUT_TYPE_AUTOMATIC){
 				intentFilter = new IntentFilter();
-				intentFilter.addAction(TrackingService.ACTION_MOTION_UPDATE);
+				intentFilter.addAction(Globals.ACTION_MOTION_UPDATE);
 				registerReceiver(mMotionUpdateReceiver, intentFilter);
 				//IntentFilter intentFilter2 = new IntentFilter();
 				//intentFilter2.addAction(TrackingService.LIGHTING_CLASS_UPDATE);
 				//registerReceiver(mLightingClassReceiver, intentFilter);
 			}
 		}
+	}
+	
+	public void sunblockReapp(Context context){
+		String notificationTitle = "MyRuns";
+		String notificationText = "Time to reapply sunblock!";
+		
+		Notification notification = new Notification.Builder(context)
+			.setContentTitle(notificationTitle)
+			.setContentText(notificationText)
+			.setSmallIcon(R.drawable.runner)
+			.setAutoCancel(true)
+			.build();
+		
+		NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		notification.flags = notification.flags | Notification.FLAG_AUTO_CANCEL;
+		notification.defaults |= Notification.DEFAULT_SOUND;
+		notification.defaults |= Notification.DEFAULT_VIBRATE;
+		notificationManager.notify(0, notification);
 	}
 	
 	/******************* button listeners ******************/
@@ -337,6 +374,7 @@ public class MapDisplayActivity extends Activity {
 		mEntry.setDuration((int)mDuration);
 		mEntry.setActivityType(mInferredActivityType);
 		mEntry.setSweatRate(mSweatRate);
+		mEntry.setUvExposureCumulative(mUvExposure);
 		
 		SharedPreferences sharedPref = mContext.getSharedPreferences(Globals.TAG, Context.MODE_PRIVATE);
 		mEntry.setGender(sharedPref.getInt(mContext.getString(R.string.data_Gender), 0));
@@ -582,13 +620,16 @@ public class MapDisplayActivity extends Activity {
 	public class MotionUpdateReceiver extends BroadcastReceiver{
 		@Override
 		public void onReceive(Context context, Intent intent){
-			mInferredActivityType = intent.getIntExtra(TrackingService.VOTED_MOTION_TYPE, -1);
-			mSweatRate = intent.getStringExtra(TrackingService.FINAL_SWEAT_RATE_AVERAGE);
-			int currentActivity = intent.getIntExtra(TrackingService.CURRENT_MOTION_TYPE, -1);
-			int sweatRateIndex = intent.getIntExtra(TrackingService.CURRENT_SWEAT_RATE_INTERVAL, -1);
+			mInferredActivityType = intent.getIntExtra(Globals.VOTED_MOTION_TYPE, -1);
+			mSweatRate = intent.getStringExtra(Globals.FINAL_SWEAT_RATE_AVERAGE);
+			mUvExposure = intent.getDoubleExtra(Globals.CURR_UV_EXPOSURE, 0);
+			double currSweatTotal = intent.getDoubleExtra(Globals.CURR_SWEAT_RATE_AVERAGE, 0);
+			int currentActivity = intent.getIntExtra(Globals.CURRENT_MOTION_TYPE, -1);
+			int sweatRateIndex = intent.getIntExtra(Globals.CURRENT_SWEAT_RATE_INTERVAL, -1);
 			String type = Globals.TYPE_STATS + Globals.ACTIVITY_TYPES[currentActivity];
 			String sweatRate = Globals.SWEAT_STATS + Globals.SWEAT_RATE_INTERVALS[sweatRateIndex];
-			typeStats.setText(type + "\n" + sweatRate);
+
+			typeStats.setText(type + "\n" + sweatRate + "\n" + "Total amount sweat:" + mSweatRate);
 			
 			lightingType.setText( Globals.LIGHT_TYPE_HEADER + TrackingService.CUR_LIGHT_CONDITION + ", Last Max: " + TrackingService.lastMaxIntensityBuffer);
 			if(Globals.FOUND_ARDUINO)
@@ -601,9 +642,25 @@ public class MapDisplayActivity extends Activity {
 			else
 				lightingType_Arduino.setText(" "+ Globals.LIGHT_TYPE_HEADER_ARDUINO + "Sensor Not Detected"  );
 				
+			if (currSweatTotal > (Globals.SWEAT_REAPPLY * sweatIteration)) {
+				sunblockReapp(context);
+				sweatIteration++;
+			}
 		}
 	}
 	
+	class UVIBroadcastReciever extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context arg0, Intent arg1) {
+			double currentUVISun = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SUN);
+			double currentUVIShade = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SHADE);
+			
+			uviStats.setText("UVI Sun: "+ currentUVISun + " UVI Shade: "+ currentUVIShade+"\n");
+			System.out.println("abcd "+currentUVISun);
+			
+			//Set text in the view here
+		}
+	}
 	
 		private boolean isMapNeedRecenter(LatLng latlng) {
 		

@@ -78,6 +78,7 @@ public class HistoryFragment extends ListFragment
 	public static final String COMMENT = "comment";
 	public static final String DISTANCE = "distance";
 	public static final String SWEATRATE = "sweatrate";
+	public static final String UVEXPOSURE = "uv exposure";
 	public static final String DURATION = "duration";
 	public static final String CALORIE = "calorie";
 	public static final String DATE_TIME = "date and time";
@@ -179,6 +180,10 @@ public class HistoryFragment extends ListFragment
 		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_SWEATRATE);
 		String sweatrate = mActivityEntryCursor.getString(idx);
 		intent.putExtra(SWEATRATE,sweatrate);
+		
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_UV_EXPOSURE);
+		String uvExposure = mActivityEntryCursor.getString(idx);
+		intent.putExtra(UVEXPOSURE,uvExposure);
 		
 		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_DURATION);
 		String duration = mActivityEntryCursor.getString(idx);
@@ -339,7 +344,11 @@ public class HistoryFragment extends ListFragment
 		        
 		        typeIndex = cursor.getColumnIndex(Globals.KEY_SWEATRATE);
 		        line2 = line2 + cursor.getString(typeIndex);	       
-		        line2 = line2 + " sweat lost";
+		        line2 = line2 + " sweat lost, ";
+		        
+		        typeIndex = cursor.getColumnIndex(Globals.KEY_UV_EXPOSURE);
+		        line2 = line2 + cursor.getString(typeIndex);	       
+		        line2 = line2 + " exposure";
 		        
 		        TextView text2 = (TextView) view.findViewById(android.R.id.text2);
 		        

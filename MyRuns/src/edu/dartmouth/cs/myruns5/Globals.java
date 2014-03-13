@@ -114,10 +114,11 @@ public abstract class Globals {
 		"Downhill Skiing", "Cross-Country Skiing", "Snowboarding", "Skating", "Swimming", 
 		"Mountain Biking", "Wheelchair", "Elliptical", "Other",  "Standing" , "Jogging" , "Unknown"};
 	
-	public static final String[] SWEAT_RATE_INTERVALS = { "Low(1-1.5 Liter/hour)","Medium(1.5-2 Liter/hour)", "High(2 - 3 Liter/hour)"};
+	public static final String[] SWEAT_RATE_INTERVALS = { "Low(0.4 Liter/hour)","Low(1.5 Liter/hour)","Medium(2 Liter/hour)", "High(3 Liter/hour)"};
+	public static final double SWEAT_REAPPLY = 4.0; // TEMP: notification when sweat total is 4ml
 	
 
-	// Average sweat rate while standing and walking is X liter per hour
+	// Average sweat rate while standing and walking is .375 liter per hour
 	public static int SWEAT_RATE_HOURLY_STANDING = 375;
 	
 	// Average sweat rate while standing and walking is 1.5 liter per hour
@@ -128,6 +129,7 @@ public abstract class Globals {
 	
 	// Average sweat rate while running is 3 liters per hour
 	public static  int SWEAT_RATE_HOURLY_RUNNING = 3000;
+	
 	// Int encoded activity types
 	public static final int ACTIVITY_TYPE_ERROR = -1;
 	public static final int ACTIVITY_TYPE_RUNNING = 0;
@@ -171,7 +173,17 @@ public abstract class Globals {
 	
 	public static final int[] INFERENCE_MAPPING = {ACTIVITY_TYPE_STANDING, ACTIVITY_TYPE_WALKING, ACTIVITY_TYPE_JOGGING, ACTIVITY_TYPE_RUNNING};
 	public static final String[] INFERENCE_LIST = {"Standing", "Walking" , "Jogging" , "Sprinting" ,"Other"};
-
+	
+	// Service broadcast
+	public static final String ACTION_MOTION_UPDATE = "motion update";
+	public static final String CURRENT_MOTION_TYPE = "new motion type";
+	public static final String VOTED_MOTION_TYPE = "voted motion type";
+	public static final String ACTION_TRACKING = "tracking action";
+	public static final String CURRENT_SWEAT_RATE_INTERVAL = "sweat rate Interval";
+	public static final String FINAL_SWEAT_RATE_AVERAGE = "average sweat rate";
+	public static final String CURR_SWEAT_RATE_AVERAGE = "current sweat rate";
+	
+	public static final String CURR_UV_EXPOSURE = "current uv exposure";
 	
 	//COllector Variables------
 	public static final int ACTIVITY_ID_STANDING = 0;
@@ -201,5 +213,7 @@ public abstract class Globals {
 	//---------------
 
 	public static final String ENVIRONMENT_CLASSIFICATION = "environments";
+
+	public static final int UVI_UPDATE_RATE = 5000;
 	
 }
