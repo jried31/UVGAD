@@ -144,6 +144,15 @@ public class TrackingService extends Service
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		
+		String option = intent.getAction();
+
+
+		//Option to retrieve Envirnment Context from Light Sensor
+		if (option.equals(Globals.ENVIRONMENT_CLASSIFICATION)) {
+			switch()
+		}
+		
 		File sdCard = Environment.getExternalStorageDirectory();  
 		String tempfilename = sdCard.getAbsolutePath()  + "/temp";
 		File file = new File(tempfilename);

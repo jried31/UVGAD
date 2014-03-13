@@ -195,5 +195,7 @@ public abstract class Globals {
 	
 	public static final int NOTIFICATION_ID = 1;
 	//---------------
+
+	public static final String ENVIRONMENT_CLASSIFICATION = "environments";
 	
 }
