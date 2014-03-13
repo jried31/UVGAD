@@ -30,7 +30,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener,G
 {
 	int uv1=-1,uv2=-1,uv=0;
 	// This is the callback object for the first light sensor
-	private class LightSensor0Callback implements ILightSensor.Callback
+	public class LightSensor0Callback implements ILightSensor.Callback
 	{
 		private final Activity mActivity;
 		
@@ -115,7 +115,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener,G
 	}
 	
 	// This is the callback object for the first UV sensor
-	private class UVSensor0Callback implements IUVSensor.Callback
+	public class UVSensor0Callback implements IUVSensor.Callback
 	{
 		private final Activity mActivity;
 		

@@ -333,7 +333,7 @@ public class LightSensorService extends Service implements SensorEventListener {
 
 	float mGravity[]=null;
 	float[] mGeomagnetic=null;
-	float []pitchReading={0,0,0};;
+	float []pitchReading={0,0,0};
 	public void onSensorChanged(SensorEvent event) {
 
 		if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
