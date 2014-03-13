@@ -7,7 +7,7 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="120dp">
+        android:layout_marginBottom="140dp">
         
 		<fragment 
 			android:id="@+id/map"
@@ -29,6 +29,12 @@
 			
 			<TextView 
 			    android:id="@+id/lightingType"
+			    android:layout_width="match_parent"
+			    android:layout_height="wrap_content">
+			</TextView>
+			
+			<TextView 
+			    android:id="@+id/lightingType_Arduino"
 			    android:layout_width="match_parent"
 			    android:layout_height="wrap_content">
 			</TextView>
@@ -91,6 +97,16 @@
             android:layout_marginRight="50dp"
             android:onClick="onCancelClicked"
             android:text="@string/title_button_cancel" >
+        </Button>
+        
+        <Button
+            android:id="@+id/button_send_data"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginRight="50dp"
+            android:onClick="onSendData"
+            android:text="@string/title_button_send">
         </Button>
 	</LinearLayout>
 	

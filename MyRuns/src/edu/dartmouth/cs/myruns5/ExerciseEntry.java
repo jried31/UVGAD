@@ -23,7 +23,13 @@ public class ExerciseEntry {
 	private int heartrate;
 	private double uvExposureCum;
 	private double vitaminDExposureCum;
-
+	private int gender;
+	private int skinTone;
+	private int spf;
+	private float clothingCover;
+	//private SpriteHeadApparel.HeadApparelType headApparel;
+	//private SpriteUpperApparel.UpperApparelType upperApparel;
+	//private SpriteLowerApparel.LowerApparelType lowerApparel;
 
 	private String comment;
     private Location[] myTrack; // Location array
@@ -45,6 +51,13 @@ public class ExerciseEntry {
 		this.vitaminDExposureCum=0;
 		this.uvExposureCum=0;
 		this.comment = "";
+		this.gender = 0;
+		this.skinTone = 0;
+		this.spf = 0;
+		this.clothingCover = 0.0f;
+		//this.headApparel = SpriteHeadApparel.HeadApparelType.NONE;
+		//this.upperApparel = SpriteUpperApparel.UpperApparelType.NONE;
+		//this.lowerApparel = SpriteLowerApparel.LowerApparelType.NONE;
 	}
 	
 	public Location[] getTrack(){ return myTrack;}
@@ -177,7 +190,65 @@ public class ExerciseEntry {
 	public void setComment(String comment) {
 		this.comment = comment;
 	}
+	
+	public int getGender() {
+		return gender;
+	}
+	
+	public void setGender(int gender) {
+		this.gender = gender;
+	}
+	
+	public int getSkinTone() {
+		return skinTone;
+	}
+	
+	public void setSkinTone(int skinTone) {
+		this.skinTone = skinTone;
+	}
+	
+	public int getSPF() {
+		return spf;
+	}
+	
+	public void setSPF(int spf) {
+		this.spf = spf;
+	}
+	
+	public float getClothingCover() {
+		return clothingCover;
+	}
+	
+	public void setClothingCover(float clothingCover) {
+		this.clothingCover = clothingCover;
+	}
+	
+	/*
+	public SpriteHeadApparel.HeadApparelType getHeadApparel() {
+		return headApparel;
+	}
+	
+	public void setHeadApparel(SpriteHeadApparel.HeadApparelType headApparel) {
+		this.headApparel = headApparel;
+	}
 
+	public SpriteUpperApparel.UpperApparelType getUpperApparel() {
+		return upperApparel;
+	}
+	
+	public void setUpperApparel(SpriteUpperApparel.UpperApparelType upperApparel) {
+		this.upperApparel = upperApparel;
+	}
+	
+	public SpriteLowerApparel.LowerApparelType getLowerApparel() {
+		return lowerApparel;
+	}
+	
+	public void setLowerApparel(SpriteLowerApparel.LowerApparelType lowerApparel) {
+		this.lowerApparel = lowerApparel;
+	}
+	*/
+	
 	@Override
 	public String toString() {
 		return super.toString();

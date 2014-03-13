@@ -40,6 +40,13 @@ public abstract class Globals {
 	public static final String KEY_PRIVACY = "privacy";
 	public static final String KEY_GPS_DATA = "gps_data";
 	public static final String KEY_TRACK = "track";
+	public static final String KEY_GENDER = "gender";
+	public static final String KEY_SKIN_TONE = "skin_tone";
+	public static final String KEY_SPF = "spf";
+	public static final String KEY_CLOTHING_COVER = "clothing_cover";
+	//public static final String KEY_HEAD_APPAREL = "head_apparel";
+	//public static final String KEY_UPPER_APPAREL = "upper_apparel";
+	//public static final String KEY_LOWER_APPAREL = "lower_apparel";
 	
 	//Time Related Constants
 	  // One second in milliseconds
@@ -69,6 +76,7 @@ public abstract class Globals {
 	
 	//Weka Attributes
 	//JERRID: ******************************
+	
 	public static final int FEAT_NUMBER_FEATURES=6;
 	public static final int LIGHT_BUFFER_CAPACITY = 20;
 	public static final int LIGHT_BLOCK_CAPACITY = 18;
@@ -93,7 +101,8 @@ public abstract class Globals {
 
 	public static final String LIGHT_INTENSITY_FILE_NAME = "lightClassification.txt";
 
-	public static final String LIGHT_TYPE_HEADER = "Lighting Condition:";
+	public static final String LIGHT_TYPE_HEADER         = "Lighting Condition:";
+	public static final String LIGHT_TYPE_HEADER_ARDUINO = "Ardunio Lighting Condition:";
 	//*************************************
 	
 	

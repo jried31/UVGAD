@@ -1,6 +1,16 @@
 package edu.dartmouth.cs.myruns5;
 
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.FragmentManager;
@@ -10,6 +20,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.location.Location;
@@ -17,6 +31,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
+import android.provider.Settings.Secure;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,6 +54,7 @@ import com.google.android.gms.maps.model.VisibleRegion;
 
 import edu.dartmouth.cs.myruns5.TrackingService.TrackingBinder;
 
+
 public class MapDisplayActivity extends Activity {
 
 		public static final String INPUT_TYPE = "input type";
@@ -56,6 +73,7 @@ public class MapDisplayActivity extends Activity {
 	
 	public TextView typeStats;
 	public TextView lightingType;
+	public TextView lightingType_Arduino;
 	public TextView avgspeedStats;
 	public TextView curspeedStats;
 	public TextView climbStats;
@@ -115,6 +133,11 @@ public class MapDisplayActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_map_display);
 		
+		Button sendButton = (Button) findViewById(R.id.button_send_data);
+		sendButton.setVisibility(View.GONE);
+		sendButton.setClickable(false);
+		
+		
 		// initialize member variables
 		mBound = false;
 		mLatLngList = new ArrayList<LatLng>();
@@ -124,6 +147,7 @@ public class MapDisplayActivity extends Activity {
 		// mark: init views here
 		typeStats = (TextView) findViewById(R.id.type_stats);
 		lightingType = (TextView) findViewById(R.id.lightingType);
+		lightingType_Arduino = (TextView) findViewById(R.id.lightingType_Arduino);
 		avgspeedStats = (TextView) findViewById(R.id.avg_speed_stats);
 		curspeedStats = (TextView) findViewById(R.id.cur_speed_stats);
 		climbStats = (TextView) findViewById(R.id.climb_stats_stats);
@@ -176,6 +200,10 @@ public class MapDisplayActivity extends Activity {
 			saveButton.setVisibility(View.GONE);
 			Button cancelButton = (Button) findViewById(R.id.button_map_cancel);
 			cancelButton.setVisibility(View.GONE);
+			
+			// Add send data button
+			sendButton.setVisibility(View.VISIBLE);
+			sendButton.setClickable(true);
 
 			// Read track from database
 			intent = getIntent();
@@ -232,12 +260,12 @@ public class MapDisplayActivity extends Activity {
 			
 			typeStats.setText(type);
 			lightingType.setText(light);
+			lightingType_Arduino.setText(light);
 			avgspeedStats.setText(avgSpeed);
 			curspeedStats.setText(curSpeed);
 			climbStats.setText(climb);
 			caloriesStats.setText(calories);
 			distanceStats.setText(distance);
-			
 			break;
 		default:
 			Toast.makeText(getApplicationContext(), "should not happen", Toast.LENGTH_SHORT).show();
@@ -295,7 +323,6 @@ public class MapDisplayActivity extends Activity {
 	
 	/******************* button listeners ******************/
 	public void onSaveClicked(View v) {
-
 		// disable the button
 		Button button = (Button) findViewById(R.id.button_map_save);
 		button.setClickable(false);
@@ -311,8 +338,26 @@ public class MapDisplayActivity extends Activity {
 		mEntry.setActivityType(mInferredActivityType);
 		mEntry.setSweatRate(mSweatRate);
 		
+		SharedPreferences sharedPref = mContext.getSharedPreferences(Globals.TAG, Context.MODE_PRIVATE);
+		mEntry.setGender(sharedPref.getInt(mContext.getString(R.string.data_Gender), 0));
+		mEntry.setSkinTone(SpriteSkinType.positionToSkinType[sharedPref.getInt(mContext.getString(R.string.data_SkinTone), 0)]);
+		mEntry.setSPF(SpriteSPF.positionToSPF[sharedPref.getInt(mContext.getString(R.string.data_SPF), 0)]);
+		mEntry.setClothingCover(sharedPref.getFloat(mContext.getString(R.string.data_ClothingCover), 0.0f));
+		
+		/*
+		String clothingValue = sharedPref.getString(
+				mContext.getString(R.string.data_Hat), SpriteHeadApparel.HeadApparelType.NONE.name());
+		mEntry.setHeadApparel(SpriteHeadApparel.HeadApparelType.valueOf(clothingValue));
+		clothingValue = sharedPref.getString(
+				mContext.getString(R.string.data_ApparelTop), SpriteUpperApparel.UpperApparelType.NONE.name());
+		mEntry.setUpperApparel(SpriteUpperApparel.UpperApparelType.valueOf(clothingValue));
+		clothingValue = sharedPref.getString(
+				mContext.getString(R.string.data_ApparelBottom), SpriteLowerApparel.LowerApparelType.NONE.name());
+		mEntry.setLowerApparel(SpriteLowerApparel.LowerApparelType.valueOf(clothingValue));
+		*/
+		
 		mEntryHelper = new ExerciseEntryHelper(mEntry);
-		id = mEntryHelper.insertToDB(this);		
+		id = mEntryHelper.insertToDB(this);
 		if (id > 0) 
 			Toast.makeText(getApplicationContext(), "Entry #" + id + " saved.",
 					Toast.LENGTH_SHORT).show();
@@ -338,6 +383,62 @@ public class MapDisplayActivity extends Activity {
 		}
 		stopService(intent);
 		// notification has flag auto_cancel set
+		finish();
+	}
+	
+	public void onSendData(View v) {
+		int val;
+		
+		Intent intent = getIntent();
+		JSONObject json = new JSONObject();
+		try {
+			json.put("id", intent.getIntExtra(HistoryFragment.ROW_ID, 0));
+			json.put("android_id", Secure.getString(getApplicationContext().getContentResolver(), Secure.ANDROID_ID));
+			json.put(Globals.KEY_DATE_TIME, intent.getStringExtra(HistoryFragment.DATE_TIME));
+			json.put(Globals.KEY_ACTIVITY_TYPE, intent.getStringExtra(HistoryFragment.ACTIVITY_TYPE));
+			json.put(Globals.KEY_GENDER, intent.getIntExtra(HistoryFragment.GENDER, 0));
+			json.put(Globals.KEY_DISTANCE, intent.getStringExtra(HistoryFragment.DISTANCE));
+			json.put(Globals.KEY_DURATION, intent.getStringExtra(HistoryFragment.DURATION));
+			json.put(Globals.KEY_CLOTHING_COVER, intent.getFloatExtra(HistoryFragment.CLOTHING_COVER, 0.0f));
+			json.put(Globals.KEY_SKIN_TONE, intent.getIntExtra(HistoryFragment.SKIN_TONE, 1));
+			json.put(Globals.KEY_SPF, intent.getIntExtra(HistoryFragment.SPF, 0));
+			
+			ArrayList<Location> locations = intent.getParcelableArrayListExtra(HistoryFragment.TRACK);
+			// FAKE DATA
+			Location tempA = new Location("");
+			tempA.setLongitude(44.56);
+			tempA.setLatitude(36.33);
+			locations.add(tempA);
+			Location tempB = new Location("");
+			tempB.setLongitude(66.14);
+			tempB.setLatitude(39.04);
+			locations.add(tempB);
+			
+			ArrayList<JSONObject> locationData = new ArrayList<JSONObject>();
+			for (Location loc : locations) {
+				JSONObject map = new JSONObject();
+				map.put("longitude", loc.getLongitude());
+				map.put("latitude", loc.getLatitude());
+				locationData.add(map);
+			}
+			json.put("tracking_data", new JSONArray(locationData));
+			
+			/*
+			val = Integer.parseInt(intent.getStringExtra(HistoryFragment.HEAD_APPAREL));
+			json.put(Globals.KEY_HEAD_APPAREL, SpriteHeadApparel.HeadApparelType.valueOf(val).name());
+			
+			val = Integer.parseInt(intent.getStringExtra(HistoryFragment.UPPER_APPAREL));
+			json.put(Globals.KEY_UPPER_APPAREL, SpriteUpperApparel.UpperApparelType.getTypeFromValue(val).name());
+			
+			val = Integer.parseInt(intent.getStringExtra(HistoryFragment.LOWER_APPAREL));
+			json.put(Globals.KEY_LOWER_APPAREL, SpriteLowerApparel.LowerApparelType.getTypeFromValue(val).name());
+			*/
+			
+			new HTTPSender().execute(json);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 		finish();
 	}
 	
@@ -490,7 +591,7 @@ public class MapDisplayActivity extends Activity {
 			typeStats.setText(type + "\n" + sweatRate);
 			
 			lightingType.setText( Globals.LIGHT_TYPE_HEADER + TrackingService.CUR_LIGHT_CONDITION + ", Last Max: " + TrackingService.lastMaxIntensityBuffer);
-
+			lightingType_Arduino.setText( Globals.LIGHT_TYPE_HEADER_ARDUINO + "No Sensor Detected"  );
 		}
 	}
 	

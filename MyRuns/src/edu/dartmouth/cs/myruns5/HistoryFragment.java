@@ -42,6 +42,13 @@ public class HistoryFragment extends ListFragment
 	public int mHeartrateIndex;
 	public int mCommentIndex;
 	public int mInputTypeIndex;
+	public int mGenderIndex;
+	public int mSkinTone;
+	public int mSPF;
+	public int mClothingCover;
+	//public int mHeadApparelIndex;
+	//public int mUpperApparelIndex;
+	//public int mLowerApparelIndex;
 	
 	public Cursor mActivityEntryCursor;
 			
@@ -80,6 +87,13 @@ public class HistoryFragment extends ListFragment
 	public static final String TRACK = "track";
 	public static final String AVG_SPEED = "average speed";
 	public static final String CLIMB = "climb";
+	public static final String GENDER = "gender";
+	public static final String SKIN_TONE = "skin tone";
+	public static final String SPF = "spf";
+	public static final String CLOTHING_COVER = "clothing cover";
+	//public static final String HEAD_APPAREL = "head apparel";
+	//public static final String UPPER_APPAREL = "upper apparel";
+	//public static final String LOWER_APPAREL = "lower apparel";
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -133,7 +147,6 @@ public class HistoryFragment extends ListFragment
 		// The extra information needed pass
 		// through to next activity.
 		Bundle extras = new Bundle();
-		
 	
 		// Write row id into extras.
 		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_ROWID);
@@ -198,10 +211,38 @@ public class HistoryFragment extends ListFragment
 			Location[] locations = Utils.fromByteArrayToLocationArray(byteArray);
 			ArrayList<Location> locationList = new ArrayList<Location>();
 			Log.d(null, "converting locations[] to ArrayList");
-			for (int i = 0; i < locations.length; i++)
+			for (int i = 0; i < locations.length; i++) {
 				locationList.add(locations[i]);
+				System.out.println("LLLLLLLL: " + locations[i].getLongitude());
+			}
 			intent.putParcelableArrayListExtra(TRACK, locationList);
 		}
+		
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_GENDER);
+		intent.putExtra(GENDER, mActivityEntryCursor.getInt(idx));
+		
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_SKIN_TONE);
+		intent.putExtra(SKIN_TONE, mActivityEntryCursor.getInt(idx));
+		
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_SPF);
+		intent.putExtra(SPF, mActivityEntryCursor.getInt(idx));
+		
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_CLOTHING_COVER);
+		intent.putExtra(CLOTHING_COVER, mActivityEntryCursor.getFloat(idx));
+		
+		/*
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_HEAD_APPAREL);
+		String headApparel = mActivityEntryCursor.getString(idx);
+		intent.putExtra(HEAD_APPAREL, headApparel);
+		
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_UPPER_APPAREL);
+		String upperApparel = mActivityEntryCursor.getString(idx);
+		intent.putExtra(UPPER_APPAREL, upperApparel);
+		
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_LOWER_APPAREL);
+		String lowerApparel = mActivityEntryCursor.getString(idx);
+		intent.putExtra(LOWER_APPAREL, lowerApparel);
+		*/
 		
 		intent.putExtras(extras);
 		Log.d(null, "firing intent");

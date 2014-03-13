@@ -290,7 +290,12 @@ public class TrackingService extends Service
 	
 
 	private File mWekaClassificationFile;
-	private Attribute mClassNameForData,meanAttribute,stdAttribute,maxAttribute,minAttribute,meanAbsDeviationAttribute;
+	private Attribute mClassNameForData,
+		meanAttribute,
+		//stdAttribute,
+		maxAttribute;
+		//minAttribute,
+		//meanAbsDeviationAttribute;
 	
 	public ArrayList<Location> mLocationList;
 	
@@ -479,8 +484,6 @@ public class TrackingService extends Service
 	    	mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, Globals.RECORDING_GPS_INTERVAL_DEFAULT, Globals.RECORDING_GPS_DISTANCE_DEFAULT, this);
 	    else
 	    	mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, Globals.RECORDING_NETWORK_PROVIDER_INTERVAL_DEFAULT,Globals.RECORDING_NETWORK_PROVIDER_DISTANCE_DEFAULT, this);
-	 
-//    	Toast.makeText(getApplicationContext(), "mInputType: "+String.valueOf(mInputType), Toast.LENGTH_SHORT).show();
 
 	    if (mInputType == Globals.INPUT_TYPE_AUTOMATIC){
 	    	// init sensor manager
@@ -532,8 +535,6 @@ public class TrackingService extends Service
 		// Remove notification
 	    NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 	    notificationManager.cancelAll();
-	    
-//    	Toast.makeText(getApplicationContext(), "mInputType: "+String.valueOf(mInputType), Toast.LENGTH_SHORT).show();
 
 	    // unregister listener
 	    if (mInputType == Globals.INPUT_TYPE_AUTOMATIC){
@@ -555,7 +556,6 @@ public class TrackingService extends Service
 	
 	/************ implement LocationLister interface ***********/
 	public void onLocationChanged(Location location) {
-//    	Toast.makeText(getApplication(), "OnLocationChanged", Toast.LENGTH_SHORT).show();
 
 		//JERRID Adds--------------
 		// Check whether location is valid, drop if invalid
@@ -599,11 +599,9 @@ public class TrackingService extends Service
 	
 	/************ implement SensorEventLister interface ***********/
 	public void onSensorChanged(SensorEvent event) {
-//		Toast.makeText(getApplicationContext(), "onSensorChanged", Toast.LENGTH_SHORT).show();
 		 // Many sensors return 3 values, one for each axis.
 		if(trackFile == null) {
-			File sdCard = Environment.getExternalStorageDirectory();  
-			String resultPredictor = sdCard + "/Android/data/edu.dartmouth.cs.myruns5/files"  + "/keepTrack.txt";     
+			String resultPredictor = android.os.Environment.getExternalStorageDirectory().getAbsolutePath()  + "/keepTrack.txt";     
 			File resultFile;
 			try {
 				resultFile = new File(resultPredictor);
@@ -623,7 +621,6 @@ public class TrackingService extends Service
 			}
 		}
 		
-		
 	      if (event.sensor.getType() == android.hardware.Sensor.TYPE_MAGNETIC_FIELD){
 	           mGeomagnetic = event.values;
 	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_GRAVITY){
@@ -631,7 +628,6 @@ public class TrackingService extends Service
 	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_LINEAR_ACCELERATION ){
               double x = event.values[0];
               double y = event.values[1];
-              //Jerrid: Dont care about z component (for now)
               double z = event.values[2];				
               double m = Math.sqrt(x*x + y*y + z*z);
 	
@@ -890,43 +886,20 @@ public class TrackingService extends Service
 	                      stdLightMagnitude = Math.sqrt(varianceIntensity);
 	                      meanAbsoluteDeveationLightIntensity = meanAbsoluteDeveationLightIntensity / Globals.LIGHT_BLOCK_CAPACITY;
 	                  
-	                      featureInstance.setValue(minAttribute,minLightMagnitude);
+	                      //featureInstance.setValue(minAttribute,minLightMagnitude);
 	                      featureInstance.setValue(maxAttribute,maxLightMagnitude);
 	                      featureInstance.setValue(meanAttribute,meanLightIntensity);
-	                      featureInstance.setValue(stdAttribute,stdLightMagnitude);
-	                      featureInstance.setValue(meanAbsDeviationAttribute,meanAbsoluteDeveationLightIntensity);
+	                      //featureInstance.setValue(stdAttribute,stdLightMagnitude);
+	                      //featureInstance.setValue(meanAbsDeviationAttribute,meanAbsoluteDeveationLightIntensity);
 	                      
-	                      //Classifier
-	                      WekaWrapper wrapper = new WekaWrapper();
-	                      double prediction = wrapper.classifyInstance(featureInstance);
-	                      String classification = featureInstance.classAttribute().value((int) prediction);
+	                      //Classifier -- Get the classified activity
+	                      //WekaWrapper wrapper = new WekaWrapper();
+	                      //double prediction = wrapper.classifyInstance(featureInstance);
+	                      //String classification = featureInstance.classAttribute().value((int) prediction);
 	                      
-	                      /*File dir = new File (android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/accelerometer");
-	                      dir.mkdirs();
-	                      FileWriter sunClassificationFile=null;
-	                  
-	                      try {
-	                          sunClassificationFile = new FileWriter(dir.getAbsolutePath()+"/"+Globals.LIGHT_INTENSITY_FILE_NAME, true);                       
-	                          try {                                  
-	                        	  long uviReading=0;
-	                        	  String out = (System.currentTimeMillis() +"\t" + classification + "\t" + uviReading + "\t" + pitchReading[0] +  "\t" + pitchReading[1] + "\t" + pitchReading[2] +"\n");         
-	                        	  Log.e("LIGHT DATA: ", out);
-	                        	  sunClassificationFile.append(out);           
-	                          } catch (IOException ex){
-	                          }
-	                          finally{
-	                        	  sunClassificationFile.flush();
-	                        	  sunClassificationFile.close();
-	                          }
-	                          
-	                      } catch (IOException e) {
-	                          e.printStackTrace();
-	                      }
-	                      */
 	                      
 	                      //Reset the Values
 	                      blockSize = 0;
-	                      // time = System.currentTimeMillis();
 	                      maxLightMagnitude = Double.MIN_VALUE;
 	                      minLightMagnitude = Double.MAX_VALUE;
 	                      stdLightMagnitude = 0;
@@ -980,10 +953,8 @@ public class TrackingService extends Service
 			// milli seconds
 			final int delayBetweenWorkerCalls = 1000;
 
-			// Memory card path.
-			File sdCard = Environment.getExternalStorageDirectory();
 			// Application path.
-    		String resultPredictor = sdCard + "/Android/data/edu.dartmouth.cs.myruns5/files"  + "/predicted.txt";
+    		String resultPredictor = android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/predicted.txt";
     		File resultFile;
 			try {
 				resultFile = new File(resultPredictor);
@@ -1051,16 +1022,7 @@ public class TrackingService extends Service
 						timeElapsed = timeElapsed + (timeCorrectionMillis/1000);						
 						bufferFillStartTime = bufferFillFinishTime;
 						blockSize = 0;
-						
-						// time = System.currentTimeMillis();
-						/* OLD CODE - jerrid
-						max = .0;						 
-						for (double val : accBlock) {
-							if (max < val) {
-								max = val;
-							}
-						}	
-						*/
+		
 						fft.fft(re, im);
 						for (int i = 0; i < re.length; i++) {
 							double mag = Math.sqrt(re[i] * re[i] + im[i] * im[i]);
@@ -1098,58 +1060,10 @@ public class TrackingService extends Service
 							currentTrend = value;
 						}
 						
-						/* JERRID: Old code
-						 * This code block performs running mean of Activity inferences. 
-						 * This won't work becasue of truncation (eg: 3+3+3+2+2/5 yeilds 2.8 roughly
-						 * but 3 should be the inferred
-						if(inferenceCount++ == 0){//1st motion value
-							
-		                	  mActivityInference = value;
-						}else{//1..* activity values averaged using running mean
-							mActivityInference = (value + mActivityInference * (inferenceCount-1)) / inferenceCount;
-						}
-						*/
-		                  
-						//Once the max inference count is reached, do a half sliding window 
-						//(ie: the current mean inference value weight counts for 2 of next 5 readings)
-
-	                	//int maxInferenceKey=-1,maxInferenceValue=-1;
-						
-						// Log for testing activity durations.
-	                	/*
-						StringBuilder currentActivityBuilder2 = new StringBuilder();
-						currentActivityBuilder2.append("\n\nThe recorded duration activities so far:\n");
-                		for (Map.Entry<Integer, Double> entry : mActivityVsDurationMap.entrySet()) {
-                			// List each activity along with count.
-                			currentActivityBuilder2.append(Globals.INFERENCE_LIST[entry.getKey()] + " totally occured " + entry.getValue() + "  amount of duration. \n \n");
-                		}
-                        predictionFile.write(currentActivityBuilder2.toString().getBytes());
-                        predictionFile.flush();*/
                         
 	                	// Finished collection the 5 samples
 	                	// Now increase the weight of an activity based on the current dominant trend.
 		                if(inferenceCount == mMaxActivityInferenceWindow)  {
-		                	try {		
-		                		
-		                		// Log for testing activity count.
-		                		/*StringBuilder currentActivityBuilder = new StringBuilder();
-		                		// List the current time.
-		                		currentActivityBuilder.append("\n\nTime:" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime()) + "\n");
-		                		// List the dominant activity
-		                		currentActivityBuilder.append("Current activity predicted:" + (currentTrend == -1 ? "NA" : Globals.INFERENCE_LIST[currentTrend]) + ".\n");
-		                		// List all the activities.
-		                		currentActivityBuilder.append("The recorded set of activities in the current cycle is as follows:\n");
-		                		for (Map.Entry<Integer, Integer> entry : mInferredActivityTypeMap.entrySet()) {
-		                			// List each activity along with count.
-		                			currentActivityBuilder.append(Globals.INFERENCE_LIST[entry.getKey()] + " occured " + entry.getValue() + " times. \n");
-		                		}
-		                        predictionFile.write(currentActivityBuilder.toString().getBytes());
-		                        predictionFile.flush();*/
-		                    }
-		                    catch (Exception e) {
-		                    	//predictionFile.close();
-		                        Log.e("Exception", "File write failed: " + e.toString());
-		                    }
 		                	
 		                	// Reset the entire map
 		                	mInferredActivityTypeMap.clear();
@@ -1165,35 +1079,6 @@ public class TrackingService extends Service
 		                	//Reset current lead count and the inference count.
 		                	currentLeadCount = 0;
 		                	inferenceCount = 0;
-		                	//Old Code --- inferenceCount = 2;
-		                	//iterating over keys only
-		                	//int maxIndex = -1;
-		                	//for (Map.Entry<Integer, Integer> entry : mInferredActivityTypeMap.entrySet()) {
-		                		// Reset the mapping.
-		                		// Reset all entries to 0.
-		                		//entry.setValue(0);
-		                		//int val = entry.getValue();
-		                		
-		                		//Old code
-		                		/*
-		                		if(val > maxIndex){
-		                			maxIndex = val;
-		                			maxInferenceValue = val;
-		                			maxInferenceKey = entry.getKey();
-		                		}
-		                		*/
-		                		// Reset instance counts to 0 to avoid a 2nd for loop to clear vector
-		                		// All counts have been reset to 0.
-		                		// entry.setValue(0);
-		                	//}
-		                
-		                	// Weight the Mode activity with the highest
-		                	// mInferredActivityTypeMap.put(maxInferenceKey, 2);
-		                	
-		                	// New code.
-		                	// After clearing the entire map increased the weight for the current dominant trend.
-		                	// Unless some other activity dominates this activity in the next cycle, this would continue to be the dominant trend.
-		                	//mInferredActivityTypeMap.put(currentTrend, 2);
 		                	//Reset current lead count and the inference count.
 		                	currentLeadCount = 0;
 		                	inferenceCount = 0;
@@ -1202,10 +1087,6 @@ public class TrackingService extends Service
 		                	
 		                }
 						
-						//int maxIndex = 0;their original code
-						//if (mInferenceCount[maxIndex] < mInferenceCount[1]) maxIndex = 1;
-						//if (mInferenceCount[maxIndex] < mInferenceCount[2]) maxIndex = 2;their original code
-		                
 		                // Here specify the current trend.
 		                // new code
 						mInferredActivityType = Globals.INFERENCE_MAPPING[currentTrend == -1 ? value : currentTrend];//maxIndex];
@@ -1215,8 +1096,6 @@ public class TrackingService extends Service
 						mMotionUpdateBroadcast.putExtra(CURRENT_SWEAT_RATE_INTERVAL,sweatRateIndex);
 						updateTask.SetCurrentType(currentActivity);
 						updateTask.SetSweatRateIndex(sweatRateIndex);
-
-						//mMotionUpdateBroadcast.putExtra(CURRENT_MOTION_TYPE, currentActivity);
 						// send broadcast with the CURRENT activity type
 						//---------------
 						
@@ -1266,7 +1145,6 @@ public class TrackingService extends Service
 		
 		return sweatRateIndex;
 		}
-		
 	}
 	}
 
