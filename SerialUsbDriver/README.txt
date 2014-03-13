@@ -1,10 +1,11 @@
 == PORTING TO ANDROID PROJECT ==
 
-1. Right-click the project you wish to port and select 'Build Path' -> 
+1. Import the project into Eclipse.
+2. Right-click the project you wish to port and select 'Build Path' -> 
    'Configure Build Path'.
-2. Click the 'Android' tab.
-3. Click the 'Add...' button and select 'SerialUsbDriver'.
-4. Create a new class that extends the 'Application' class 
+3. Click the 'Android' tab.
+4. Click the 'Add...' button and select 'SerialUsbDriver'.
+5. Create a new class that extends the 'Application' class 
    (e.g. MyRunsCollectorApplication) and fill in the following:
 
 import edu.repo.ucla.serialusbdriver.UsbSensorManager;
@@ -18,7 +19,7 @@ public class MyRunsCollectorApplication extends Application
     }
 }
 
-5. Modify the following code in the Android manifest.
+6. Modify the following code in the Android manifest.
 
 <application
     android:name=".MyRunsCollectorApplication"
@@ -29,13 +30,13 @@ public class MyRunsCollectorApplication extends Application
     <!-- Additional content here... -->
 </application>
 
-6. If it doesn't already exist, create an 'assets' directory in the root 
+7. If it doesn't already exist, create an 'assets' directory in the root 
    directory of the project.
 
-7. Copy the SerialUsbDriver/assets/hardware.db to the 'assets' directory in the 
+8. Copy the SerialUsbDriver/assets/hardware.db to the 'assets' directory in the 
    local project.
 
-8. If the application was previously installed, remove it completely from the 
+9. If the application was previously installed, remove it completely from the 
    device.
 
 
