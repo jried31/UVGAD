@@ -591,7 +591,11 @@ public class MapDisplayActivity extends Activity {
 			typeStats.setText(type + "\n" + sweatRate);
 			
 			lightingType.setText( Globals.LIGHT_TYPE_HEADER + TrackingService.CUR_LIGHT_CONDITION + ", Last Max: " + TrackingService.lastMaxIntensityBuffer);
-			lightingType_Arduino.setText( Globals.LIGHT_TYPE_HEADER_ARDUINO + "No Sensor Detected"  );
+			if(Globals.FOUND_ARDUINO)
+				lightingType_Arduino.setText( Globals.LIGHT_TYPE_HEADER_ARDUINO + "Sensor Detected"  );
+			else
+				lightingType_Arduino.setText( Globals.LIGHT_TYPE_HEADER_ARDUINO + "Sensor Not Detected"  );
+				
 		}
 	}
 	

@@ -408,13 +408,13 @@ public class TrackingService extends Service
 		mIsStreaming = false;
 		
 		// Get the UV and light sensors that the UsbSensorManager recognizes
-		List<IUVSensor> uvSensor_list = mUsbSensorManager.getUVSensorList();
+		List<IUVSensor> uvSensor_list       = mUsbSensorManager.getUVSensorList();
 		List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
 		
 		// Make sure that the lists aren't empty
 		if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
 		{
-			Toast.makeText(this, "ERROR: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "ERROR 1: Sensor hardware not detected", Toast.LENGTH_LONG).show();
 			return;
 		}
 		
@@ -430,11 +430,12 @@ public class TrackingService extends Service
 		// 		  factory that returns light sensor objects so we need it to create a new 
 		// 		  object for us.
 		lightSensor_list = mUsbSensorManager.getLightSensorList();
+		uvSensor_list    = mUsbSensorManager.getUVSensorList();
 		
 		// Make sure that the lists aren't empty
 		if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
 		{
-			Toast.makeText(this, "ERROR: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "ERROR 2: Sensor hardware not detected", Toast.LENGTH_LONG).show();
 			return;
 		}
 		
@@ -448,9 +449,8 @@ public class TrackingService extends Service
 		mUVSensor0.init(Constants.PULSE_ID_UV_0);
 		mUVSensor1.init(Constants.PULSE_ID_UV_1);
 		
-
 		//mLightSensor0.register(mLightSensor0Callback);
-		
+		Globals.FOUND_ARDUINO = true;
 		Toast.makeText(this, "Initialized sensor hardware!", Toast.LENGTH_LONG).show();
 	}
 

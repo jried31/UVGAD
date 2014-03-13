@@ -80,7 +80,7 @@ public abstract class Globals {
 	public static final int FEAT_NUMBER_FEATURES=6;
 	public static final int LIGHT_BUFFER_CAPACITY = 20;
 	public static final int LIGHT_BLOCK_CAPACITY = 18;
-	
+	public static boolean FOUND_ARDUINO = false;
 
 	public static final String ACTION_LIGHT_SENSOR_UPDATED = "MYRUNS_LIGHT_SENSOR_UPDATED";
 	public static final String CLASS_LABEL_IN_SUN = "in_sun";
