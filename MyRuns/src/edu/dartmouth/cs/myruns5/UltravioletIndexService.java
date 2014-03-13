@@ -46,6 +46,8 @@ import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 
+import edu.dartmouth.cs.myruns5.util.uv.ParseUVReading;
+
 public class UltravioletIndexService extends Service implements LocationListener {
 
 	private LocationManager myTracksLocationManager;
@@ -73,7 +75,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 	private boolean hasData = false;
 	// private boolean looperCalled=false;
 	private Context mContext;
-	private float uvIndex;
+	private float uvIndexSun,uvIndexShade,uvIndexCloud;
 	private String option;
 	private NotificationManager nm;
 
@@ -112,19 +114,36 @@ public class UltravioletIndexService extends Service implements LocationListener
 			sendData();
 		}
 	};
-
-	public void setUVI(float uvi) {
-		uvIndex = uvi;
+	
+	public void setUVISun(float uvi) {
+		uvIndexSun = uvi;
 	}
 
-	public float getUVI() {
-		return uvIndex;
+	public float getUVISun() {
+		return uvIndexSun;
 	}
 
+	public void setUVIShade(float uvi) {
+		uvIndexShade = uvi;
+	}
+
+	public float getUVIShade() {
+		return uvIndexShade;
+	}
+
+	public void setUVICloud(float uvi) {
+		uvIndexCloud = uvi;
+	}
+
+	public float getUVICloud() {
+		return uvIndexShade;
+	}
+	
 	private void updateHourlyUVI(final Location location) {
 		Handler handler = new Handler(Looper.getMainLooper());
 
-		if (location == null) {
+		if (location == null) 
+		{
 			NotificationCompat.Builder n = new NotificationCompat.Builder(this)
 					.setSmallIcon(R.drawable.runner)
 					.setContentTitle("UV notification")
@@ -143,7 +162,8 @@ public class UltravioletIndexService extends Service implements LocationListener
 			});
 			System.out.println("Location is null!");
 			return;
-		} else {
+		} else 
+		{
 			nm.cancel(0);
 			handler.post(new Runnable() {
 				public void run() {
@@ -157,27 +177,56 @@ public class UltravioletIndexService extends Service implements LocationListener
 			});
 
 			ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("UVData");
-			query.orderByDescending("createdAt");
+			query.whereEqualTo(ParseUVReading.ENVIRONMENT, Globals.CLASS_LABEL_IN_SUN);
+			query.whereEqualTo(ParseUVReading.ENVIRONMENT, Globals.CLASS_LABEL_IN_CLOUD);
+			query.whereEqualTo(ParseUVReading.ENVIRONMENT, Globals.CLASS_LABEL_IN_SHADE);
+			query.orderByDescending("timestamp");
+			query.setLimit(30);
+			
 			query.findInBackground(new FindCallback<ParseObject>() {
 				public void done(List<ParseObject> objectList, ParseException e) {
-					Date now = new Date();
-					Date refer;
-					int sum = 0, num = 0;
-					long time1, time2;
-					time1 = now.getTime();
+					
 					if (e == null) {
-						for (ParseObject obj : objectList) {
-							refer = obj.getUpdatedAt();
-							time2 = refer.getTime();
-							if (time1 - time2 <= 120000) {
-								num++;
-								sum += obj.getInt("UV_index");
-							} else
-								break;
+						long time1, time2;
+						Date now = new Date();
+						time1 = now.getTime();
+						double meanUVISun = 0,sunCount=0,
+								meanUVIShade=0,shadeCount=0,
+								meanUVICloud=0,cloudCount=0;
+						
+						for (ParseObject obj: objectList) {
+							ParseUVReading reading = (ParseUVReading)obj;
+							Date timestamp = reading.getTimestamp();
+							String environment = reading.getEnvironment();
+							int uvi = reading.getUVI();
+							time2 = timestamp.getTime();
+							
+							//if (time1 - time2 <= 120000) {
+							
+							if(environment.equals(Globals.CLASS_LABEL_IN_SUN)){
+								if(sunCount <= 1)
+									meanUVISun = uvi;
+				                else
+				                	meanUVISun = (uvi + meanUVISun*(sunCount-1))/sunCount;
+								sunCount++;
+							}else if(environment.equals(Globals.CLASS_LABEL_IN_CLOUD)){
+								if(cloudCount <= 1)
+									meanUVICloud = uvi;
+				                else
+				                	meanUVICloud = (uvi + meanUVICloud*(cloudCount-1))/cloudCount;
+								cloudCount++;
+							}else if(environment.equals(Globals.CLASS_LABEL_IN_SHADE)){
+								if(shadeCount <= 1)
+									meanUVIShade = uvi;
+				                else
+				                	meanUVIShade = (uvi + meanUVIShade*(shadeCount-1))/shadeCount;
+								shadeCount++;
+							}
+							//}
 						}
-						if (num > 0)
-							sum /= num;
-						setUVI(sum);
+						setUVISun((int)(meanUVISun));
+						setUVIShade((int)meanUVIShade);
+						setUVICloud((int)meanUVICloud);
 
 						hasData = true;
 					} else {
@@ -305,7 +354,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 		if (hasData) {
 			if (option.equals(CURRENT_UV_INDEX)) {
 				// float uvi = UltravioletIndexService.getCurrentUVI();
-				float uvi = getUVI();
+				float uvi = getUVISun();
 				if (uvi >= 0) {
 					Intent i = new Intent(CURRENT_UV_INDEX).putExtra(
 							CURRENT_UV_INDEX, uvi);
@@ -356,40 +405,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 	private void setLocation(Location loc) {
 		location = loc;
 	}
-
-	/*
-	 * private static float getCurrentUVI() { float currUVI = 0; Calendar now =
-	 * Calendar.getInstance(); int hour = now.get(Calendar.HOUR_OF_DAY);// 24 hr
-	 * format int nextHour = hour + 1;
-	 * 
-	 * if (hour < 6)// Hr < 6am return currUVI; else if (hour > 18)// Hr > 6pm
-	 * return currUVI; else {
-	 * 
-	 * long currTime = now.getTimeInMillis(); Calendar prevHr =
-	 * Calendar.getInstance(); prevHr.set(now.get(Calendar.YEAR),
-	 * now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH), hour, 0, 0);
-	 * 
-	 * Calendar currHr = Calendar.getInstance();
-	 * currHr.set(now.get(Calendar.YEAR), now.get(Calendar.MONTH),
-	 * now.get(Calendar.DATE), hour, 0);
-	 * 
-	 * Calendar nextHr = Calendar.getInstance();
-	 * nextHr.set(now.get(Calendar.YEAR), now.get(Calendar.MONTH),
-	 * now.get(Calendar.DATE), nextHour, 0);
-	 * 
-	 * float dtime = (currTime - prevHr.getTimeInMillis()) /
-	 * (nextHr.getTimeInMillis() - prevHr.getTimeInMillis());
-	 * 
-	 * // y=mx+b assuming linear scale time increase hour -= 6; nextHour -= 6;
-	 * // simple correction for the last index if (nextHour ==
-	 * HOURLY_UVI_FORECAST.length) nextHour = hour;
-	 * 
-	 * if (HOURLY_UVI_FORECAST[nextHour] > HOURLY_UVI_FORECAST[hour]) return
-	 * dtime (HOURLY_UVI_FORECAST[nextHour] - HOURLY_UVI_FORECAST[hour]) +
-	 * HOURLY_UVI_FORECAST[hour]; else return HOURLY_UVI_FORECAST[hour] - dtime
-	 * (HOURLY_UVI_FORECAST[hour] - HOURLY_UVI_FORECAST[nextHour]); } }
-	 */
-
+	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent == null)
@@ -398,7 +414,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 
 		if (hasData) {
 			if (option.equals(CURRENT_UV_INDEX)) {
-				float uvi = getUVI();
+				float uvi = getUVISun();
 				if (uvi > 0) {
 					Intent i = new Intent(CURRENT_UV_INDEX).putExtra(
 							CURRENT_UV_INDEX, uvi);
@@ -430,7 +446,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 
 			if (option.equals(CURRENT_UV_INDEX)) {
 				// float uvi = UltravioletIndexService.getCurrentUVI();
-				float uvi = getUVI();
+				float uvi = getUVISun();
 				if (uvi > 0) {
 					Intent i = new Intent(CURRENT_UV_INDEX);
 					i.putExtra(CURRENT_UV_INDEX, uvi);

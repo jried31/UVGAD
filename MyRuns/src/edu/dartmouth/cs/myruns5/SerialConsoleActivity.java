@@ -1,19 +1,34 @@
 package edu.dartmouth.cs.myruns5;
 
+import java.util.Date;
 import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.IntentSender;
 import android.content.res.Resources;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class SerialConsoleActivity extends Activity implements OnClickListener
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient;
+import com.google.android.gms.location.LocationClient;
+import com.parse.ParseGeoPoint;
+
+import edu.dartmouth.cs.myruns5.util.uv.ParseUVReading;
+
+import edu.repo.ucla.serialusbdriver.*;
+
+public class SerialConsoleActivity extends Activity implements OnClickListener,GooglePlayServicesClient.ConnectionCallbacks,GooglePlayServicesClient.OnConnectionFailedListener 
 {
+	int uv1=-1,uv2=-1,uv=0;
 	// This is the callback object for the first light sensor
 	public class LightSensor0Callback implements ILightSensor.Callback
 	{
@@ -121,6 +136,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				@Override
 				public void run()
 				{
+					uv1=updateUV;
 					uvSensor0_text.setText("UV0: " + updateUV);
 				}
 			});
@@ -167,6 +183,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				@Override
 				public void run()
 				{
+					uv2=updateUV;
 					uvSensor1_text.setText("UV1: " + updateUV);
 				}
 			});
@@ -192,6 +209,20 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		}
 	}
 	
+	public void uploadSample(View v){
+		uv=Math.max(uv1, uv2);
+		if(uv > 0){
+			location = this.mLocationClient.getLastLocation();
+			Date timestamp = new Date();
+			
+			ParseUVReading reading = new ParseUVReading();
+			reading.setUVI(uv);
+			reading.setLocation(new ParseGeoPoint(location.getLatitude(),location.getLongitude()));
+			reading.setTimestamp(timestamp);
+			reading.saveInBackground();
+		}
+	}
+
 	private Context mContext;
 	private Resources mResources;
 	private UsbSensorManager mUsbSensorManager;
@@ -204,6 +235,11 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 	private Button loadSensor_btn;
 	private Button toggleStream_btn;
 	private Button instantSample_btn;
+	private Button sampleUVBtn;
+	private RadioGroup radioGroup;
+	private final RadioButton[] radioBtns = new RadioButton[5];
+	private final String[] mLabels = {Globals.CLASS_LABEL_IN_SHADE,Globals.CLASS_LABEL_IN_SUN,Globals.CLASS_LABEL_IN_CLOUD,Globals.CLASS_LABEL_OTHER};
+
 	
 	private ILightSensor mLightSensor0;
 	private ILightSensor mLightSensor1;
@@ -216,16 +252,22 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 	private UVSensor1Callback mUVSensor1Callback;
 	
 	private boolean mIsStreaming;
+	private Location location = null;
+	private LocationClient mLocationClient; 
+	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_serial_console);
-		
+
+        mLocationClient = new LocationClient(this, this, this);
+
 		mContext = this;
 		mResources = getResources();
-		mUsbSensorManager = MyRunsApplication.getUsbSensorManager();
+		mUsbSensorManager = UsbSensorManager.getManager();
 		
 		uvSensor0_text = (TextView) findViewById(R.id.uvSensor0_text);
 		uvSensor1_text = (TextView) findViewById(R.id.uvSensor1_text);
@@ -235,10 +277,18 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		loadSensor_btn = (Button) findViewById(R.id.loadSensor_btn);
 		toggleStream_btn = (Button) findViewById(R.id.toggleStream_btn);
 		instantSample_btn = (Button) findViewById(R.id.instantSample_btn);
+		sampleUVBtn = (Button) findViewById(R.id.sampleUVBtn);
+
+		radioGroup = (RadioGroup) findViewById(R.id.radioGroupLabels);
+		radioBtns[0] = (RadioButton) findViewById(R.id.radioShade);
+		radioBtns[1] = (RadioButton) findViewById(R.id.radioSun);
+		radioBtns[2] = (RadioButton) findViewById(R.id.radioCloud);
+		radioBtns[3] = (RadioButton) findViewById(R.id.radioOther);
 		
 		loadSensor_btn.setOnClickListener(this);
 		toggleStream_btn.setOnClickListener(this);
 		instantSample_btn.setOnClickListener(this);
+		sampleUVBtn.setOnClickListener(this);
 		
 		// Create the sensor callback objects
 		mLightSensor0Callback = new LightSensor0Callback(this);
@@ -250,6 +300,35 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		toggleStream_btn.setText(mResources.getString(R.string.startStreaming));
 	}
 	
+	
+	@Override
+	public void onResume() {
+	    super.onResume();
+        mLocationClient.connect();
+	}
+	@Override
+	public void onPause() {
+	    super.onPause();
+        mLocationClient.disconnect();
+	}
+    /*
+     * Called when the Activity becomes visible.
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Connect the client.
+        mLocationClient.connect();
+    }
+    /*
+     * Called when the Activity is no longer visible.
+     */
+    @Override
+    protected void onStop() {
+        // Disconnecting the client invalidates it.
+        mLocationClient.disconnect();
+        super.onStop();
+    }
 	@Override
 	public void onDestroy()
 	{
@@ -275,6 +354,7 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 		{
 			mUVSensor1.unregister();
 		}
+        mLocationClient.disconnect();
 	}
 	
 	@Override
@@ -308,7 +388,8 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				// 		  the register() method will overwrite the original callback object.
 				// 		  Another way to think about it is the getLightSensorList() method is like a 
 				// 		  factory that returns light sensor objects so we need it to create a new 
-				// 		  object for us.
+				// 		  object for us.  The same applies to the UV sensor list.
+				uvSensor_list = mUsbSensorManager.getUVSensorList();
 				lightSensor_list = mUsbSensorManager.getLightSensorList();
 				
 				// Make sure that the lists aren't empty
@@ -381,9 +462,86 @@ public class SerialConsoleActivity extends Activity implements OnClickListener
 				
 				break;
 			}
+			case R.id.sampleUVBtn:
+			{
+				if(mUVSensor0 == null || mUVSensor1 == null)
+				{
+					Toast.makeText(this, "ERROR: Sensor hardware not initialized", Toast.LENGTH_LONG).show();
+					return;
+				}
+				
+				int uv1 = mUVSensor0.getUV(),uv2 = mUVSensor1.getUV(),uv = Math.max(uv1,uv2);
+				uvSensor0_text.setText("iUV0: " +uv1);
+				uvSensor1_text.setText("iUV1: " +uv2);
+
+				int acvitivtyId = radioGroup.indexOfChild(findViewById(radioGroup.getCheckedRadioButtonId()));
+				String environment = mLabels[acvitivtyId];
+				
+				location = this.mLocationClient.getLastLocation();
+				Date timestamp = new Date();
+				
+				ParseUVReading reading = new ParseUVReading();
+				reading.setUVI(uv);
+				reading.setLocation(new ParseGeoPoint(location.getLatitude(),location.getLongitude()));
+				reading.setTimestamp(timestamp);
+				reading.setEnvironment(environment);
+				reading.saveInBackground();
+			}
 			default:
 			{
 			}
 		}
 	}
+	/*
+     * Called by Location Services when the request to connect the
+     * client finishes successfully. At this point, you can
+     * request the current location or start periodic updates
+     */
+    @Override
+    public void onConnected(Bundle dataBundle) {
+        // Display the connection status
+        Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
+    }
+    /*
+     * Called by Location Services if the connection to the
+     * location client drops because of an error.
+     */
+    @Override
+    public void onDisconnected() {
+        // Display the connection status
+        Toast.makeText(this, "Disconnected. Please re-connect.",Toast.LENGTH_SHORT).show();
+    }
+    /*
+     * Called by Location Services if the attempt to
+     * Location Services fails.
+     */
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        /*
+         * Google Play services can resolve some errors it detects.
+         * If the error has a resolution, try sending an Intent to
+         * start a Google Play services activity that can resolve
+         * error.
+         */
+        if (connectionResult.hasResolution()) {
+            try {
+                // Start an Activity that tries to resolve the error
+                connectionResult.startResolutionForResult(this,CONNECTION_FAILURE_RESOLUTION_REQUEST);
+                /*
+                 * Thrown if Google Play services canceled the original
+                 * PendingIntent
+                 */
+            } catch (IntentSender.SendIntentException e) {
+                // Log the error
+                e.printStackTrace();
+            }
+        } else {
+            /*
+             * If no resolution is available, display a dialog to the
+             * user with the error.
+             */
+            Toast.makeText(this, connectionResult.getErrorCode(),Toast.LENGTH_SHORT).show();
+        }
+    }
+
 }

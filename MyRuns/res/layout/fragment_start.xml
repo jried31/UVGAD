@@ -42,4 +42,14 @@
             android:text="@string/button_start"
             android:onClick="onStartClicked">
     </Button>
+        <Button
+            android:id="@+id/ButtonSampleUV"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_gravity="center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sample UV"
+            android:onClick="onSampleClicked">
+    </Button>
 </LinearLayout>
