@@ -385,9 +385,9 @@ public class TrackingService extends Service
 	public void onCreate() {
 		mLocationList = new ArrayList<Location>();
 		mLocationUpdateBroadcast = new Intent();
-		mLocationUpdateBroadcast.setAction(ACTION_TRACKING);
+		mLocationUpdateBroadcast.setAction(Globals.ACTION_TRACKING);
 		mMotionUpdateBroadcast = new Intent();
-		mMotionUpdateBroadcast.setAction(ACTION_MOTION_UPDATE);
+		mMotionUpdateBroadcast.setAction(Globals.ACTION_MOTION_UPDATE);
 		
 		//mLightingClassificationBroadcast = new Intent();
 		//mLightingClassificationBroadcast.setAction(ACTION_MOTION_UPDATE);
@@ -1125,9 +1125,9 @@ public class TrackingService extends Service
 		                // new code
 						mInferredActivityType = Globals.INFERENCE_MAPPING[currentTrend == -1 ? value : currentTrend];//maxIndex];
 						int currentActivity = Globals.INFERENCE_MAPPING[value];
-						mMotionUpdateBroadcast.putExtra(CURRENT_MOTION_TYPE, currentActivity);
+						mMotionUpdateBroadcast.putExtra(Globals.CURRENT_MOTION_TYPE, currentActivity);
 						int sweatRateIndex = GetSweatRateIndexForActivity(currentActivity);
-						mMotionUpdateBroadcast.putExtra(CURRENT_SWEAT_RATE_INTERVAL,sweatRateIndex);
+						mMotionUpdateBroadcast.putExtra(Globals.CURRENT_SWEAT_RATE_INTERVAL,sweatRateIndex);
 						updateTask.SetCurrentType(currentActivity);
 						updateTask.SetSweatRateIndex(sweatRateIndex);
 						// send broadcast with the CURRENT activity type
@@ -1176,16 +1176,16 @@ public class TrackingService extends Service
 			switch(currentActivityIndex) {
 			case Globals.ACTIVITY_TYPE_STANDING:
 			case Globals.ACTIVITY_TYPE_WALKING:
-				sweatRateIndex = 0;
-				break;
-			case Globals.ACTIVITY_TYPE_JOGGING :
 				sweatRateIndex = 1;
 				break;
-			case Globals.ACTIVITY_TYPE_RUNNING:
+			case Globals.ACTIVITY_TYPE_JOGGING :
 				sweatRateIndex = 2;
 				break;
+			case Globals.ACTIVITY_TYPE_RUNNING:
+				sweatRateIndex = 3;
+				break;
 				default:
-					sweatRateIndex = 3;
+					sweatRateIndex = 4;
 					break;
 			}
 		
@@ -1278,18 +1278,6 @@ class UpdateFinalTypeTask extends TimerTask {
 	public void SetSweatRateIndex(int sweatRateIndex) {
 		mSweatRateIndex = sweatRateIndex;
 	}
-
-	// Constant element required to update the final type.
-	public static final String VOTED_MOTION_TYPE = "voted motion type";
-	
-	// Constant element to calculate the average sweat rate.
-	public static final String FINAL_SWEAT_RATE_AVERAGE = "average sweat rate";
-	
-	// Constant element required to update the current type.
-	public static final String CURRENT_MOTION_TYPE = "new motion type";
-	
-	// Constant element required to update the sweat rate interval prediction.
-	public static final String CURRENT_SWEAT_RATE_INTERVAL = "sweat rate Interval";
 	
 	// Keeps track of the number of times this worker has been executed
 
@@ -1324,13 +1312,14 @@ class UpdateFinalTypeTask extends TimerTask {
 				}			
 			}
 			// Set the current type.
-			mMotionUpdateBroadcast.putExtra(CURRENT_MOTION_TYPE, mCurrentType);
+			mMotionUpdateBroadcast.putExtra(Globals.CURRENT_MOTION_TYPE, mCurrentType);
 			// set the current sweat rate.
-			mMotionUpdateBroadcast.putExtra(CURRENT_SWEAT_RATE_INTERVAL, mSweatRateIndex);
+			mMotionUpdateBroadcast.putExtra(Globals.CURRENT_SWEAT_RATE_INTERVAL, mSweatRateIndex);
 			// Set the final type.
-			mMotionUpdateBroadcast.putExtra(VOTED_MOTION_TYPE, finalInferredType);
+			mMotionUpdateBroadcast.putExtra(Globals.VOTED_MOTION_TYPE, finalInferredType);
 			Double sweatRateMeasure = 0.0;
 			Double activityDuration = 0.0;
+			double uvExposureMeasure = 1.0;
 			if(finalInferredType == Globals.ACTIVITY_TYPE_STANDING) {
 				// Get the activity duration in seconds. 				
 				activityDuration = mActivityVsDurationMap.get(0);
@@ -1363,8 +1352,11 @@ class UpdateFinalTypeTask extends TimerTask {
 			}
 			
 			// set the final sweat rate.
-			mMotionUpdateBroadcast.putExtra(FINAL_SWEAT_RATE_AVERAGE,sweatRateMeasure + " milli liters");
-			
+			double sweatRateMeasureStr = Math.floor(sweatRateMeasure*100)/100;
+			mMotionUpdateBroadcast.putExtra(Globals.FINAL_SWEAT_RATE_AVERAGE,sweatRateMeasureStr + " milli liters");
+			mMotionUpdateBroadcast.putExtra(Globals.CURR_SWEAT_RATE_AVERAGE, sweatRateMeasure);
+			mMotionUpdateBroadcast.putExtra(Globals.CURR_UV_EXPOSURE, uvExposureMeasure);
+
 			// Send the broad cast. It updates the UI.
 			mAppContext.sendBroadcast(mMotionUpdateBroadcast);
 	   }	   

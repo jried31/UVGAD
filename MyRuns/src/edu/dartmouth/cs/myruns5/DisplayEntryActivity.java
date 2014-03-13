@@ -59,6 +59,7 @@ public class DisplayEntryActivity extends Activity {
 		String duration = intent.getStringExtra(HistoryFragment.DURATION);
 		String distance = intent.getStringExtra(HistoryFragment.DISTANCE);
 		String sweatrate = intent.getStringExtra(HistoryFragment.SWEATRATE);
+		String uvexposure = intent.getStringExtra(HistoryFragment.UVEXPOSURE);
 		String calorie = intent.getStringExtra(HistoryFragment.CALORIE);
 		String heartrate = intent.getStringExtra(HistoryFragment.HEARTRATE);
 		String comment = intent.getStringExtra(HistoryFragment.COMMENT);

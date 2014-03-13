@@ -14,6 +14,8 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -93,6 +95,7 @@ public class MapDisplayActivity extends Activity {
 	private int mInputType;
 	private int mInferredActivityType;
 	private String mSweatRate;
+	private double mUvExposure;
 	
 	public static final int MENU_ID_DELETE = 0;
 	
@@ -108,6 +111,8 @@ public class MapDisplayActivity extends Activity {
     private double mDuration;
     
     public LatLng firstLatLng;
+    
+    public int sweatIteration = 1;
 
 
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -171,12 +176,14 @@ public class MapDisplayActivity extends Activity {
 		mStartTime = 0;
 		mClimb = 0;
 		mDuration = 0;
+		mUvExposure = 0.0;
 		
 		// init mEntry
 		mEntry = new ExerciseEntry();
 		mEntry.setActivityType(mInferredActivityType);
 		mEntry.setSweatRate(mSweatRate);
 		mEntry.setInputType(mInputType);
+		mEntry.setUvExposureCumulative(mUvExposure);
 		
 		FragmentManager myFragmentManager = getFragmentManager();
 		MapFragment mMapFragment = (MapFragment)myFragmentManager.findFragmentById(R.id.map);
@@ -307,18 +314,36 @@ public class MapDisplayActivity extends Activity {
 		
 		if (mTaskType == Globals.TASK_TYPE_NEW){
 			IntentFilter intentFilter = new IntentFilter();
-			intentFilter.addAction(TrackingService.ACTION_TRACKING);
+			intentFilter.addAction(Globals.ACTION_TRACKING);
 			registerReceiver(receiver, intentFilter);
 			
 			if(mInputType == Globals.INPUT_TYPE_AUTOMATIC){
 				intentFilter = new IntentFilter();
-				intentFilter.addAction(TrackingService.ACTION_MOTION_UPDATE);
+				intentFilter.addAction(Globals.ACTION_MOTION_UPDATE);
 				registerReceiver(mMotionUpdateReceiver, intentFilter);
 				//IntentFilter intentFilter2 = new IntentFilter();
 				//intentFilter2.addAction(TrackingService.LIGHTING_CLASS_UPDATE);
 				//registerReceiver(mLightingClassReceiver, intentFilter);
 			}
 		}
+	}
+	
+	public void sunblockReapp(Context context){
+		String notificationTitle = "MyRuns";
+		String notificationText = "Time to reapply sunblock!";
+		
+		Notification notification = new Notification.Builder(context)
+			.setContentTitle(notificationTitle)
+			.setContentText(notificationText)
+			.setSmallIcon(R.drawable.runner)
+			.setAutoCancel(true)
+			.build();
+		
+		NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		notification.flags = notification.flags | Notification.FLAG_AUTO_CANCEL;
+		notification.defaults |= Notification.DEFAULT_SOUND;
+		notification.defaults |= Notification.DEFAULT_VIBRATE;
+		notificationManager.notify(0, notification);
 	}
 	
 	/******************* button listeners ******************/
@@ -337,6 +362,7 @@ public class MapDisplayActivity extends Activity {
 		mEntry.setDuration((int)mDuration);
 		mEntry.setActivityType(mInferredActivityType);
 		mEntry.setSweatRate(mSweatRate);
+		mEntry.setUvExposureCumulative(mUvExposure);
 		
 		SharedPreferences sharedPref = mContext.getSharedPreferences(Globals.TAG, Context.MODE_PRIVATE);
 		mEntry.setGender(sharedPref.getInt(mContext.getString(R.string.data_Gender), 0));
@@ -582,13 +608,16 @@ public class MapDisplayActivity extends Activity {
 	public class MotionUpdateReceiver extends BroadcastReceiver{
 		@Override
 		public void onReceive(Context context, Intent intent){
-			mInferredActivityType = intent.getIntExtra(TrackingService.VOTED_MOTION_TYPE, -1);
-			mSweatRate = intent.getStringExtra(TrackingService.FINAL_SWEAT_RATE_AVERAGE);
-			int currentActivity = intent.getIntExtra(TrackingService.CURRENT_MOTION_TYPE, -1);
-			int sweatRateIndex = intent.getIntExtra(TrackingService.CURRENT_SWEAT_RATE_INTERVAL, -1);
+			mInferredActivityType = intent.getIntExtra(Globals.VOTED_MOTION_TYPE, -1);
+			mSweatRate = intent.getStringExtra(Globals.FINAL_SWEAT_RATE_AVERAGE);
+			mUvExposure = intent.getDoubleExtra(Globals.CURR_UV_EXPOSURE, 0);
+			double currSweatTotal = intent.getDoubleExtra(Globals.CURR_SWEAT_RATE_AVERAGE, 0);
+			int currentActivity = intent.getIntExtra(Globals.CURRENT_MOTION_TYPE, -1);
+			int sweatRateIndex = intent.getIntExtra(Globals.CURRENT_SWEAT_RATE_INTERVAL, -1);
 			String type = Globals.TYPE_STATS + Globals.ACTIVITY_TYPES[currentActivity];
 			String sweatRate = Globals.SWEAT_STATS + Globals.SWEAT_RATE_INTERVALS[sweatRateIndex];
-			typeStats.setText(type + "\n" + sweatRate);
+
+			typeStats.setText(type + "\n" + sweatRate + "\n" + "Total amount sweat:" + mSweatRate);
 			
 			lightingType.setText( Globals.LIGHT_TYPE_HEADER + TrackingService.CUR_LIGHT_CONDITION + ", Last Max: " + TrackingService.lastMaxIntensityBuffer);
 			if(Globals.FOUND_ARDUINO)
@@ -601,6 +630,9 @@ public class MapDisplayActivity extends Activity {
 			else
 				lightingType_Arduino.setText(" "+ Globals.LIGHT_TYPE_HEADER_ARDUINO + "Sensor Not Detected"  );
 				
+			if (currSweatTotal > (Globals.SWEAT_REAPPLY * sweatIteration)) {
+				sunblockReapp(context);
+				sweatIteration++;
 		}
 	}
 	
