@@ -67,7 +67,10 @@ public class MapDisplayActivity extends Activity {
 	
 	private TrackingServiceReceiver receiver = new TrackingServiceReceiver();
 	private MotionUpdateReceiver mMotionUpdateReceiver = new MotionUpdateReceiver();
+
 	//private LightingClassificationReceiver mLightingClassReceiver = new LightingClassificationReceiver();
+
+	private UVIBroadcastReciever mUVReceiver = new UVIBroadcastReciever();
 	
 	private GoogleMap mMap;
 
@@ -201,7 +204,11 @@ public class MapDisplayActivity extends Activity {
 
 		case Globals.TASK_TYPE_HISTORY:
 			Log.d(null, "history 1");
-
+			
+			final Intent currentUVIIntent = new Intent(mMapFragment.getActivity(), UltravioletIndexService.class);
+			currentUVIIntent.setAction(UltravioletIndexService.CURRENT_UV_INDEX);
+			mMapFragment.getActivity().startService(currentUVIIntent);
+			
 			// remove buttons
 			Button saveButton = (Button) findViewById(R.id.button_map_save);
 			saveButton.setVisibility(View.GONE);
@@ -293,8 +300,6 @@ public class MapDisplayActivity extends Activity {
 	@Override
 	public void onPause(){
 		
-		
-		
 		if (mTaskType == Globals.TASK_TYPE_NEW){
 			unregisterReceiver(receiver);
 			if (mInputType == Globals.INPUT_TYPE_AUTOMATIC)
@@ -312,6 +317,11 @@ public class MapDisplayActivity extends Activity {
 	public void onResume(){
 		super.onResume();
 		
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(UltravioletIndexService.CURRENT_UV_INDEX);
+		//UVIBroadcastReciever receiver = new UVIBroadcastReciever();
+		registerReceiver(mUVReceiver, filter);
+				
 		if (mTaskType == Globals.TASK_TYPE_NEW){
 			IntentFilter intentFilter = new IntentFilter();
 			intentFilter.addAction(Globals.ACTION_TRACKING);
@@ -636,6 +646,19 @@ public class MapDisplayActivity extends Activity {
 		}
 	}
 	
+	class UVIBroadcastReciever extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context arg0, Intent arg1) {
+			float currentUVI = arg1.getExtras().getFloat(
+					UltravioletIndexService.CURRENT_UV_INDEX);
+			float[] data = arg1.getExtras().getFloatArray(
+					UltravioletIndexService.WEB_UVI);
+			System.out.println("abcd "+currentUVI);
+		}
+		
+		public void registerReciever(MapFragment f) {
+		}
+	}
 	
 		private boolean isMapNeedRecenter(LatLng latlng) {
 		
