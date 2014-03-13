@@ -769,10 +769,12 @@ public class TrackingService extends Service
 	        	{
 	        		if(maxIntensityThisBuffer > 1500){
 	        			CUR_LIGHT_CONDITION = Globals.CLASS_LABEL_IN_SUN;
-	        			environmentClassification = Globals.CLASS_LABEL_IN_SUN;
+	        			if(!Globals.FOUND_ARDUINO)
+	        				environmentClassification = Globals.CLASS_LABEL_IN_SUN;
 	        		}else{
 	        			CUR_LIGHT_CONDITION = Globals.CLASS_LABEL_IN_SHADE;
-        				environmentClassification = Globals.CLASS_LABEL_IN_SHADE;
+	        			if(!Globals.FOUND_ARDUINO)
+	        				environmentClassification = Globals.CLASS_LABEL_IN_SHADE;
 	        		}
 	        		lastMaxIntensityBuffer = maxIntensityThisBuffer;
 	        	}
@@ -1050,8 +1052,7 @@ public class TrackingService extends Service
 						bufferFillFinishTime = System.currentTimeMillis();
 						
 						// This gives the seconds difference
-						timeElapsed = TimeUnit.MILLISECONDS.toSeconds(bufferFillFinishTime) 
-								- TimeUnit.MILLISECONDS.toSeconds(bufferFillStartTime);
+						timeElapsed = TimeUnit.MILLISECONDS.toSeconds(bufferFillFinishTime) - TimeUnit.MILLISECONDS.toSeconds(bufferFillStartTime);
 						// Can either be positive or negative - used to correct the seconds difference.
 						timeCorrectionMillis = ((bufferFillFinishTime%1000) - (bufferFillStartTime%1000));
 						// Correct the time with the milli second component, so for ex: if 2 times are 2.1 and 0.9
