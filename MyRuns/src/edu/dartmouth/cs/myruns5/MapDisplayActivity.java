@@ -592,7 +592,10 @@ public class MapDisplayActivity extends Activity {
 			
 			lightingType.setText( Globals.LIGHT_TYPE_HEADER + TrackingService.CUR_LIGHT_CONDITION + ", Last Max: " + TrackingService.lastMaxIntensityBuffer);
 			if(Globals.FOUND_ARDUINO)
-				lightingType_Arduino.setText( Globals.LIGHT_TYPE_HEADER_ARDUINO + "Sensor Detected"  );
+			{
+				
+				lightingType_Arduino.setText( Globals.LIGHT_TYPE_HEADER_ARDUINO +  intent.getIntExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO, -1)  );
+			}
 			else
 				lightingType_Arduino.setText( Globals.LIGHT_TYPE_HEADER_ARDUINO + "Sensor Not Detected"  );
 				

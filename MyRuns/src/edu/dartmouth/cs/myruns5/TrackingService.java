@@ -88,6 +88,9 @@ public class TrackingService extends Service
 	private UVSensor0Callback mUVSensor0Callback;
 	private UVSensor1Callback mUVSensor1Callback;
 	
+	public static int light0 = -1;
+	public static int light1 = -1;
+	
 	private UsbSensorManager mUsbSensorManager;
 	
 	// This is the callback object for the first light sensor
@@ -107,8 +110,8 @@ public class TrackingService extends Service
 			@Override
 			public void onSensorUpdate(final int updateLux)
 			{
-				
-				Toast.makeText(getApplicationContext(), "Initialized sensor hardware! " + updateLux, Toast.LENGTH_LONG).show();
+				light0 = updateLux;
+				//Toast.makeText(getApplicationContext(), "Initialized sensor hardware! " + updateLux, Toast.LENGTH_LONG).show();
 				// This callback method is invoked when the light sensor gets a new light reading data
 				
 				// All UI updates MUST occur on the main thread (a.k.a. UI thread) so we update the
@@ -159,6 +162,8 @@ public class TrackingService extends Service
 			@Override
 			public void onSensorUpdate(final int updateLux)
 			{
+
+				light1 = updateLux;
 				/*mActivity.runOnUiThread(new Runnable()
 				{
 					@Override
@@ -392,12 +397,7 @@ public class TrackingService extends Service
 		//mLightSensorActivityClassificationTask = new LightSensorActivityClassificationTask();
 		mInferredActivityType = Globals.ACTIVITY_TYPE_STANDING;
 		
-		//Start the timer for data collection
-		dataCollector = new Timer();
-		dataCollector.scheduleAtFixedRate(dataCollectorTask, Globals.DATA_COLLECTOR_START_DELAY, Globals.DATA_COLLECTOR_INTERVAL);
-		
-		//In here, create an instance of Daniel's sensor callback. Put that clas down in the bottom of this file and use it here
-		mUsbSensorManager = UsbSensorManager.getManager();
+		mUsbSensorManager = UsbSensorManager.getManager();	
 		
 		// Create the sensor callback objects
 		mLightSensor0Callback = new LightSensor0Callback(this);
@@ -405,53 +405,11 @@ public class TrackingService extends Service
 		mUVSensor0Callback = new UVSensor0Callback(this);
 		mUVSensor1Callback = new UVSensor1Callback(this);
 		
-		mIsStreaming = false;
+		//Start the timer for data collection
+		dataCollector = new Timer();
+		dataCollector.scheduleAtFixedRate(dataCollectorTask, Globals.DATA_COLLECTOR_START_DELAY, Globals.DATA_COLLECTOR_INTERVAL);
 		
-		// Get the UV and light sensors that the UsbSensorManager recognizes
-		List<IUVSensor> uvSensor_list       = mUsbSensorManager.getUVSensorList();
-		List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
 		
-		// Make sure that the lists aren't empty
-		if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
-		{
-			Toast.makeText(this, "ERROR 1: Sensor hardware not detected", Toast.LENGTH_LONG).show();
-			return;
-		}
-		
-		// Grab the first pair of sensor objects.  On an Android phone there really shouldn't 
-		// be more than one
-		mLightSensor0 = lightSensor_list.get(0);
-		mUVSensor0 = uvSensor_list.get(0);
-		
-		// @NOTE: We need to grab a new list of sensors since Java must create a new sensor 
-		//    	  object.  Otherwise, they'll refer to the same sensor object and invoking 
-		// 		  the register() method will overwrite the original callback object.
-		// 		  Another way to think about it is the getLightSensorList() method is like a 
-		// 		  factory that returns light sensor objects so we need it to create a new 
-		// 		  object for us.
-		lightSensor_list = mUsbSensorManager.getLightSensorList();
-		uvSensor_list    = mUsbSensorManager.getUVSensorList();
-		
-		// Make sure that the lists aren't empty
-		if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
-		{
-			Toast.makeText(this, "ERROR 2: Sensor hardware not detected", Toast.LENGTH_LONG).show();
-			return;
-		}
-		
-		// Grab the handle to the UV sensor and second light sensor objects
-		mLightSensor1 = lightSensor_list.get(0);
-		mUVSensor1 = uvSensor_list.get(0);
-		
-		// Initialize the UV sensor and light sensor objects
-		mLightSensor0.init(Constants.PULSE_ID_LIGHT_0);
-		mLightSensor1.init(Constants.PULSE_ID_LIGHT_1);
-		mUVSensor0.init(Constants.PULSE_ID_UV_0);
-		mUVSensor1.init(Constants.PULSE_ID_UV_1);
-		
-		//mLightSensor0.register(mLightSensor0Callback);
-		Globals.FOUND_ARDUINO = true;
-		Toast.makeText(this, "Initialized sensor hardware!", Toast.LENGTH_LONG).show();
 	}
 
 	@Override
@@ -465,6 +423,60 @@ public class TrackingService extends Service
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		//In here, create an instance of Daniel's sensor callback. Put that clas down in the bottom of this file and use it here
+		Globals.FOUND_ARDUINO = false;
+		mIsStreaming = false;
+		
+		// Get the UV and light sensors that the UsbSensorManager recognizes
+		List<IUVSensor> uvSensor_list       = mUsbSensorManager.getUVSensorList();
+		List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
+		
+		// Make sure that the lists aren't empty
+		if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
+		{
+			Toast.makeText(this, "ERROR 1: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+		}
+		else
+		{
+			// Grab the first pair of sensor objects.  On an Android phone there really shouldn't 
+			// be more than one
+			mLightSensor0 = lightSensor_list.get(0);
+			mUVSensor0 = uvSensor_list.get(0);
+			
+			// @NOTE: We need to grab a new list of sensors since Java must create a new sensor 
+			//    	  object.  Otherwise, they'll refer to the same sensor object and invoking 
+			// 		  the register() method will overwrite the original callback object.
+			// 		  Another way to think about it is the getLightSensorList() method is like a 
+			// 		  factory that returns light sensor objects so we need it to create a new 
+			// 		  object for us.
+			lightSensor_list = mUsbSensorManager.getLightSensorList();
+			uvSensor_list    = mUsbSensorManager.getUVSensorList();
+			
+			// Make sure that the lists aren't empty
+			if(uvSensor_list.isEmpty() || lightSensor_list.isEmpty())
+			{
+				Toast.makeText(this, "ERROR 2: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+				
+			}
+			else
+			{	
+				// Grab the handle to the UV sensor and second light sensor objects
+				mLightSensor1 = lightSensor_list.get(0);
+				mUVSensor1 = uvSensor_list.get(0);
+				
+				// Initialize the UV sensor and light sensor objects
+				mLightSensor0.init(Constants.PULSE_ID_LIGHT_0);
+				mLightSensor1.init(Constants.PULSE_ID_LIGHT_1);
+				mUVSensor0.init(Constants.PULSE_ID_UV_0);
+				mUVSensor1.init(Constants.PULSE_ID_UV_1);
+				
+				Globals.FOUND_ARDUINO = true;
+				Toast.makeText(this, "Initialized sensor hardware!", Toast.LENGTH_LONG).show();
+			}
+		}
+		
+		
 		
 		//Create Weka features.arff file reference
 		mWekaClassificationFile = new File(getExternalFilesDir(null), Globals.FEATURE_LIGHT_FILE_NAME);
@@ -501,6 +513,13 @@ public class TrackingService extends Service
 	    	//JERRID: Register light Sensor
 			mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 			mSensorManager.registerListener(this, mLightSensor,SensorManager.SENSOR_DELAY_FASTEST);
+			
+
+			if(Globals.FOUND_ARDUINO)
+			{
+				mLightSensor0.register(mLightSensor0Callback);
+				mLightSensor1.register(mLightSensor1Callback);
+			}
 			
 			mMagnetSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 			mSensorManager.registerListener(this, mMagnetSensor,SensorManager.SENSOR_DELAY_FASTEST);
@@ -733,9 +752,9 @@ public class TrackingService extends Service
 	        	if(maxIntensityThisBuffer > 0)
 	        	{
 	        		if(maxIntensityThisBuffer > 1500)
-	        			CUR_LIGHT_CONDITION = "Bright";
+	        			CUR_LIGHT_CONDITION = Globals.CLASS_LABEL_IN_SUN;
 	        		else
-	        			CUR_LIGHT_CONDITION = "Dim";
+	        			CUR_LIGHT_CONDITION = Globals.CLASS_LABEL_IN_SHADE;
 	        	
 	        		lastMaxIntensityBuffer = maxIntensityThisBuffer;
 	        	}
@@ -1107,12 +1126,12 @@ public class TrackingService extends Service
 						 updateTask.SetIntent(mMotionUpdateBroadcast);
 						 updateTask.SetContext(getApplicationContext());
 						 
+						 //Adding light values
+						 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO, Math.max(light0,light1));
 						 // Used to update the current type.
 						 sendBroadcast(mMotionUpdateBroadcast);
 
-			        	  mLightingClassificationBroadcast.putExtra(CUR_LIGHT_CONDITION, 10);
-			        	  sendBroadcast(mLightingClassificationBroadcast);
-						
+			        	 
 						//Reset the max value
 						max = Double.MIN_VALUE;
 					}
