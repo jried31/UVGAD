@@ -29,8 +29,10 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -43,6 +45,7 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -71,6 +74,8 @@ public class TrackingService extends Service
 	implements LocationListener, SensorEventListener
 	{
 	
+	private UVIBroadcastReciever mUVReceiver = new UVIBroadcastReciever();
+	private double runningUVExposure = 0.0;
 	
 	//Classes for connecting to Arduino light sensor
 
@@ -557,6 +562,14 @@ public class TrackingService extends Service
 		notification.flags = notification.flags | Notification.FLAG_ONGOING_EVENT;
 		//notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		notificationManager.notify(0, notification);
+		
+		//---
+		IntentFilter filter = new IntentFilter();
+    	filter.addAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
+    	registerReceiver(mUVReceiver, filter);
+		
+		uviHandler = new Handler();
+		uviHandler.postDelayed(uviRunnable, Globals.UVI_UPDATE_RATE);
 				
 		return START_STICKY;
 	}
@@ -565,6 +578,7 @@ public class TrackingService extends Service
 	public void onDestroy() {
 //    	Toast.makeText(getApplicationContext(), "service onDestroy", Toast.LENGTH_SHORT).show();
 
+		this.unregisterReceiver(mUVReceiver);
 		// Unregistering listeners
 		mLocationManager.removeUpdates(this);
 		// Remove notification
@@ -951,6 +965,37 @@ public class TrackingService extends Service
 		}
 	}
 	
+	Handler uviHandler;
+	Runnable uviRunnable = new Runnable() {
+        @Override
+        public void run() {
+        	final Intent currentUVIIntent = new Intent(getApplicationContext(), UltravioletIndexService.class);
+        	currentUVIIntent.setAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
+        	startService(currentUVIIntent);
+
+    		uviHandler.postDelayed(uviRunnable, Globals.UVI_UPDATE_RATE);
+        	
+        }
+    };
+	
+	class UVIBroadcastReciever extends BroadcastReceiver {
+		double mCurrentUVISun = 0.0;
+		double mCurrentUVIShade = 0.0;
+		
+		@Override
+		public void onReceive(Context arg0, Intent arg1) {
+			double currentUVISun = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SUN);
+			double currentUVIShade = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SHADE);
+			
+			// Convert from mW/cm^2 to (J/s)/m^2
+			currentUVISun = currentUVISun * 100*100 / 1000;
+			currentUVIShade = currentUVIShade * 100*100 / 1000;
+			
+			mCurrentUVISun = currentUVISun;
+			mCurrentUVIShade = currentUVIShade;
+			//System.out.println("QQQQQ: " + currentUVISun + " : " + currentUVIShade);
+		}
+	}
 	
 	// Timer object to periodically update final type
 	Timer updateFinalTypeTimer = new Timer();
@@ -1052,6 +1097,21 @@ public class TrackingService extends Service
 						// This gives the seconds difference
 						timeElapsed = TimeUnit.MILLISECONDS.toSeconds(bufferFillFinishTime) 
 								- TimeUnit.MILLISECONDS.toSeconds(bufferFillStartTime);
+						
+						// Calculate running total of UV Exposure
+						if (environmentClassification.equals(Globals.CLASS_LABEL_IN_SUN))
+							runningUVExposure += mUVReceiver.mCurrentUVISun * timeElapsed;
+						else if (environmentClassification.equals(Globals.CLASS_LABEL_IN_SHADE))
+							runningUVExposure += mUVReceiver.mCurrentUVIShade * timeElapsed;
+						else
+							runningUVExposure += 0.0;
+						
+						//System.out.println("DOES THIS WORK: " + environmentClassification);
+						//System.out.println("FFF: " + timeElapsed);
+						//System.out.println(runningUVExposure);
+						//System.out.println(timeElapsed);
+						updateTask.setUVExposure(runningUVExposure);
+						
 						// Can either be positive or negative - used to correct the seconds difference.
 						timeCorrectionMillis = ((bufferFillFinishTime%1000) - (bufferFillStartTime%1000));
 						// Correct the time with the milli second component, so for ex: if 2 times are 2.1 and 0.9
@@ -1136,7 +1196,7 @@ public class TrackingService extends Service
 						// send broadcast with the CURRENT activity type
 						//---------------
 						
-						
+						//mMotionUpdateBroadcast.putExtra(Globals.CURR_UV_EXPOSURE, mUVReceiver.currentUVISun);
 						 
 						 // Updates the timer task class with the latest status
 						 // This is required for the timer task implementor class to judicious determine the dominant activity as per the latest trend.
@@ -1161,7 +1221,6 @@ public class TrackingService extends Service
 						 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO,environmentClassification);
 						 // Used to update the current type.
 						 sendBroadcast(mMotionUpdateBroadcast);
-
 			        	 
 						//Reset the max value
 						max = Double.MIN_VALUE;
@@ -1196,7 +1255,7 @@ public class TrackingService extends Service
 		return sweatRateIndex;
 		}
 	}
-	}
+}
 
 
 
@@ -1222,6 +1281,8 @@ class UpdateFinalTypeTask extends TimerTask {
 	
 	// Used to predict the current sweat rate.
 	public static int mSweatRateIndex = 0;
+	
+	private double mUVExposure = 0.0;
 		
 	// Maximum number of calls that can be done in a minute.
 	private int mNoOfMaxCalls;
@@ -1281,6 +1342,10 @@ class UpdateFinalTypeTask extends TimerTask {
 	// set the current sweat rate index.
 	public void SetSweatRateIndex(int sweatRateIndex) {
 		mSweatRateIndex = sweatRateIndex;
+	}
+	
+	public void setUVExposure(double UVExposure) {
+		mUVExposure = UVExposure;
 	}
 	
 	// Keeps track of the number of times this worker has been executed
@@ -1359,6 +1424,8 @@ class UpdateFinalTypeTask extends TimerTask {
 			double sweatRateMeasureStr = Math.floor(sweatRateMeasure*100)/100;
 			mMotionUpdateBroadcast.putExtra(Globals.FINAL_SWEAT_RATE_AVERAGE,sweatRateMeasureStr + " milli liters");
 			mMotionUpdateBroadcast.putExtra(Globals.CURR_SWEAT_RATE_AVERAGE, sweatRateMeasure);
+			
+			uvExposureMeasure = mUVExposure;
 			mMotionUpdateBroadcast.putExtra(Globals.CURR_UV_EXPOSURE, uvExposureMeasure);
 
 			// Send the broad cast. It updates the UI.

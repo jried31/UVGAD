@@ -57,8 +57,6 @@ public class MapDisplayActivity extends Activity {
 	private MotionUpdateReceiver mMotionUpdateReceiver = new MotionUpdateReceiver();
 
 	//private LightingClassificationReceiver mLightingClassReceiver = new LightingClassificationReceiver();
-
-	private UVIBroadcastReciever mUVReceiver = new UVIBroadcastReciever();
 	
 	private GoogleMap mMap;
 
@@ -122,7 +120,7 @@ public class MapDisplayActivity extends Activity {
 		}
 	};
 
-
+	/*
 	Handler uviHandler;
 	Runnable uviRunnable = new Runnable() {
         @Override
@@ -135,7 +133,7 @@ public class MapDisplayActivity extends Activity {
         	
         }
     };
-
+	 */
 
 	/******************* methods ********************/
 	@Override
@@ -287,13 +285,6 @@ public class MapDisplayActivity extends Activity {
 			return;
 		}
 		
-		//Stephanie: Code here to display the UV 
-    	IntentFilter filter = new IntentFilter();
-    	filter.addAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
-    	registerReceiver(mUVReceiver, filter);
-    	
-		uviHandler = new Handler();
-		uviHandler.postDelayed(uviRunnable, Globals.UVI_UPDATE_RATE);
 	}
 	
 	@Override
@@ -630,6 +621,7 @@ public class MapDisplayActivity extends Activity {
 			String sweatRate = Globals.SWEAT_STATS + Globals.SWEAT_RATE_INTERVALS[sweatRateIndex];
 
 			typeStats.setText(type + "\n" + sweatRate + "\n" + "Total amount sweat:" + mSweatRate);
+			uviStats.setText(String.format("Total UV Exposure: %.2f (J/s)/m^2", mUvExposure));
 			
 			lightingType.setText( Globals.LIGHT_TYPE_HEADER + TrackingService.CUR_LIGHT_CONDITION + ", Last Max: " + TrackingService.lastMaxIntensityBuffer);
 			if(Globals.FOUND_ARDUINO)
@@ -649,41 +641,28 @@ public class MapDisplayActivity extends Activity {
 		}
 	}
 	
-	class UVIBroadcastReciever extends BroadcastReceiver {
-		@Override
-		public void onReceive(Context arg0, Intent arg1) {
-			double currentUVISun = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SUN);
-			double currentUVIShade = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SHADE);
-			
-			uviStats.setText("UVI Sun: "+ currentUVISun + " UVI Shade: "+ currentUVIShade+"\n");
-			System.out.println("abcd "+currentUVISun);
-			
-			//Set text in the view here
-		}
-	}
+	private boolean isMapNeedRecenter(LatLng latlng) {
 	
-		private boolean isMapNeedRecenter(LatLng latlng) {
+		VisibleRegion vr = mMap.getProjection().getVisibleRegion();
 		
-			VisibleRegion vr = mMap.getProjection().getVisibleRegion();
-			
-			double left = vr.latLngBounds.southwest.longitude;	
-			double top = vr.latLngBounds.northeast.latitude;
-			double right = vr.latLngBounds.northeast.longitude;
-			double bottom = vr.latLngBounds.southwest.latitude;
+		double left = vr.latLngBounds.southwest.longitude;	
+		double top = vr.latLngBounds.northeast.latitude;
+		double right = vr.latLngBounds.northeast.longitude;
+		double bottom = vr.latLngBounds.southwest.latitude;
 
-		
-			int rectWidth = (int) Math.abs(right - left);
-			int rectHeight = (int) Math.abs(top - bottom);
+	
+		int rectWidth = (int) Math.abs(right - left);
+		int rectHeight = (int) Math.abs(top - bottom);
 
-			int rectCenterX = (int) mMap.getCameraPosition().target.longitude;
-			int rectCenterY = (int) mMap.getCameraPosition().target.latitude;
+		int rectCenterX = (int) mMap.getCameraPosition().target.longitude;
+		int rectCenterY = (int) mMap.getCameraPosition().target.latitude;
 
-			// Constructs the rectangle
-			Rect validScreenRect = new Rect(rectCenterX - rectWidth / 2,
-				rectCenterY - rectHeight / 2, rectCenterX + rectWidth / 2,
-				rectCenterY + rectHeight / 2);
+		// Constructs the rectangle
+		Rect validScreenRect = new Rect(rectCenterX - rectWidth / 2,
+			rectCenterY - rectHeight / 2, rectCenterX + rectWidth / 2,
+			rectCenterY + rectHeight / 2);
 
-			return !validScreenRect.contains((int) latlng.longitude,
-				(int) latlng.latitude);	
-		}
+		return !validScreenRect.contains((int) latlng.longitude,
+			(int) latlng.latitude);	
+	}
 }
