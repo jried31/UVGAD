@@ -64,6 +64,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 	public static final String CURRENT_UV_INDEX_SUN = "CURRENT_UVI_SUN";
 	public static final String CURRENT_UV_INDEX_SHADE = "CURRENT_UVI_SHADE";
 	public static final String CURRENT_UV_INDEX_CLOUD = "CURRENT_UVI_CLOUD";
+	public static final String CURRENT_UV_INDEX_ALL = "uvi_all";
 
 	public static enum DAY_OF_WEEK {
 		SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY;
@@ -457,7 +458,12 @@ public class UltravioletIndexService extends Service implements LocationListener
 		option = intent.getAction();
 
 		if (hasData) {
-			if (option.equals(CURRENT_UV_INDEX)) {
+			if (option.equals(CURRENT_UV_INDEX_ALL)) {
+					Intent i = new Intent(CURRENT_UV_INDEX_ALL);
+					i.putExtra(CURRENT_UV_INDEX_SUN, uvIndexSun);
+					i.putExtra(CURRENT_UV_INDEX_SHADE, uvIndexShade);
+					sendBroadcast(i);
+			} else if (option.equals(CURRENT_UV_INDEX)) {
 				double uvi = uvIndexSun;
 				if (uvi > 0) {
 					Intent i = new Intent(CURRENT_UV_INDEX).putExtra(CURRENT_UV_INDEX, uvi);

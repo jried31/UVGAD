@@ -205,10 +205,6 @@ public class MapDisplayActivity extends Activity {
 		case Globals.TASK_TYPE_HISTORY:
 			Log.d(null, "history 1");
 			
-			final Intent currentUVIIntent = new Intent(mMapFragment.getActivity(), UltravioletIndexService.class);
-			currentUVIIntent.setAction(UltravioletIndexService.CURRENT_UV_INDEX);
-			mMapFragment.getActivity().startService(currentUVIIntent);
-			
 			// remove buttons
 			Button saveButton = (Button) findViewById(R.id.button_map_save);
 			saveButton.setVisibility(View.GONE);
@@ -317,9 +313,12 @@ public class MapDisplayActivity extends Activity {
 	public void onResume(){
 		super.onResume();
 		
+		final Intent currentUVIIntent = new Intent(this, UltravioletIndexService.class);
+		currentUVIIntent.setAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
+		startService(currentUVIIntent);
+		
 		IntentFilter filter = new IntentFilter();
-		filter.addAction(UltravioletIndexService.CURRENT_UV_INDEX);
-		//UVIBroadcastReciever receiver = new UVIBroadcastReciever();
+		filter.addAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
 		registerReceiver(mUVReceiver, filter);
 				
 		if (mTaskType == Globals.TASK_TYPE_NEW){
@@ -649,14 +648,11 @@ public class MapDisplayActivity extends Activity {
 	class UVIBroadcastReciever extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context arg0, Intent arg1) {
-			float currentUVI = arg1.getExtras().getFloat(
-					UltravioletIndexService.CURRENT_UV_INDEX);
-			float[] data = arg1.getExtras().getFloatArray(
-					UltravioletIndexService.WEB_UVI);
-			System.out.println("abcd "+currentUVI);
-		}
-		
-		public void registerReciever(MapFragment f) {
+			double currentUVISun = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SUN);
+			double currentUVIShade = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SHADE);
+			
+			System.out.println("abcd "+currentUVISun);
+			//Set text in the view here
 		}
 	}
 	
