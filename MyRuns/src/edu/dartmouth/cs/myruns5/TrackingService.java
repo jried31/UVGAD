@@ -414,6 +414,8 @@ public class TrackingService extends Service
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		
+		
 		File sdCard = Environment.getExternalStorageDirectory();  
 		String tempfilename = sdCard.getAbsolutePath()  + "/temp";
 		File file = new File(tempfilename);
