@@ -92,6 +92,7 @@
     
     <string name="title_button_save">Save</string>
     <string name="title_button_cancel">Cancel</string>
+    <string name="title_button_send">Send</string>
         
     
     <string name="title_dialog_date">To Be Modified.</string>
@@ -243,6 +244,7 @@
     <string name="data_Hat">hat</string>
     <string name="data_ApparelTop">apparel_top</string>
     <string name="data_ApparelBottom">apparel_bottom</string>
+    <string name="data_ClothingCover">clothing_cover</string>
     
     <string-array name="MajorHints">
         <item>African and African American Studies</item>

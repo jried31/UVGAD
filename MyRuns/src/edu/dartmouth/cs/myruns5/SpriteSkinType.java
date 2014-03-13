@@ -20,6 +20,8 @@ import edu.dartmouth.cs.myruns5.UserBodyProfileDialog.OurView;
 public class SpriteSkinType implements ChooseSkinTypeCaller {
 	int x,y,
 		height, width;
+	public static int[] positionToSkinType = {1, 2, 3, 4, 5, 6};
+	
 	public int getX() {
 		return x;
 	}
@@ -52,7 +54,7 @@ public class SpriteSkinType implements ChooseSkinTypeCaller {
 		skinToneMap.put(3, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_4));
 		skinToneMap.put(4, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_5));
 		skinToneMap.put(5, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_6));
-		getSkinTypeFromSharedPreferences();//Grab the Gender of persion
+		getSkinTypeFromSharedPreferences(); //Grab the Gender of person
 		
 		//Set the dimension variable for the default option
 		setDimension();

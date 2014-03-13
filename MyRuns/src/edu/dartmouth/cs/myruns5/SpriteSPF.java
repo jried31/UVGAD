@@ -19,8 +19,9 @@ import android.widget.GridView;
 import edu.dartmouth.cs.myruns5.UserBodyProfileDialog.OurView;
 
 public class SpriteSPF implements ChooseSPFLevelCaller {
-	int x,y,
-		height, width;
+	int x, y, height, width;
+	public static int[] positionToSPF = {0, 8, 15, 30, 45, 50};
+	
 	public int getX() {
 		return x;
 	}
@@ -54,7 +55,7 @@ public class SpriteSPF implements ChooseSPFLevelCaller {
 		spfMap.put(4, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_45));
 		spfMap.put(5, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_50));
 		
-		getSPFFromSharedPreferences();//Grab the Gender of persion
+		getSPFFromSharedPreferences();
 		
 		//Set the dimension variable for the default option
 		setDimension();

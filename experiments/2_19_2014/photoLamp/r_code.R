@@ -26,7 +26,7 @@ files<-c(
   '~/Desktop/experiments/2_23_2014/shake/lightClassificationtreeshadeawayfacing.txt' #21
   )
 
-data<-read.table(files[6])
+data<-read.table(files[16])
 #names(data)=c("Timestamp","Reading","Angle")#,"UV")
 names(data)=c("Timestamp","Reading","Angle1", "Angle2", "Angle3")#,"UV")
 
