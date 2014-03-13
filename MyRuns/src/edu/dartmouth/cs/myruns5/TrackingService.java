@@ -150,7 +150,11 @@ public class TrackingService extends Service
 
 		//Option to retrieve Envirnment Context from Light Sensor
 		if (option.equals(Globals.ENVIRONMENT_CLASSIFICATION)) {
-			switch()
+			if(Globals.FOUND_ARDUINO)
+				return CUR_LIGHT_CONDITION_ARDUINO;
+			else
+				return CUR_LIGHT_CONDITION;
+				
 		}
 		
 		File sdCard = Environment.getExternalStorageDirectory();  
