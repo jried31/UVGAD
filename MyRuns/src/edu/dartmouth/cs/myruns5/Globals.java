@@ -114,7 +114,7 @@ public abstract class Globals {
 		"Downhill Skiing", "Cross-Country Skiing", "Snowboarding", "Skating", "Swimming", 
 		"Mountain Biking", "Wheelchair", "Elliptical", "Other",  "Standing" , "Jogging" , "Unknown"};
 	
-	public static final String[] SWEAT_RATE_INTERVALS = { "Low(0.4 Liter/hour)","Low(1.5 Liter/hour)","Medium(2 Liter/hour)", "High(3 Liter/hour)"};
+	public static final String[] SWEAT_RATE_INTERVALS = { "Low(0.4 Liter/hour)","Low(<1.5 Liter/hour)","Medium(2 Liter/hour)", "High(3 Liter/hour)"};
 	public static final double SWEAT_REAPPLY = 4.0; // TEMP: notification when sweat total is 4ml
 	
 

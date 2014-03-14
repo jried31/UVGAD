@@ -617,8 +617,6 @@ public class MapDisplayActivity extends Activity {
 			int sweatRateIndex = intent.getIntExtra(Globals.CURRENT_SWEAT_RATE_INTERVAL, -1);
 			String type = Globals.TYPE_STATS + Globals.ACTIVITY_TYPES[currentActivity];
 			String sweatRate = Globals.SWEAT_STATS + Globals.SWEAT_RATE_INTERVALS[sweatRateIndex];
-
-			System.out.println("Free memory (bytes): " + Runtime.getRuntime().freeMemory());
 			
 			typeStats.setText(type + "\n" + sweatRate + "\n" + "Total amount sweat:" + mSweatRate);
 			uviStats.setText(String.format("Total UV Exposure: %.2f (J/s)/m^2", mUvExposure));

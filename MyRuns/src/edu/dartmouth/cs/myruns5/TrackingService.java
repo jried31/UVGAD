@@ -427,7 +427,6 @@ public class TrackingService extends Service
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent == null) {
-			System.out.println("INTENT IS NULL");
 			return START_STICKY;		
 		}
 		
@@ -1002,8 +1001,6 @@ public class TrackingService extends Service
 			
 			mCurrentUVISun = currentUVISun;
 			mCurrentUVIShade = currentUVIShade;
-			System.out.println("UVBroadcastReceiver: " + currentUVISun + " : " + currentUVIShade);
-			
 		}
 	}
 	
@@ -1086,7 +1083,6 @@ public class TrackingService extends Service
 							e.printStackTrace();
 						}
 						
-						System.out.println("Exiting loop");
 						return null;
 					}
 					
@@ -1103,9 +1099,7 @@ public class TrackingService extends Service
 					
 					if (blockSize == Globals.ACCELEROMETER_BLOCK_CAPACITY) {
 						//Recieved a full block/disable data collection						
-						System.out.println("BEFORE");
 						pauseDataCollection();
-						System.out.println("AFTER");
 						
 						bufferFillFinishTime = System.currentTimeMillis();
 						
