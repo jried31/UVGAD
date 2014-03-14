@@ -416,11 +416,20 @@ public class TrackingService extends Service
 		dataCollector = new Timer();
 		dataCollector.scheduleAtFixedRate(dataCollectorTask, Globals.DATA_COLLECTOR_START_DELAY, Globals.DATA_COLLECTOR_INTERVAL);
 		
+		IntentFilter filter = new IntentFilter();
+    	filter.addAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
+    	registerReceiver(mUVReceiver, filter);
 		
+		uviHandler = new Handler();
+		uviHandler.postDelayed(uviRunnable, Globals.UVI_UPDATE_RATE);
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		if (intent == null) {
+			System.out.println("INTENT IS NULL");
+			return START_STICKY;		
+		}
 		
 		String option = intent.getAction();
 		//Option to retrieve Envirnment Context from Light Sensor
@@ -564,13 +573,12 @@ public class TrackingService extends Service
 		notificationManager.notify(0, notification);
 		
 		//---
-		IntentFilter filter = new IntentFilter();
-    	filter.addAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
-    	registerReceiver(mUVReceiver, filter);
-		
-		uviHandler = new Handler();
-		uviHandler.postDelayed(uviRunnable, Globals.UVI_UPDATE_RATE);
-				
+    	
+		/*
+    	final Intent currentUVIIntent = new Intent(getApplicationContext(), UltravioletIndexService.class);
+    	currentUVIIntent.setAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
+    	startService(currentUVIIntent);
+		*/	
 		return START_STICKY;
 	}
 
@@ -578,7 +586,7 @@ public class TrackingService extends Service
 	public void onDestroy() {
 //    	Toast.makeText(getApplicationContext(), "service onDestroy", Toast.LENGTH_SHORT).show();
 
-		this.unregisterReceiver(mUVReceiver);
+		//this.unregisterReceiver(mUVReceiver);
 		// Unregistering listeners
 		mLocationManager.removeUpdates(this);
 		// Remove notification
@@ -976,7 +984,6 @@ public class TrackingService extends Service
         	startService(currentUVIIntent);
 
     		uviHandler.postDelayed(uviRunnable, Globals.UVI_UPDATE_RATE);
-        	
         }
     };
 	
@@ -995,7 +1002,8 @@ public class TrackingService extends Service
 			
 			mCurrentUVISun = currentUVISun;
 			mCurrentUVIShade = currentUVIShade;
-			//System.out.println("QQQQQ: " + currentUVISun + " : " + currentUVIShade);
+			System.out.println("UVBroadcastReceiver: " + currentUVISun + " : " + currentUVIShade);
+			
 		}
 	}
 	
@@ -1077,6 +1085,8 @@ public class TrackingService extends Service
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
+						
+						System.out.println("Exiting loop");
 						return null;
 					}
 					
@@ -1093,13 +1103,17 @@ public class TrackingService extends Service
 					
 					if (blockSize == Globals.ACCELEROMETER_BLOCK_CAPACITY) {
 						//Recieved a full block/disable data collection						
+						System.out.println("BEFORE");
 						pauseDataCollection();
+						System.out.println("AFTER");
+						
 						bufferFillFinishTime = System.currentTimeMillis();
 						
 						// This gives the seconds difference
 						timeElapsed = TimeUnit.MILLISECONDS.toSeconds(bufferFillFinishTime) - TimeUnit.MILLISECONDS.toSeconds(bufferFillStartTime);
 						
 						// Calculate running total of UV Exposure
+						
 						if (environmentClassification.equals(Globals.CLASS_LABEL_IN_SUN))
 							runningUVExposure += mUVReceiver.mCurrentUVISun * timeElapsed;
 						else if (environmentClassification.equals(Globals.CLASS_LABEL_IN_SHADE))
@@ -1107,6 +1121,7 @@ public class TrackingService extends Service
 						else
 							runningUVExposure += 0.0;
 						
+						//System.out.println("Updating running total " + runningUVExposure);
 						updateTask.setUVExposure(runningUVExposure);
 						
 						// Can either be positive or negative - used to correct the seconds difference.
@@ -1127,13 +1142,11 @@ public class TrackingService extends Service
 						// Append max after frequency component
 						featVect.add(max);						
 						int value = (int) WekaClassifier.classify(featVect.toArray());
-						
 						// new code, used to track the activity duration.
 						//Just note the activity and the time that has elapsed;
 						Double currentDuration = mActivityVsDurationMap.containsKey(value) ? mActivityVsDurationMap.get(value):0;
 						mActivityVsDurationMap.put(value,currentDuration+timeElapsed);
 						updateTask.SetActivityDurationMap(mActivityVsDurationMap);
-						
 						// For classification purpose
 						Log.d("mag", String.valueOf(value));
 						//JERRID: Infer motion type based upon majority vote------
@@ -1142,7 +1155,6 @@ public class TrackingService extends Service
 						mInferredActivityTypeMap.put(value, currentCount);
 						// Increment inference count to handle sliding window mechanism.
 						inferenceCount++;
-						
 						// New code.
 						// The count is regenerated each cycle.
 						// Check which activity has gained lead in the current trend so far.
@@ -1154,11 +1166,9 @@ public class TrackingService extends Service
 							currentTrend = value;
 						}
 						
-                        
 	                	// Finished collection the 5 samples
 	                	// Now increase the weight of an activity based on the current dominant trend.
 		                if(inferenceCount == mMaxActivityInferenceWindow)  {
-		                	
 		                	// Reset the entire map
 		                	mInferredActivityTypeMap.clear();
 		                	// For this activity get the current count in the mapping
@@ -1180,7 +1190,6 @@ public class TrackingService extends Service
 		                	// The window is done. Write to an output file a prediction indicating the current activity.
 		                	
 		                }
-						
 		                // Here specify the current trend.
 		                // new code
 						mInferredActivityType = Globals.INFERENCE_MAPPING[currentTrend == -1 ? value : currentTrend];//maxIndex];
@@ -1200,7 +1209,6 @@ public class TrackingService extends Service
 						 updateTask.SetFinalInferredActivityTypeMap(mFinalInferredActivityTypeMap);
 						 updateTask.SetIntent(mMotionUpdateBroadcast);
 						 updateTask.SetContext(getApplicationContext());
-						 
 						 //Adding light value classification
 						 int ardVal = Math.max(light0,light1);
 						 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER, ardVal);
@@ -1214,11 +1222,9 @@ public class TrackingService extends Service
 							 CUR_LIGHT_CONDITION_ARDUINO = Globals.CLASS_LABEL_IN_SHADE;
 							 environmentClassification = Globals.CLASS_LABEL_IN_SHADE;
 						 }
-
 						 mMotionUpdateBroadcast.putExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO,environmentClassification);
 						 // Used to update the current type.
 						 sendBroadcast(mMotionUpdateBroadcast);
-			        	 
 						//Reset the max value
 						max = Double.MIN_VALUE;
 					}
@@ -1358,9 +1364,12 @@ class UpdateFinalTypeTask extends TimerTask {
 	   public void run() {
 		   mCallCount++;
 		   // check the call count, to make sure only it is being called in the first minute.
+		   /*
 		   if(mCallCount > mNoOfMaxCalls) {
+			   System.out.println("XXXXXXXXXXXXXXXXXXXXXX");
 			   return;
 		   }
+		   */
 			// Temp element used in getting the maximum value.
 			int maxElement = Integer.MIN_VALUE;
 			// By default standing. Would be updated as and when we poll the activity map.
@@ -1426,7 +1435,7 @@ class UpdateFinalTypeTask extends TimerTask {
 			mMotionUpdateBroadcast.putExtra(Globals.CURR_UV_EXPOSURE, uvExposureMeasure);
 
 			// Send the broad cast. It updates the UI.
-			mAppContext.sendBroadcast(mMotionUpdateBroadcast);
+			//mAppContext.sendBroadcast(mMotionUpdateBroadcast);
 	   }	   
 	
 }

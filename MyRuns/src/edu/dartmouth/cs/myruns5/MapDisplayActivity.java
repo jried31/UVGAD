@@ -120,7 +120,6 @@ public class MapDisplayActivity extends Activity {
 		}
 	};
 
-	/*
 	Handler uviHandler;
 	Runnable uviRunnable = new Runnable() {
         @Override
@@ -133,7 +132,6 @@ public class MapDisplayActivity extends Activity {
         	
         }
     };
-	 */
 
 	/******************* methods ********************/
 	@Override
@@ -475,6 +473,7 @@ public class MapDisplayActivity extends Activity {
 	public void onBackPressed() {
 		// When back is pressed, similar to onCancelClicked, stop service and the notification.
 		if (mTaskType == Globals.TASK_TYPE_NEW) {
+			
 			Intent intent = new Intent(this, TrackingService.class);
 			if(mBound){
 				unbindService(mConnection);
@@ -484,7 +483,6 @@ public class MapDisplayActivity extends Activity {
 			// notification has flag auto_cancel set
 			finish();		
 		}
-
 		
 		super.onBackPressed();
 	}
@@ -620,6 +618,8 @@ public class MapDisplayActivity extends Activity {
 			String type = Globals.TYPE_STATS + Globals.ACTIVITY_TYPES[currentActivity];
 			String sweatRate = Globals.SWEAT_STATS + Globals.SWEAT_RATE_INTERVALS[sweatRateIndex];
 
+			System.out.println("Free memory (bytes): " + Runtime.getRuntime().freeMemory());
+			
 			typeStats.setText(type + "\n" + sweatRate + "\n" + "Total amount sweat:" + mSweatRate);
 			uviStats.setText(String.format("Total UV Exposure: %.2f (J/s)/m^2", mUvExposure));
 			

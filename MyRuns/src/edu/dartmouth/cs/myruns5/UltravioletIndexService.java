@@ -436,7 +436,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 		 * now.get(Calendar.MINUTE);// 24 hr format long firstExecutionDelay =
 		 * (updateInterval - minute) Globals.ONE_MINUTE;
 		 */
-		timer.scheduleAtFixedRate(updateUVITask, 0, 10000);
+		timer.scheduleAtFixedRate(updateUVITask, 0, 60000);
 		// super.onCreate();
 		
 	}
