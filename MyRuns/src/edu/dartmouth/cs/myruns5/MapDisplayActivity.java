@@ -619,7 +619,7 @@ public class MapDisplayActivity extends Activity {
 			String sweatRate = Globals.SWEAT_STATS + Globals.SWEAT_RATE_INTERVALS[sweatRateIndex];
 			
 			typeStats.setText(type + "\n" + sweatRate + "\n" + "Total amount sweat:" + mSweatRate);
-			uviStats.setText(String.format("Total UV Exposure: %.2f (J/s)/m^2", mUvExposure));
+			uviStats.setText(String.format("Total UV Exposure: %.2f J/m^2", mUvExposure));
 			
 			lightingType.setText( Globals.LIGHT_TYPE_HEADER + TrackingService.CUR_LIGHT_CONDITION + ", Last Max: " + TrackingService.lastMaxIntensityBuffer);
 			if(Globals.FOUND_ARDUINO)
