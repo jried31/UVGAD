@@ -347,8 +347,8 @@ public class HistoryFragment extends ListFragment
 		        line2 = line2 + " sweat lost, ";
 		        
 		        typeIndex = cursor.getColumnIndex(Globals.KEY_UV_EXPOSURE);
-		        line2 = line2 + cursor.getString(typeIndex);	       
-		        line2 = line2 + " exposure";
+		        line2 = line2 + String.format("%.2f", Double.parseDouble(cursor.getString(typeIndex)));	       
+		        line2 = line2 + " (J/s)/m^2 exposure";
 		        
 		        TextView text2 = (TextView) view.findViewById(android.R.id.text2);
 		        
