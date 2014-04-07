@@ -49,8 +49,7 @@ public class MainActivity extends Activity {
 		saveSettings();
 		mContext = this;
 
-		final Intent currentUVIIntent = new Intent(this,
-				UltravioletIndexService.class);
+		final Intent currentUVIIntent = new Intent(this, UltravioletIndexService.class);
 		currentUVIIntent.setAction(UltravioletIndexService.CURRENT_UV_INDEX);
 		startService(currentUVIIntent);
 
@@ -66,24 +65,18 @@ public class MainActivity extends Activity {
 		uviFragment = new CurrentUVIFragment();
 		chartFragment = new ChartFragment();
 		recommendFragment = new RecommendFragment();
-		// dateFragment = new DateFragment();
 
 		// create tabs
-		ActionBar.Tab startTab = bar.newTab().setText(
-				getString(R.string.startTab_title));
+		ActionBar.Tab startTab = bar.newTab().setText(getString(R.string.startTab_title));
 		startTab.setTabListener(new MyTabListener(startFragment, mContext));
 
-		ActionBar.Tab historyTab = bar.newTab().setText(
-				getString(R.string.historyTab_title));
+		ActionBar.Tab historyTab = bar.newTab().setText(getString(R.string.historyTab_title));
 		historyTab.setTabListener(new MyTabListener(historyFragment, mContext));
 
-		ActionBar.Tab settingsTab = bar.newTab().setText(
-				getString(R.string.settingsTab_title));
-		settingsTab
-				.setTabListener(new MyTabListener(settingsFragment, mContext));
+		ActionBar.Tab settingsTab = bar.newTab().setText(getString(R.string.settingsTab_title));
+		settingsTab.setTabListener(new MyTabListener(settingsFragment, mContext));
 
-		ActionBar.Tab uviTab = bar.newTab().setText(
-				getString(R.string.uviTab_title));
+		ActionBar.Tab uviTab = bar.newTab().setText(getString(R.string.uviTab_title));
 		uviTab.setTabListener(new MyTabListener(uviFragment, mContext));
 
 		ActionBar.Tab graphTab = bar.newTab().setText(getString(R.string.graphTab_title));
@@ -130,8 +123,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		outState.putInt(KEY_TAB_INDEX, getActionBar()
-				.getSelectedNavigationIndex());
+		outState.putInt(KEY_TAB_INDEX, getActionBar().getSelectedNavigationIndex());
 	}
 
 	
@@ -181,8 +173,6 @@ public class MainActivity extends Activity {
 			break;
 		case 1:
 		case 2:
-			intent = new Intent(this, MapDisplayActivity.class);
-			break;
 		default:
 			intent = new Intent(this, MapDisplayActivity.class);
 		}

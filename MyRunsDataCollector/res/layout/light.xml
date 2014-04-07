@@ -9,7 +9,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="30dp" >
-
+        <RadioButton
+            android:id="@+id/radioIndoors"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_indoor_title" />
         <RadioButton
             android:id="@+id/radioShade"
             android:layout_width="wrap_content"
@@ -24,12 +29,21 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="@string/ui_collector_radio_sun_title" />
+                
+        <RadioButton
+            android:id="@+id/radioPartialCloud"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/ui_collector_radio_partial_cloud_title" />
+        
         <RadioButton
             android:id="@+id/radioCloud"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="@string/ui_collector_radio_cloud_title" />
+
         <RadioButton
             android:id="@+id/radioOther"
             android:layout_width="wrap_content"

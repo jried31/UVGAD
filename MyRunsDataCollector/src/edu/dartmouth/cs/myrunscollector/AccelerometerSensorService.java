@@ -43,7 +43,7 @@ public class AccelerometerSensorService extends Service implements SensorEventLi
 	
 	private File mWekaFeaturesFile;
 	private SensorManager mSensorManager;
-	private Sensor mAccelerometer,mGravity;
+	private Sensor mAccelerometer;
 	private int mServiceTaskType;
 	private String mLabel;
 	private Instances mDataset;
@@ -66,7 +66,6 @@ public class AccelerometerSensorService extends Service implements SensorEventLi
 		//Once Service starts, register the sensors
 		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-		mGravity = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
 		mSensorManager.registerListener(this, mAccelerometer,SensorManager.SENSOR_DELAY_FASTEST);
 
 		Bundle extras = intent.getExtras();
@@ -92,7 +91,7 @@ public class AccelerometerSensorService extends Service implements SensorEventLi
 		attributeList.add(new Attribute(Globals.FEAT_MAX_LABEL));
 
 		// Declare a nominal attribute along with its candidate values
-		ArrayList<String> labelItems = new ArrayList<String>(3);
+		ArrayList<String> labelItems = new ArrayList<String>(5);
 		labelItems.add(Globals.CLASS_LABEL_STANDING);
 		labelItems.add(Globals.CLASS_LABEL_WALKING);
 		labelItems.add(Globals.CLASS_LABEL_JOGGING);
@@ -181,16 +180,6 @@ public class AccelerometerSensorService extends Service implements SensorEventLi
 					if (blockSize == Globals.ACCELEROMETER_BLOCK_CAPACITY) {
 						blockSize = 0;
 
-						// time = System.currentTimeMillis();
-						/* Old Code
-						 * maxAccelerometerMagnitude = 0.0;
-						 
-						for (double val : accelerometerMagnitudeDataBlock) {
-							if (maxAccelerometerMagnitude < val) {
-								maxAccelerometerMagnitude = val;
-							}
-						}
-						*/
 						//JERRID: Perform the FFT to get the real & imaginary component
 						//NOTE: We only care about the real component, not imaginary
 						fft.fft(realComponent, imaginaryComponent);
@@ -231,8 +220,6 @@ public class AccelerometerSensorService extends Service implements SensorEventLi
 				DataSource source;
 				try {
 					// Create a datasource from mFeatureFile where
-					// mFeatureFile = new File(getExternalFilesDir(null),
-					// "features.arff");
 					source = new DataSource(new FileInputStream(mWekaFeaturesFile));
 					// Read the dataset set out of this datasource
 					
@@ -313,8 +300,6 @@ public class AccelerometerSensorService extends Service implements SensorEventLi
 				mAccelerometerMagnitudeBuffer = newBuf;
 				mAccelerometerMagnitudeBuffer.add(m);
 			}
-		}else if (event.sensor.getType() == Sensor.TYPE_GRAVITY) {
-			gravity = event.values;
 		}
 	}
 

@@ -3,7 +3,6 @@ package edu.dartmouth.cs.myruns5;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -26,7 +25,7 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 	SpriteHeadApparel headApparelSprite;
 	SpriteUpperApparel upperApparelSprite;
 	SpriteLowerApparel lowerApparelSprite;
-	Region genderRegion, spfRegion, skinTypeRegion, headApparelRegion, upperApparelRegion, lowerApparelRegion;
+	Region genderRegion=null, spfRegion=null, skinTypeRegion=null, headApparelRegion=null, upperApparelRegion=null, lowerApparelRegion=null;
 	int sexOption = 0;
 	
 	@Override
@@ -64,33 +63,19 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 		switch(event.getAction()){
 			case MotionEvent.ACTION_DOWN:
 				//Click was in the Gender field
-				if(genderRegion.contains((int)x,(int) y)){
+				if(genderRegion != null && genderRegion.contains((int)x,(int) y)){
 					genderSprite.toggle();
-					headApparelSprite.reset();
-					upperApparelSprite.reset();
-					lowerApparelSprite.reset();
-					break;
-				}
-				
-				if(spfRegion.contains((int)x,(int) y)){
+				}else if(spfRegion != null && spfRegion.contains((int)x,(int) y)){
 					spfSprite.onTouch();
-					break;
-				}
-				
-				if(skinTypeRegion.contains((int)x,(int) y)){
+				}else if(skinTypeRegion != null && skinTypeRegion.contains((int)x,(int) y)){
 					skinTypeSprite.onTouch();
-					break;
-				}
-				
-				if (headApparelRegion.contains((int)x, (int)y))
+				}else if (headApparelRegion != null && headApparelRegion.contains((int)x, (int)y)){
 					headApparelSprite.toggle();
-				if (upperApparelRegion.contains((int)x, (int)y))
+				}else if (upperApparelRegion != null && upperApparelRegion.contains((int)x, (int)y)){
 					upperApparelSprite.toggle();
-				if (lowerApparelRegion.contains((int)x, (int)y))
+				}else if (lowerApparelRegion != null && lowerApparelRegion.contains((int)x, (int)y)){
 					lowerApparelSprite.toggle();
-				
-				SpriteClothing.saveClothingCover(v.getContext(), 
-						headApparelSprite.headApparel, upperApparelSprite.upperApparel, lowerApparelSprite.lowerApparel);
+				}
 				break;
 			case MotionEvent.ACTION_UP:
 			case MotionEvent.ACTION_MOVE:
@@ -101,7 +86,7 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 	}
 
 	@SuppressLint("WrongCall")
-	public class OurView extends SurfaceView implements Runnable{
+	public class OurView extends SurfaceView implements IRegionListener, Runnable{
 		Thread t = null;
 		SurfaceHolder holder;
 		boolean isItOk = false;
@@ -111,28 +96,43 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 			holder = getHolder();
 		}
 		
+		@Override
+		public void updateRegion(Class type,Region region) {
+			if(type == SpriteHeadApparel.class){
+				headApparelRegion = region;
+			}else if(type == SpriteUpperApparel.class){
+				upperApparelRegion = region;
+			}else if(type == SpriteLowerApparel.class){
+				lowerApparelRegion = region;
+			}else if(type == SpriteSPF.class){
+				spfRegion = region;
+			}else if(type == SpriteSkinType.class){
+				skinTypeRegion = region;
+			}else if(type == SpriteGender.class){
+				genderRegion = region;
+			}
+		}
+		
 		public void run(){
 			personSprite = new SpritePerson(this);
+			
 			genderSprite = new SpriteGender(this,personSprite);
-			genderRegion = new Region(genderSprite.getX(),genderSprite.getY(), genderSprite.getX() + genderSprite.getWidth(),genderSprite.getY() + genderSprite.getHeight());
-
+			
 			spfSprite = new SpriteSPF(this);
-			spfRegion = new Region(spfSprite.getX(),spfSprite.getY(), spfSprite.getX() + spfSprite.getWidth(),spfSprite.getY() + spfSprite.getHeight());
-			
 			skinTypeSprite = new SpriteSkinType(this);
-			skinTypeRegion = new Region(skinTypeSprite.getX(),skinTypeSprite.getY(), skinTypeSprite.getX() + skinTypeSprite.getWidth(),skinTypeSprite.getY() + skinTypeSprite.getHeight());
 			
-			headApparelSprite = new SpriteHeadApparel(this, personSprite);
-			headApparelRegion = new Region(headApparelSprite.getX(), headApparelSprite.getY(), 
-					headApparelSprite.getX() + headApparelSprite.getWidth(), headApparelSprite.getY() + headApparelSprite.getHeight());
+			headApparelSprite = new SpriteHeadApparel(this);
+			personSprite.registerGenderCallBack(headApparelSprite);
+			personSprite.registerScaleCallBack(headApparelSprite);
 			
-			upperApparelSprite = new SpriteUpperApparel(this, personSprite);
-			upperApparelRegion = new Region(upperApparelSprite.getX(), upperApparelSprite.getY(), 
-					upperApparelSprite.getX() + upperApparelSprite.getWidth(), upperApparelSprite.getY() + upperApparelSprite.getHeight());
+			upperApparelSprite = new SpriteUpperApparel(this);
+			personSprite.registerGenderCallBack(upperApparelSprite);
+			personSprite.registerScaleCallBack(upperApparelSprite);
 			
-			lowerApparelSprite = new SpriteLowerApparel(this, personSprite);
-			lowerApparelRegion = new Region(lowerApparelSprite.getX(), personSprite.getY() + (int)(personSprite.getHeight()*0.55), 
-					lowerApparelSprite.getX() + lowerApparelSprite.getWidth(), personSprite.getY() + (int)(personSprite.getHeight()*0.55) + lowerApparelSprite.getHeight());
+			lowerApparelSprite = new SpriteLowerApparel(this);
+			personSprite.registerGenderCallBack(lowerApparelSprite);
+			personSprite.registerScaleCallBack(lowerApparelSprite);
+
 			
 			while(isItOk){//If the surface (holder) view is NOT valid don't render
 				if(!holder.getSurface().isValid()){
@@ -154,14 +154,8 @@ public class UserBodyProfileDialog extends Activity implements OnTouchListener{
 			
 			// Update clothing toggling
 			lowerApparelSprite.onDraw(canvas);
-			//lowerApparelRegion.set(lowerApparelSprite.getX(), lowerApparelSprite.getY(), 
-			//		lowerApparelSprite.getX() + lowerApparelSprite.getWidth(), lowerApparelSprite.getY() + lowerApparelSprite.getHeight());
 			upperApparelSprite.onDraw(canvas);
-			//upperApparelRegion.set(upperApparelSprite.getX(), upperApparelSprite.getY(), 
-			//		upperApparelSprite.getX() + upperApparelSprite.getWidth(), upperApparelSprite.getY() + upperApparelSprite.getHeight());
 			headApparelSprite.onDraw(canvas);
-			//headApparelRegion.set(headApparelSprite.getX(), headApparelSprite.getY(), 
-			//		headApparelSprite.getX() + headApparelSprite.getWidth(), headApparelSprite.getY() + headApparelSprite.getHeight());
 			
 			canvas.drawBitmap(arrowBitmap,x - arrowBitmap.getWidth()/2,y - arrowBitmap.getHeight()/2, null);//draws ball
 		}

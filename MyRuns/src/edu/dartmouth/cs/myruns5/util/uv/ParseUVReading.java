@@ -16,8 +16,8 @@ public class ParseUVReading extends ParseObject{
 	public ParseUVReading() {
 	}
 
-	public int getUVI(){
-		return this.getInt(UVI);
+	public double getUVI(){
+		return this.getDouble(UVI);
 	}
 	
 	public ParseGeoPoint getLocation(){

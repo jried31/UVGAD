@@ -86,6 +86,7 @@ public abstract class Globals {
 	public static final String CLASS_LABEL_IN_SUN = "in_sun";
 	public static final String CLASS_LABEL_IN_SHADE = "in_shade";
 	public static final String CLASS_LABEL_IN_CLOUD = "in_cloud";
+	public static final String CLASS_LABEL_IN_DOORS = "in_door";
 
 	
 	//public static final String FEAT_INTENSITY_LABEL = "lumen_";
@@ -100,9 +101,6 @@ public abstract class Globals {
 	public static final String FEATURE_LIGHT_FILE_NAME = "lightFeatures.arff";
 
 	public static final String LIGHT_INTENSITY_FILE_NAME = "lightClassification.txt";
-
-	public static final String LIGHT_TYPE_HEADER         = "Lighting Condition:";
-	public static final String LIGHT_TYPE_HEADER_ARDUINO = "Ardunio Lighting Condition:";
 	//*************************************
 	
 	
@@ -114,21 +112,21 @@ public abstract class Globals {
 		"Downhill Skiing", "Cross-Country Skiing", "Snowboarding", "Skating", "Swimming", 
 		"Mountain Biking", "Wheelchair", "Elliptical", "Other",  "Standing" , "Jogging" , "Unknown"};
 	
-	public static final String[] SWEAT_RATE_INTERVALS = { "Low(0.4 Liter/hour)","Low(<1.5 Liter/hour)","Medium(2 Liter/hour)", "High(3 Liter/hour)"};
-	public static final double SWEAT_REAPPLY = 4.0; // TEMP: notification when sweat total is 4ml
+	public static final String[] SWEAT_RATE_INTERVALS = {"Low (0.4 Liter/hour)","Low (<1.5 Liter/hour)","Medium (2 Liter/hour)", "High (3 Liter/hour)"};
+	public static final double SWEAT_REAPPLY = 400.0; // TEMP: notification when sweat total is 400ml
 	
 
 	// Average sweat rate while standing and walking is .375 liter per hour
-	public static int SWEAT_RATE_HOURLY_STANDING = 375;
+	public static double SWEAT_RATE_HOURLY_STANDING = 0.375;
 	
 	// Average sweat rate while standing and walking is 1.5 liter per hour
-	public static int SWEAT_RATE_HOURLY_WALKING = 1500;
+	public static double SWEAT_RATE_HOURLY_WALKING = 1.5;
 	
 	// Average sweat rate while standing and walking is 2 liters per hour
-	public static int SWEAT_RATE_HOURLY_JOGGING = 2000;
+	public static double SWEAT_RATE_HOURLY_JOGGING = 2.0;
 	
 	// Average sweat rate while running is 3 liters per hour
-	public static  int SWEAT_RATE_HOURLY_RUNNING = 3000;
+	public static  double SWEAT_RATE_HOURLY_RUNNING = 3.0;
 	
 	// Int encoded activity types
 	public static final int ACTIVITY_TYPE_ERROR = -1;
@@ -176,20 +174,20 @@ public abstract class Globals {
 	
 	// Service broadcast
 	public static final String ACTION_MOTION_UPDATE = "motion update";
-	public static final String CURRENT_MOTION_TYPE = "new motion type";
-	public static final String VOTED_MOTION_TYPE = "voted motion type";
+	public static final String CURRENT_ACTIVITY_TYPE = "new motion type";
+	public static final String VOTED_ACTIVITY_TYPE = "voted motion type";
 	public static final String ACTION_TRACKING = "tracking action";
-	public static final String CURRENT_SWEAT_RATE_INTERVAL = "sweat rate Interval";
+	public static final String SWEAT_RATE_INDEX = "sweat rate Interval";
 	public static final String FINAL_SWEAT_RATE_AVERAGE = "average sweat rate";
 	public static final String CURR_SWEAT_RATE_AVERAGE = "current sweat rate";
 	
-	public static final String CURR_UV_EXPOSURE = "current uv exposure";
+	public static final String CUMULATIVE_UV_EXPOSURE = "current uv exposure";
 	
 	//COllector Variables------
 	public static final int ACTIVITY_ID_STANDING = 0;
 	public static final int ACTIVITY_ID_WALKING = 1;
 	public static final int ACTIVITY_ID_RUNNING = 2;
-	public static final int ACTIVITY_ID_OTHER = 2;
+	public static final int ACTIVITY_ID_OTHER = 3;
 	
 	public static final int SERVICE_TASK_TYPE_COLLECT = 0;
 	public static final int SERVICE_TASK_TYPE_CLASSIFY = 1;
@@ -214,6 +212,12 @@ public abstract class Globals {
 
 	public static final String ENVIRONMENT_CLASSIFICATION = "environments";
 
-	public static final int UVI_UPDATE_RATE = 5000;
+	public static final int UVI_UPDATE_RATE = 60000;
+
+	public static final String PITCH_BODY = "pitch";
+
+	public static final String LIGHT_INTENSITY_READING = "light_intensity";
+
+	public static final String SWEAT_TOTAL = "sweat_total";
 	
 }

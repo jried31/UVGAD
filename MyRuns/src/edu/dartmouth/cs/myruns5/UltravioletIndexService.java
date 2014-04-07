@@ -86,8 +86,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 
 	@Override
 	public void onLocationChanged(Location location) {
-		// TODO Auto-generated method stub
-		setLocation(location);
+		this.location=location;
 	}
 
 	@Override
@@ -100,7 +99,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 	public void onProviderEnabled(String provider) {
 		// TODO Auto-generated method stub
 		System.out.println("GPS provider enabled!");
-		setLocation(myTracksLocationManager.getLastKnownLocation(provider));
+		this.location=(myTracksLocationManager.getLastKnownLocation(provider));
 	}
 
 	@Override
@@ -130,6 +129,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 		uvIndexCloud = uvi;
 	}
 	
+	boolean dailyUVIRetrieved = false;
 	private void updateHourlyUVI(final Location location) {
 		Handler handler = new Handler(Looper.getMainLooper());
 
@@ -187,7 +187,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 							ParseUVReading reading = (ParseUVReading)obj;
 							Date timestamp = reading.getTimestamp();
 							String environment = reading.getEnvironment();
-							int uvi = reading.getUVI();
+							double uvi = reading.getUVI();
 							time2 = timestamp.getTime();
 							
 							//if (time1 - time2 <= 120000) {
@@ -223,7 +223,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 							ParseUVReading reading = (ParseUVReading)obj;
 							Date timestamp = reading.getTimestamp();
 							String environment = reading.getEnvironment();
-							int uvi = reading.getUVI();
+							double uvi = reading.getUVI();
 							time2 = timestamp.getTime();
 							
 							//if (time1 - time2 <= 120000) {
@@ -244,6 +244,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 					}
 				}
 			});
+			
 			queryShade.whereEqualTo(ParseUVReading.ENVIRONMENT, Globals.CLASS_LABEL_IN_SHADE);
 			queryShade.orderByDescending("timestamp");
 			queryShade.setLimit(30);
@@ -260,7 +261,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 							ParseUVReading reading = (ParseUVReading)obj;
 							Date timestamp = reading.getTimestamp();
 							String environment = reading.getEnvironment();
-							int uvi = reading.getUVI();
+							double uvi = reading.getUVI();
 							time2 = timestamp.getTime();
 							
 							//if (time1 - time2 <= 120000) {
@@ -282,9 +283,12 @@ public class UltravioletIndexService extends Service implements LocationListener
 				}
 			});
 
-			getDataFromWeb(location);
+			if(!dailyUVIRetrieved)
+				getDataFromWeb(location);
 		}
 	}
+	
+	
 
 	public void getDataFromWeb(Location location) {
 		// Get the time and day of week
@@ -293,7 +297,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 
 		String responseString = null;
 		try {
-			String postCode = getPostcode(location);
+			String postCode = "46556";//getPostcode(location);
 
 			// curl --referer
 			// http://www.uvawareness.com/uv-index/uv-index.php?location=ucla
@@ -362,7 +366,8 @@ public class UltravioletIndexService extends Service implements LocationListener
 							break;
 						}
 					}
-					hasData = true;
+
+					dailyUVIRetrieved = true;
 				}
 			}else{				
 				System.out.println("Post Code is empty!");
@@ -429,16 +434,20 @@ public class UltravioletIndexService extends Service implements LocationListener
 		criteria.setAccuracy(Criteria.ACCURACY_LOW);
 		String bestProvider = myTracksLocationManager.getBestProvider(criteria, true);
 		myTracksLocationManager.requestLocationUpdates(bestProvider,MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES,this);
-		setLocation(myTracksLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
+
+		location = myTracksLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER) == null ? myTracksLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER):location;
+		
 		nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		/*
 		 * Calendar now = Calendar.getInstance(); int minute =
 		 * now.get(Calendar.MINUTE);// 24 hr format long firstExecutionDelay =
 		 * (updateInterval - minute) Globals.ONE_MINUTE;
 		 */
-		timer.scheduleAtFixedRate(updateUVITask, 0, 60000);
+		timer.scheduleAtFixedRate(updateUVITask, 0, MIN_TIME_BW_UPDATES);
 		// super.onCreate();
 		
+		if(location != null)
+			getDataFromWeb(location);
 	}
 
 
@@ -446,11 +455,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 	public void onDestroy() {
 		myTracksLocationManager.removeUpdates(this);
 	}
-	
-	private void setLocation(Location loc) {
-		location = loc;
-	}
-	
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent == null)

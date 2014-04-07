@@ -1,98 +1,175 @@
 package edu.dartmouth.cs.myruns5;
 
+import java.util.HashMap;
+
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.graphics.Region;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+import edu.dartmouth.cs.myruns5.Person.Gender;
+import edu.dartmouth.cs.myruns5.Person.HeadApparelType.LowerApparelFemaleType;
+import edu.dartmouth.cs.myruns5.Person.HeadApparelType.LowerApparelMaleType;
+import edu.dartmouth.cs.myruns5.Person.HeadApparelType.UpperApparelFemaleType;
+import edu.dartmouth.cs.myruns5.Person.HeadApparelType.UpperApparelMaleType;
 import edu.dartmouth.cs.myruns5.UserBodyProfileDialog.OurView;
 
-public class SpriteLowerApparel extends SpriteClothing {
+@SuppressLint("UseSparseArrays")
+public class SpriteLowerApparel implements IScaleCallback,IGenderCallback{
 	final int defaultHeight = 80;
 	final int defaultWidth = 80;
-	LowerApparelType lowerApparel;
+	LowerApparelMaleType lowerApparelMale;
+	LowerApparelFemaleType lowerApparelFemale;
+	protected int x, y, height, width;
+	OurView ov;
+	Context context;
+	@SuppressLint("UseSparseArrays")
+	HashMap<Integer,Bitmap> clothingMaleMap,clothingFemaleMap;
+	Rect display=null;
+	Bitmap image=null;
+	private Gender gender;
+	private double scale;
+	private int personSpriteX;
+	private int personSpriteY;
 	
-	public enum LowerApparelType {
-		NONE(0f), SHORTS_MALE(0.15f), SHORTS_FEMALE(0.15f), JEANS(0.30f);
-		
-		float cover;
-		LowerApparelType(float cover) {
-			this.cover = cover;
-		}
-
-		public float getCover() {
-			return cover;
-		}
+	public int getX() {
+		return x;
+	}
+	public int getY() {
+		return y;
+	}
+	public int getWidth() {
+		return width;
+	}
+	public int getHeight() {
+		return height;
 	}
 	
-	public SpriteLowerApparel(OurView ourView,SpritePerson person) {
-		super(ourView, person);
 
-		clothingMap.put(LowerApparelType.NONE.name(), null);
-		
-		double scale = person.getScale();
-		Bitmap b = BitmapFactory.decodeResource(context.getResources(), R.drawable.shorts_man);
-		clothingMap.put(LowerApparelType.SHORTS_MALE.name(), 
-				Bitmap.createScaledBitmap(b, (int)(b.getWidth()*scale), (int)(b.getHeight()*scale), false));
-		b = BitmapFactory.decodeResource(context.getResources(), R.drawable.shorts_woman);
-		clothingMap.put(LowerApparelType.SHORTS_FEMALE.name(), 
-				Bitmap.createScaledBitmap(b, (int)(b.getWidth()*scale), (int)(b.getHeight()*scale), false));
-		b = BitmapFactory.decodeResource(context.getResources(), R.drawable.jeans);
-		clothingMap.put(LowerApparelType.JEANS.name(), 
-				Bitmap.createScaledBitmap(b, (int)(b.getWidth()*scale), (int)(b.getHeight()*scale), false));
-		
-		SharedPreferences sharedPref = context.getSharedPreferences(Globals.TAG,Context.MODE_PRIVATE);
-		String value = sharedPref.getString(context.getString(R.string.data_ApparelBottom), LowerApparelType.NONE.name());
-		lowerApparel = LowerApparelType.valueOf(value);
-		height = lowerApparel == LowerApparelType.NONE ? 
-				defaultHeight : clothingMap.get(lowerApparel.name()).getHeight();
-		width = lowerApparel == LowerApparelType.NONE ? 
-				defaultWidth : clothingMap.get(lowerApparel.name()).getWidth();
-		x = ov.getWidth()/2 - width/2;
-		y = personSprite.getY() + (int)(personSprite.getHeight()*0.45); // TODO: Use a member variable from SpritePerson
-		
-		display = new Rect(x, y, x + width, y + height);
+	public SpriteLowerApparel(OurView ourView) {
+		ov = ourView;
+		context = ov.getContext();
+		clothingFemaleMap = new HashMap<Integer,Bitmap>(3);
+		clothingMaleMap = new HashMap<Integer,Bitmap>(2);
 	}
 	
-	@Override
 	public void onDraw(Canvas canvas) {
-		if (lowerApparel != LowerApparelType.NONE)
-			canvas.drawBitmap(clothingMap.get(lowerApparel.name()), null, display, null);
+		if (display != null){
+			canvas.drawBitmap(image, null, display, null);
+		}
 	}
 
 	//Method invoked to toggle lower apparel for male/female sprite
-	@Override
 	public void toggle() {
-		switch (lowerApparel) {
-			case NONE: // Switch to shorts
-				lowerApparel = personSprite.getGenderFromSharedPreferences() == SpritePerson.Gender.MALE ? 
-						LowerApparelType.SHORTS_MALE : LowerApparelType.SHORTS_FEMALE;
-				break;
-			case SHORTS_FEMALE:
-			case SHORTS_MALE: // Switch to jeans
-				lowerApparel = LowerApparelType.JEANS;
-				break;
-			case JEANS: // Switch to none
-			default:
-				lowerApparel = LowerApparelType.NONE;
+		if(gender == Gender.MALE){
+			LowerApparelMaleType values[] = LowerApparelMaleType.values();
+			int size = values.length,newIndex = lowerApparelMale.ordinal() + 1;
+			
+			lowerApparelMale = values[newIndex == size ? 0:newIndex];
+			display = null;
+			image = clothingMaleMap.get(lowerApparelMale.ordinal());
+			height = lowerApparelMale == LowerApparelMaleType.NONE ? defaultHeight : image.getHeight();
+			width = lowerApparelMale == LowerApparelMaleType.NONE ? defaultWidth : image.getWidth();
+				
+			saveClothingOptions(R.string.data_ApparelBottom, lowerApparelMale.ordinal());
+		}else{
+			LowerApparelFemaleType values[] = LowerApparelFemaleType.values();
+			int size = values.length,newIndex = lowerApparelFemale.ordinal() + 1;
+			
+			lowerApparelFemale = values[newIndex == size ? 0:newIndex];
+			display = null;
+			image = clothingFemaleMap.get(lowerApparelFemale.ordinal());
+			height = lowerApparelFemale == LowerApparelFemaleType.NONE ? defaultHeight : image.getHeight();
+			width = lowerApparelFemale == LowerApparelFemaleType.NONE ? defaultWidth : image.getWidth();
+			
+			saveClothingOptions(R.string.data_ApparelBottom, lowerApparelFemale.ordinal());
 		}
-		
-		height = lowerApparel == LowerApparelType.NONE ? 
-				defaultHeight : clothingMap.get(lowerApparel.name()).getHeight();
-		width = lowerApparel == LowerApparelType.NONE ? 
-				defaultWidth : clothingMap.get(lowerApparel.name()).getWidth();
-		
-		x = ov.getWidth()/2 - width/2;
-		y = personSprite.getY() + (int)(personSprite.getHeight()*0.45);
-		
-		display = new Rect(x, y, x + width, y + height);
-		
-		super.saveClothingOptions(R.string.data_ApparelBottom, lowerApparel.name());
+
+		this.x = ov.getWidth()/2 - width/2;
+		this.y = (int) (ov.getHeight()*.49);
+
+		if(image != null){
+			display = new Rect(x, y, x + width, y + height);
+			ov.updateRegion(SpriteLowerApparel.class,new Region(x,y,x+width,y+height ));
+		}
+	}
+
+	@Override
+	public void genderUpdate(Gender gender) {
+		this.gender = gender;
+		//reset the clothing
+		if(gender == Gender.MALE){
+			lowerApparelMale = LowerApparelMaleType.SHORTS;
+			saveClothingOptions(R.string.data_ApparelBottom, lowerApparelMale.ordinal());
+		}else{
+			lowerApparelFemale =LowerApparelFemaleType.SHORTS;
+			saveClothingOptions(R.string.data_ApparelBottom, lowerApparelFemale.ordinal());
+		}
 	}
 	
+	protected void saveClothingOptions(int resourceId, int index) {
+		if (context != null) {
+			SharedPreferences sharedPref = context.getSharedPreferences(Globals.TAG,Context.MODE_PRIVATE);
+			SharedPreferences.Editor editor = sharedPref.edit();
+			editor.putInt(context.getString(resourceId), index);
+			editor.commit();
+		}
+	}
+
 	@Override
-	public void reset() {
-		lowerApparel = LowerApparelType.NONE;
+	public void displayScaleUpdate(double scale, int x, int y) {
+		this.scale=scale;
+		this.personSpriteX=x;
+		this.personSpriteY=y;
+
+		//Female
+		clothingFemaleMap.put(LowerApparelFemaleType.NONE.ordinal(), null);
+		image = BitmapFactory.decodeResource(context.getResources(), R.drawable.bikini_bottom);
+		clothingFemaleMap.put(LowerApparelFemaleType.BIKINI_BOTTOM.ordinal(),Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+		image = BitmapFactory.decodeResource(context.getResources(), R.drawable.shorts_woman);
+		clothingFemaleMap.put(LowerApparelFemaleType.SHORTS.ordinal(),Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+		image = BitmapFactory.decodeResource(context.getResources(), R.drawable.jeans_female);
+		clothingFemaleMap.put(LowerApparelFemaleType.JEANS.ordinal(),Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+
+
+		//Male
+		clothingMaleMap.put(LowerApparelMaleType.NONE.ordinal(), null);
+		image = BitmapFactory.decodeResource(context.getResources(), R.drawable.shorts_man);
+		clothingMaleMap.put(LowerApparelMaleType.SHORTS.ordinal(),Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+		image = BitmapFactory.decodeResource(context.getResources(), R.drawable.jeans_male);
+		clothingMaleMap.put(LowerApparelMaleType.JEANS.ordinal(),Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+
+		image=null;
+		//Get the gender of the person
+		SharedPreferences sharedPref = context.getSharedPreferences(Globals.TAG,Context.MODE_PRIVATE);
+		switch(gender){
+		case MALE:
+			int value = sharedPref.getInt(context.getString(R.string.data_ApparelBottom), LowerApparelMaleType.NONE.ordinal());
+			lowerApparelMale = LowerApparelMaleType.values()[value];
+			
+			image = clothingMaleMap.get(value);			
+			height = lowerApparelMale == LowerApparelMaleType.NONE ? defaultHeight : image.getHeight();
+			width = lowerApparelMale == LowerApparelMaleType.NONE ? defaultWidth : image.getWidth();
+			break;
+		case FEMALE:
+			value = sharedPref.getInt(context.getString(R.string.data_ApparelBottom), LowerApparelFemaleType.NONE.ordinal());
+			lowerApparelFemale = LowerApparelFemaleType.values()[value];
+			
+			image = clothingFemaleMap.get(value);			
+			height = lowerApparelFemale == LowerApparelFemaleType.NONE ? defaultHeight : image.getHeight();
+			width = lowerApparelFemale == LowerApparelFemaleType.NONE ? defaultWidth : image.getWidth();
+		}
+		
+		this.x = ov.getWidth()/2 - width/2;
+		this.y = (int) (ov.getHeight()*.49);
+		
+		if(image != null){
+			display = new Rect(this.x, this.y, this.x + width, this.y + height);
+			ov.updateRegion(SpriteLowerApparel.class,new Region(this.x,this.y,this.x+width,this.y+height));
+		}
 	}
 }

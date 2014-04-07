@@ -20,7 +20,6 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings.Secure;
 import android.util.Log;
@@ -55,8 +54,6 @@ public class MapDisplayActivity extends Activity {
 	
 	private TrackingServiceReceiver receiver = new TrackingServiceReceiver();
 	private MotionUpdateReceiver mMotionUpdateReceiver = new MotionUpdateReceiver();
-
-	//private LightingClassificationReceiver mLightingClassReceiver = new LightingClassificationReceiver();
 	
 	private GoogleMap mMap;
 
@@ -64,7 +61,6 @@ public class MapDisplayActivity extends Activity {
 	
 	public TextView typeStats;
 	public TextView lightingType;
-	public TextView lightingType_Arduino;
 	public TextView avgspeedStats;
 	public TextView curspeedStats;
 	public TextView climbStats;
@@ -83,9 +79,6 @@ public class MapDisplayActivity extends Activity {
 	
 	private int mTaskType;
 	private int mInputType;
-	private int mInferredActivityType;
-	private String mSweatRate;
-	private double mUvExposure;
 	
 	public static final int MENU_ID_DELETE = 0;
 	
@@ -101,8 +94,6 @@ public class MapDisplayActivity extends Activity {
     private double mDuration;
     
     public LatLng firstLatLng;
-    
-    public int sweatIteration = 1;
 
 
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -120,22 +111,11 @@ public class MapDisplayActivity extends Activity {
 		}
 	};
 
-	Handler uviHandler;
-	Runnable uviRunnable = new Runnable() {
-        @Override
-        public void run() {
-        	final Intent currentUVIIntent = new Intent(getApplicationContext(), UltravioletIndexService.class);
-        	currentUVIIntent.setAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
-        	startService(currentUVIIntent);
-
-    		uviHandler.postDelayed(uviRunnable, Globals.UVI_UPDATE_RATE);
-        	
-        }
-    };
-
 	/******************* methods ********************/
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+
+    	Toast.makeText(getApplicationContext(), "MapDisplay onCreate", Toast.LENGTH_SHORT).show();
 		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_map_display);
@@ -154,7 +134,6 @@ public class MapDisplayActivity extends Activity {
 		// mark: init views here
 		typeStats = (TextView) findViewById(R.id.type_stats);
 		lightingType = (TextView) findViewById(R.id.lightingType);
-		lightingType_Arduino = (TextView) findViewById(R.id.lightingType_Arduino);
 		avgspeedStats = (TextView) findViewById(R.id.avg_speed_stats);
 		curspeedStats = (TextView) findViewById(R.id.cur_speed_stats);
 		climbStats = (TextView) findViewById(R.id.climb_stats_stats);
@@ -167,26 +146,21 @@ public class MapDisplayActivity extends Activity {
 		Intent intent = getIntent();
 		mTaskType = intent.getIntExtra(MainActivity.TASK_TYPE, -1);
 		mInputType = intent.getIntExtra(MainActivity.INPUT_TYPE, -1);
-		mInferredActivityType = intent.getIntExtra(MainActivity.ACTIVITY_TYPE, -1);
-		//Lohith
-		//mSweatRate = intent.getIntExtra(MainActivity.SWEAT_RATE,-1);
-		// mark: row id ?
+		mInferredActivityType = intent.getIntExtra(Globals.VOTED_ACTIVITY_TYPE, Globals.ACTIVITY_TYPE_STANDING);
 		
 		mDistance = 0;
 		mCalories = 0;
 		mAvgSpeed = 0;
-		mSweatRate = "";
 		mStartTime = 0;
 		mClimb = 0;
 		mDuration = 0;
-		mUvExposure = 0.0;
+		mCumulativeUVExposure = 0.0;
+		this.mCumulativeSweatTotal = 0.0;
 		
 		// init mEntry
 		mEntry = new ExerciseEntry();
 		mEntry.setActivityType(mInferredActivityType);
-		mEntry.setSweatRate(mSweatRate);
 		mEntry.setInputType(mInputType);
-		mEntry.setUvExposureCumulative(mUvExposure);
 		
 		FragmentManager myFragmentManager = getFragmentManager();
 		MapFragment mMapFragment = (MapFragment)myFragmentManager.findFragmentById(R.id.map);
@@ -200,6 +174,10 @@ public class MapDisplayActivity extends Activity {
 			intent.putExtra(INPUT_TYPE, mInputType);
 			bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 			startService(intent);
+			
+			IntentFilter intentFilter = new IntentFilter();
+			intentFilter.addAction(Globals.ACTION_MOTION_UPDATE);
+			registerReceiver(mMotionUpdateReceiver, intentFilter);
 			break;
 
 		case Globals.TASK_TYPE_HISTORY:
@@ -237,28 +215,27 @@ public class MapDisplayActivity extends Activity {
 
 			// draw markers
 			if (draw){
-			mMap.addMarker(new MarkerOptions().position(firstLatLng).title("Start Point"));
-			mMap.addMarker(new MarkerOptions().position(mLatLngList.get(mLatLngList.size()-1)).
-					title("You Are Here").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-			
-			
-			// move camera
-			mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(firstLatLng, 17));
-			mMap.animateCamera(CameraUpdateFactory.zoomTo(17), 2000, null); 
-			
-			// draw trace
-			rectOptions = new PolylineOptions();
-			rectOptions.color(Color.RED);
-			rectOptions.addAll(mLatLngList);
-			polyline = mMap.addPolyline(rectOptions);
-					
-			mLatLngList.clear();
+				mMap.addMarker(new MarkerOptions().position(firstLatLng).title("Start Point"));
+				mMap.addMarker(new MarkerOptions().position(mLatLngList.get(mLatLngList.size()-1)).
+						title("You Are Here").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+				
+				
+				// move camera
+				mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(firstLatLng, 17));
+				mMap.animateCamera(CameraUpdateFactory.zoomTo(17), 2000, null); 
+				
+				// draw trace
+				rectOptions = new PolylineOptions();
+				rectOptions.color(Color.RED);
+				rectOptions.addAll(mLatLngList);
+				polyline = mMap.addPolyline(rectOptions);
+						
+				mLatLngList.clear();
 			}
 			
 			// read stats
 			intent = getIntent();
 			String type  = Globals.TYPE_STATS + intent.getStringExtra(HistoryFragment.ACTIVITY_TYPE);
-			String light = Globals.LIGHT_TYPE_HEADER + "I made a string!";
 			String avgSpeed = Globals.AVG_SPEED_STATS + String.format("%1$.2f", 
 					Double.parseDouble(intent.getStringExtra(HistoryFragment.AVG_SPEED))) + " meters / sec";
 			String curSpeed = Globals.CUR_SPEED_STATS + "0" + " meters / sec";
@@ -269,8 +246,6 @@ public class MapDisplayActivity extends Activity {
 					Double.parseDouble(intent.getStringExtra(HistoryFragment.DISTANCE))) + " meters";
 			
 			typeStats.setText(type);
-			lightingType.setText(light);
-			lightingType_Arduino.setText(light);
 			avgspeedStats.setText(avgSpeed);
 			curspeedStats.setText(curSpeed);
 			climbStats.setText(climb);
@@ -287,6 +262,8 @@ public class MapDisplayActivity extends Activity {
 	
 	@Override
 	public void onDestroy(){	
+
+    	Toast.makeText(getApplicationContext(), "MapDisplay onDestroy", Toast.LENGTH_SHORT).show();
 		if (mBound){
 			unbindService(mConnection);
 			stopService(new Intent(this, TrackingService.class));
@@ -302,7 +279,6 @@ public class MapDisplayActivity extends Activity {
 			if (mInputType == Globals.INPUT_TYPE_AUTOMATIC)
 			{
 				unregisterReceiver(mMotionUpdateReceiver);
-				//unregisterReceiver(mLightingClassReceiver);
 			}
 			
 		}
@@ -322,9 +298,6 @@ public class MapDisplayActivity extends Activity {
 				intentFilter = new IntentFilter();
 				intentFilter.addAction(Globals.ACTION_MOTION_UPDATE);
 				registerReceiver(mMotionUpdateReceiver, intentFilter);
-				//IntentFilter intentFilter2 = new IntentFilter();
-				//intentFilter2.addAction(TrackingService.LIGHTING_CLASS_UPDATE);
-				//registerReceiver(mLightingClassReceiver, intentFilter);
 			}
 		}
 	}
@@ -362,12 +335,10 @@ public class MapDisplayActivity extends Activity {
 		mEntry.setLocationList(mLocationList);
 		mEntry.setDuration((int)mDuration);
 		mEntry.setActivityType(mInferredActivityType);
-		mEntry.setSweatRate(mSweatRate);
-		mEntry.setUvExposureCumulative(mUvExposure);
+		mEntry.setUvExposureCumulative(mCumulativeUVExposure);
+		mEntry.setSweatCumulative(mCumulativeSweatTotal);
 		
 		SharedPreferences sharedPref = mContext.getSharedPreferences(Globals.TAG, Context.MODE_PRIVATE);
-		mEntry.setGender(sharedPref.getInt(mContext.getString(R.string.data_Gender), 0));
-		mEntry.setSkinTone(SpriteSkinType.positionToSkinType[sharedPref.getInt(mContext.getString(R.string.data_SkinTone), 0)]);
 		mEntry.setSPF(SpriteSPF.positionToSPF[sharedPref.getInt(mContext.getString(R.string.data_SPF), 0)]);
 		mEntry.setClothingCover(sharedPref.getFloat(mContext.getString(R.string.data_ClothingCover), 0.0f));
 		
@@ -403,6 +374,8 @@ public class MapDisplayActivity extends Activity {
 	}
 
 	public void onCancelClicked(View v) {
+
+    	Toast.makeText(getApplicationContext(), "MapDisplay onCancel", Toast.LENGTH_SHORT).show();
 		Intent intent = new Intent(this, TrackingService.class);
 		if(mBound){
 			unbindService(mConnection);
@@ -540,7 +513,6 @@ public class MapDisplayActivity extends Activity {
     				mClimb = loc.getAltitude(); 
     				mCalories = (int) mDistance / 10;
     				mDuration = ((loc.getTime()-mStartTime) / 1000 / 60); // minutes
-
     			}	
     			
     		
@@ -605,37 +577,37 @@ public class MapDisplayActivity extends Activity {
     			}		
         }
 	}
+
+	private double mCumulativeUVExposure,mCumulativeSweatTotal;
+	private String environmentClassification;
+	private int mInferredActivityType;
 	
 	public class MotionUpdateReceiver extends BroadcastReceiver{
 		@Override
 		public void onReceive(Context context, Intent intent){
-			mInferredActivityType = intent.getIntExtra(Globals.VOTED_MOTION_TYPE, -1);
-			mSweatRate = intent.getStringExtra(Globals.FINAL_SWEAT_RATE_AVERAGE);
-			mUvExposure = intent.getDoubleExtra(Globals.CURR_UV_EXPOSURE, 0);
-			double currSweatTotal = intent.getDoubleExtra(Globals.CURR_SWEAT_RATE_AVERAGE, 0);
-			int currentActivity = intent.getIntExtra(Globals.CURRENT_MOTION_TYPE, -1);
-			int sweatRateIndex = intent.getIntExtra(Globals.CURRENT_SWEAT_RATE_INTERVAL, -1);
-			String type = Globals.TYPE_STATS + Globals.ACTIVITY_TYPES[currentActivity];
-			String sweatRate = Globals.SWEAT_STATS + Globals.SWEAT_RATE_INTERVALS[sweatRateIndex];
+
+			environmentClassification = intent.getStringExtra(Globals.ENVIRONMENT_CLASSIFICATION);
+			double []pitch = intent.getDoubleArrayExtra(Globals.PITCH_BODY);
+			double lightIntensity = intent.getDoubleExtra(Globals.LIGHT_INTENSITY_READING,0);
+			mInferredActivityType = intent.getIntExtra(Globals.VOTED_ACTIVITY_TYPE, 0);
+			int currentActivity = intent.getIntExtra(Globals.CURRENT_ACTIVITY_TYPE, 0);
+			String type = Globals.TYPE_STATS + "Instant: " + Globals.ACTIVITY_TYPES[currentActivity] + " Voted: " + Globals.ACTIVITY_TYPES[mInferredActivityType];
 			
-			typeStats.setText(type + "\n" + sweatRate + "\n" + "Total amount sweat:" + mSweatRate);
-			uviStats.setText(String.format("Total UV Exposure: %.2f J/m^2", mUvExposure));
+			mCumulativeUVExposure = intent.getDoubleExtra(Globals.CUMULATIVE_UV_EXPOSURE, 0);
+			mCumulativeSweatTotal = intent.getDoubleExtra(Globals.SWEAT_TOTAL, 0);
+			String sweatRate = intent.getStringExtra(Globals.SWEAT_RATE_INDEX);
+			sweatRate =  Globals.SWEAT_STATS + sweatRate;
 			
-			lightingType.setText( Globals.LIGHT_TYPE_HEADER + TrackingService.CUR_LIGHT_CONDITION + ", Last Max: " + TrackingService.lastMaxIntensityBuffer);
-			if(Globals.FOUND_ARDUINO)
-			{
-				
-				lightingType_Arduino.setText(" "+ Globals.LIGHT_TYPE_HEADER_ARDUINO +  intent.getStringExtra(Globals.LIGHT_TYPE_HEADER_ARDUINO) 
-						+ " " + intent.getIntExtra(Globals.LIGHT_TYPE_HEADER, -1)  );
-				
-			}
-			else
-				lightingType_Arduino.setText(" "+ Globals.LIGHT_TYPE_HEADER_ARDUINO + "Sensor Not Detected"  );
-				
-			if (currSweatTotal > (Globals.SWEAT_REAPPLY * sweatIteration)) {
+			typeStats.setText(type + "\n" + sweatRate + "\n" + "Total amount sweat:" + mCumulativeSweatTotal + "liters/hr");
+			
+			uviStats.setText(String.format("Total UV Exposure: %.2f J/m^2", mCumulativeUVExposure));
+			
+			
+			/*if (sweatRate > Globals.SWEAT_REAPPLY ) {
 				sunblockReapp(context);
-				sweatIteration++;
-			}
+			}*/
+			
+			lightingType.setText((Globals.FOUND_ARDUINO == true ? "Arduino":"") + " Lighting Condition: " + environmentClassification + ", Last Max: " +lightIntensity + " lux");
 		}
 	}
 	

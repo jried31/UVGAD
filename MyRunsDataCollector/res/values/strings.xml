@@ -7,6 +7,8 @@
     <string name="ui_collector_radio_shade_title">Shade</string>
     <string name="ui_collector_radio_sun_title">Sun</string>
     <string name="ui_collector_radio_standing_title">Standing</string>
+    <string name="ui_collector_radio_indoor_title">Indoors</string>
+    <string name="ui_collector_radio_partial_cloud_title">Partial Cloud</string>
     <string name="ui_collector_radio_cloud_title">Cloud</string>
     <string name="ui_collector_radio_walking_title">Walking</string>
     <string name="ui_collector_radio_jogging_title">Jogging</string>

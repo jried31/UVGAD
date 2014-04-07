@@ -10,8 +10,11 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Rect;
+import android.graphics.Region;
 import android.util.SparseArray;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
@@ -20,6 +23,7 @@ import edu.dartmouth.cs.myruns5.UserBodyProfileDialog.OurView;
 public class SpriteSkinType implements ChooseSkinTypeCaller {
 	int x,y,
 		height, width;
+	Bitmap image = null;
 	public static int[] positionToSkinType = {1, 2, 3, 4, 5, 6};
 	
 	public int getX() {
@@ -48,19 +52,32 @@ public class SpriteSkinType implements ChooseSkinTypeCaller {
 		context = ourView.getContext();
 		//Skin type Array for images
 		skinToneMap = new SparseArray<Bitmap>(6);
-		skinToneMap.put(0, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_1));
-		skinToneMap.put(1, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_2));
-		skinToneMap.put(2, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_3));
-		skinToneMap.put(3, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_4));
-		skinToneMap.put(4, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_5));
-		skinToneMap.put(5, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_6));
-		getSkinTypeFromSharedPreferences(); //Grab the Gender of person
 		
-		//Set the dimension variable for the default option
-		setDimension();
-		//position of the icon 
-		y=6;
-		x=ov.getWidth() - width;
+		ov.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+	        @Override
+	        public void onGlobalLayout() {
+	        	
+	        	if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN)
+	        		ov.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+	        	else
+	        		ov.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+
+	    		skinToneMap.put(0, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_1));
+	    		skinToneMap.put(1, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_2));
+	    		skinToneMap.put(2, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_3));
+	    		skinToneMap.put(3, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_4));
+	    		skinToneMap.put(4, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_5));
+	    		skinToneMap.put(5, BitmapFactory.decodeResource(context.getResources(),R.drawable.fitzpatrick_type_6));
+	    		getSkinTypeFromSharedPreferences(); //Grab the Gender of person
+	    		
+	    		//Set the dimension variable for the default option
+	    		setDimension();
+	    		//position of the icon 
+	    		y=6;
+	    		x=ov.getWidth() - width;
+	    		ov.updateRegion(SpriteSPF.class, new Region(x,y,x+width,y+height));
+	        }
+	    });
 	}
 
 	public void getSkinTypeFromSharedPreferences(){
@@ -87,15 +104,15 @@ public class SpriteSkinType implements ChooseSkinTypeCaller {
 	
 	@SuppressLint("DrawAllocation")
 	public void onDraw(Canvas canvas) {
-		setDimension();
-		canvas.drawBitmap(skinToneMap.get(selection),x, y, null );
+		if(image != null)
+			canvas.drawBitmap(image,x, y, null );
 	}
 
 	private void setDimension(){
 		//set dimensions of the app
-		Bitmap skintone = skinToneMap.get(selection);
-		width = skintone.getWidth();
-		height = skintone.getHeight();
+		image = skinToneMap.get(selection);
+		width = image.getWidth();
+		height = image.getHeight();
 	}
 	
 	public void onTouch(){

@@ -46,9 +46,6 @@ public class HistoryFragment extends ListFragment
 	public int mSkinTone;
 	public int mSPF;
 	public int mClothingCover;
-	//public int mHeadApparelIndex;
-	//public int mUpperApparelIndex;
-	//public int mLowerApparelIndex;
 	
 	public Cursor mActivityEntryCursor;
 			

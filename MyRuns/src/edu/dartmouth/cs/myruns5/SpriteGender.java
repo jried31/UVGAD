@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.graphics.Region;
+import android.view.ViewTreeObserver;
 import edu.dartmouth.cs.myruns5.UserBodyProfileDialog.OurView;
 
 public class SpriteGender {
@@ -27,35 +29,48 @@ public class SpriteGender {
 		return width;
 	}
 
-	Bitmap b;
+	Bitmap image;
 	OurView ov;
 	Context context;
 	
 	public SpriteGender(OurView ourView,SpritePerson person) {
 		ov = ourView;
-		personSprite = person;
 		context = ov.getContext();
-		b = BitmapFactory.decodeResource(context.getResources(),R.drawable.male_female_sprite);
-		height = b.getHeight();
-		width = b.getWidth()/2;//Split male/female
-		x=y=6;
+		personSprite = person;
+		ov.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+	        @Override
+	        public void onGlobalLayout() {
+	        	
+	        	if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN)
+	        		ov.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+	        	else
+	        		ov.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+	        	image = BitmapFactory.decodeResource(context.getResources(),R.drawable.male_female_sprite);
+	        	height = image.getHeight();
+	        	width = image.getWidth()/2;//Split male/female
+	        	x=y=6;
+	    		updateGenderImage();
+	    		ov.updateRegion(SpriteGender.class, new Region(x,y,x+width,y+height));
+	        }
+	    });
+		
 	}
 	
+	void updateGenderImage(){
+		int srcX = personSprite.getGender() == Person.Gender.MALE ? width:0;
+		src = new Rect(srcX,0,srcX + width,height);//Defines what we will cut out of the sprite sheet 
+		dst = new Rect(x,y,x + width, y + height);//Allows you to scale it such that you can say you can draw it at position x,y and scale it according to other 2 params 	
+	}
+	
+	Rect src=null,dst=null;
 	public void onDraw(Canvas canvas) {
-		int srcX;
-		if (personSprite.getGenderFromSharedPreferences() == SpritePerson.Gender.MALE)
-			srcX = width;
-		else
-			srcX = 0;
-		
-		Rect src = new Rect(srcX,0,srcX + width,height);//Defines what we will cut out of the sprite sheet 
-		Rect dst = new Rect(x,y,x + width, y + height);//Allows you to scale it such that you can say you can draw it at position x,y and scale it according to other 2 params 
-		canvas.drawBitmap(b,src,dst, null);
+		canvas.drawBitmap(image,src,dst, null);
 	}
 
 	//Method invoked to toggle the Male/Female icon
 	public void toggle() {
 		//update the person sprite
 		personSprite.toggle();
+		updateGenderImage();
 	}
 }

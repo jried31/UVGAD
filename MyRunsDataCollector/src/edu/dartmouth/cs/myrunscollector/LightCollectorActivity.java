@@ -19,12 +19,12 @@ public class LightCollectorActivity extends Activity {
 		IDLE, COLLECTING, TRAINING, CLASSIFYING
 	};
 
-	private final String[] mLabels = {Globals.CLASS_LABEL_IN_SHADE,Globals.CLASS_LABEL_IN_SUN,Globals.CLASS_LABEL_IN_CLOUD,Globals.CLASS_LABEL_OTHER};
+	private final String[] mLabels = {Globals.CLASS_LABEL_IN_DOORS,Globals.CLASS_LABEL_IN_SHADE,Globals.CLASS_LABEL_IN_SUN,Globals.CLASS_LABEL_IN_PARTIAL_CLOUD,Globals.CLASS_LABEL_IN_CLOUD,Globals.CLASS_LABEL_OTHER};
 
 	private RadioGroup radioGroup;
-	private final RadioButton[] radioBtns = new RadioButton[4];
+	private final RadioButton[] radioBtns = new RadioButton[6];
 	private Intent mServiceIntent;
-	private File mFeatureFile;
+	private File mFeatureFilePhone,mFeatureFileArdurino;
 
 	private State mState;
 	private Button btnDelete;
@@ -34,15 +34,18 @@ public class LightCollectorActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.light);
 		radioGroup = (RadioGroup) findViewById(R.id.radioGroupLabels);
-		radioBtns[0] = (RadioButton) findViewById(R.id.radioShade);
-		radioBtns[1] = (RadioButton) findViewById(R.id.radioSun);
-		radioBtns[2] = (RadioButton) findViewById(R.id.radioCloud);
-		radioBtns[3] = (RadioButton) findViewById(R.id.radioOther);
+		radioBtns[0] = (RadioButton) findViewById(R.id.radioIndoors);
+		radioBtns[1] = (RadioButton) findViewById(R.id.radioShade);
+		radioBtns[2] = (RadioButton) findViewById(R.id.radioSun);
+		radioBtns[3] = (RadioButton) findViewById(R.id.radioPartialCloud);
+		radioBtns[4] = (RadioButton) findViewById(R.id.radioCloud);
+		radioBtns[5] = (RadioButton) findViewById(R.id.radioOther);
 		
 		btnDelete = (Button) findViewById(R.id.btnDeleteData);
 
 		mState = State.IDLE;
-		mFeatureFile = new File(getExternalFilesDir(null), Globals.FEATURE_LIGHT_FILE_NAME);
+		mFeatureFilePhone = new File(getExternalFilesDir(null), Globals.FEATURE_LIGHT_FILE_NAME);
+		mFeatureFileArdurino = new File(getExternalFilesDir(null), Globals.FEATURE_LIGHT_FILE_NAME_ARDUINO);
 		mServiceIntent = new Intent(this, LightSensorService.class);
 	}
 
@@ -56,9 +59,9 @@ public class LightCollectorActivity extends Activity {
 			radioBtns[1].setEnabled(false);
 			radioBtns[2].setEnabled(false);
 			radioBtns[3].setEnabled(false);
-
-			int acvitivtyId = radioGroup.indexOfChild(findViewById(radioGroup
-					.getCheckedRadioButtonId()));
+			radioBtns[4].setEnabled(false);
+			radioBtns[5].setEnabled(false);
+			int acvitivtyId = radioGroup.indexOfChild(findViewById(radioGroup.getCheckedRadioButtonId()));
 			String label = mLabels[acvitivtyId];
 
 			Bundle extras = new Bundle();
@@ -75,6 +78,8 @@ public class LightCollectorActivity extends Activity {
 			radioBtns[1].setEnabled(true);
 			radioBtns[2].setEnabled(true);
 			radioBtns[3].setEnabled(true);
+			radioBtns[4].setEnabled(true);
+			radioBtns[5].setEnabled(true);
 
 			stopService(mServiceIntent);
 			((NotificationManager) getSystemService(NOTIFICATION_SERVICE))
@@ -84,15 +89,14 @@ public class LightCollectorActivity extends Activity {
 
 	public void onDeleteDataClicked(View view) {
 
-		if (Environment.MEDIA_MOUNTED.equals(Environment
-				.getExternalStorageState())) {
-			if (mFeatureFile.exists()) {
-				mFeatureFile.delete();
+		if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+			if (mFeatureFilePhone.exists()) {
+				mFeatureFilePhone.delete();
 			}
-
-			Toast.makeText(getApplicationContext(),
-					R.string.ui_collector_toast_file_deleted,
-					Toast.LENGTH_SHORT).show();
+			if (mFeatureFileArdurino.exists()) {
+				mFeatureFileArdurino.delete();
+			}
+			Toast.makeText(getApplicationContext(), R.string.ui_collector_toast_file_deleted, Toast.LENGTH_SHORT).show();
 		}
 	}
 

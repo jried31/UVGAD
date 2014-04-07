@@ -1,19 +1,18 @@
 package edu.dartmouth.cs.myrunscollector;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.List;
 
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
-import weka.core.converters.ConverterUtils.DataSource;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -28,6 +27,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
+import edu.repo.ucla.serialusbdriver.Constants;
+import edu.repo.ucla.serialusbdriver.ILightSensor;
+import edu.repo.ucla.serialusbdriver.UsbSensorManager;
 /**
  * LocationService.java
  * 
@@ -37,32 +39,71 @@ import android.widget.Toast;
 
 public class LightSensorService extends Service implements SensorEventListener {
 
+	//Classes for connecting to Arduino light sensor
+	private ILightSensor mLightSensor0;
+	private ILightSensor mLightSensor1;
+	private LightSensor0Callback mLightSensor0Callback;
+	private LightSensor1Callback mLightSensor1Callback;
+	private UsbSensorManager mUsbSensorManager;	
+	public static double  light0=0,light1=0,lightPhone=0;
+	
+	// This is the callback object for the first light sensor
+	public class LightSensor0Callback implements ILightSensor.Callback
+	{
+		@Override
+		public void onSensorUpdate(final int updateLux)
+		{
+			light0 = updateLux;
+		}
+
+		@Override
+		public void onSensorEjected()
+		{
+			mLightSensor0.unregister();
+		}
+	}
+	
+	// This is the callback object for the second light sensor
+	private class LightSensor1Callback implements ILightSensor.Callback
+	{
+		@Override
+		public void onSensorUpdate(final int updateLux)
+		{
+			light1 = updateLux;
+		}
+
+		@Override
+		public void onSensorEjected()
+		{
+			mLightSensor1.unregister();
+		}
+	}
+
+		
 	private static final int mFeatLen = Globals.FEAT_NUMBER_FEATURES;
 	
-	private File mWekaFeaturesFile;
+	private File mWekaFeaturesFilePhone,mWekaFeaturesFileArduino;
 	private SensorManager mSensorManager;
 	private Sensor mLightSensor;
-	private Sensor mGravitySensor;
-	private Sensor mMagneticSensor;
 	private int mServiceTaskType;
 	private String mLabel;
-	private Instances mDataset;
+	private Instances mDatasetArdurino,mDatasetPhone;
 	private Attribute mClassNameForData,
-	//meanAttribute,
-	//stdAttribute,
 	maxAttribute;
-	//minAttribute,
-	//meanAbsDeviationAttribute;
 	
-	private SensorDataProcessorAsyncTask mSensorDataProcessingTask;
+	private SensorDataProcessorPhoneAsyncTask mSensorDataProcessingPhoneTask;
+	private SensorDataProcessorArdurinoAsyncTask mSensorDataProcessingArdurinoTask;
 
-	private static ArrayBlockingQueue<LumenDataPoint> mLightIntensityReadingBuffer;
 	public static final DecimalFormat mdecimalformat = new DecimalFormat("#.##");
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		mLightIntensityReadingBuffer = new ArrayBlockingQueue<LumenDataPoint>( Globals.LIGHT_BUFFER_CAPACITY);
+		mUsbSensorManager = UsbSensorManager.getManager();	
+		
+		// Create the sensor callback objects
+		mLightSensor0Callback = new LightSensor0Callback();
+		mLightSensor1Callback = new LightSensor1Callback();
 	}
 
 	@Override
@@ -71,18 +112,62 @@ public class LightSensorService extends Service implements SensorEventListener {
 		//Once Service starts, register the sensors
 		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-		mGravitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-		mMagneticSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		
 		mSensorManager.registerListener(this, mLightSensor,SensorManager.SENSOR_DELAY_FASTEST);
-    	mSensorManager.registerListener(this, mGravitySensor, SensorManager.SENSOR_DELAY_FASTEST);
-    	mSensorManager.registerListener(this, mMagneticSensor, SensorManager.SENSOR_DELAY_FASTEST);
+    	
+    	//Initialize the custom UV Sensors
+    	// Get the UV and light sensors that the UsbSensorManager recognizes
+		List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
+		
+		// Make sure that the lists aren't empty
+		if(lightSensor_list.isEmpty())
+		{
+			Toast.makeText(this, "ERROR 1: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+		}
+		else
+		{
+			// Grab the first pair of sensor objects.  On an Android phone there really shouldn't 
+			// be more than one
+			mLightSensor0 = lightSensor_list.get(0);
+			
+			// @NOTE: We need to grab a new list of sensors since Java must create a new sensor 
+			//    	  object.  Otherwise, they'll refer to the same sensor object and invoking 
+			// 		  the register() method will overwrite the original callback object.
+			// 		  Another way to think about it is the getLightSensorList() method is like a 
+			// 		  factory that returns light sensor objects so we need it to create a new 
+			// 		  object for us.
+			lightSensor_list = mUsbSensorManager.getLightSensorList();
+			
+			// Make sure that the lists aren't empty
+			if(lightSensor_list.isEmpty())
+			{
+				Toast.makeText(this, "ERROR 2: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+			}
+			else
+			{	
+				// Grab the handle to the UV sensor and second light sensor objects
+				mLightSensor1 = lightSensor_list.get(0);
+				
+				// Initialize the UV sensor and light sensor objects
+				mLightSensor0.init(Constants.PULSE_ID_LIGHT_0);
+				mLightSensor1.init(Constants.PULSE_ID_LIGHT_1);
+				
+				Globals.FOUND_ARDUINO = true;
+				Toast.makeText(this, "Initialized sensor hardware!", Toast.LENGTH_LONG).show();
+			}
 
+			mLightSensor0.register(mLightSensor0Callback);
+			mLightSensor1.register(mLightSensor1Callback);
+		}
+    		
 		Bundle extras = intent.getExtras();
 		mLabel = extras.getString(Globals.CLASS_LABEL_KEY);
 
 		//Create Weka features.arff file reference
-		mWekaFeaturesFile = new File(getExternalFilesDir(null), Globals.FEATURE_LIGHT_FILE_NAME);
-		Log.d(Globals.TAG, mWekaFeaturesFile.getAbsolutePath());
+		mWekaFeaturesFileArduino = new File(getExternalFilesDir(null), Globals.FEATURE_LIGHT_FILE_NAME_ARDUINO);
+		mWekaFeaturesFilePhone = new File(getExternalFilesDir(null), Globals.FEATURE_LIGHT_FILE_NAME);
+		Log.d(Globals.TAG, mWekaFeaturesFilePhone.getAbsolutePath());
+		Log.d(Globals.TAG, mWekaFeaturesFileArduino.getAbsolutePath());
 
 		mServiceTaskType = Globals.SERVICE_TASK_TYPE_COLLECT;
 
@@ -90,32 +175,17 @@ public class LightSensorService extends Service implements SensorEventListener {
 		// Create the container for attributes
 		ArrayList<Attribute> attributeList = new ArrayList<Attribute>();
 
-		// Adding FFT coefficient attributes
-		/*DecimalFormat lightIntensityColNumFormat = new DecimalFormat("0000");
-
-		//Add the attribute column in the weka file, which sets up the light intensity value columns and data types
-		for (int i = 0; i < Globals.LIGHT_BLOCK_CAPACITY; i++) {
-			attributeList.add(new Attribute(Globals.FEAT_INTENSITY_LABEL + lightIntensityColNumFormat.format(i)));
-		}*/
-		
 		// Adding the min,max,mean,std,mean_absolute_deviation feature column in the file (since it's the last column
-		//minAttribute = new Attribute(Globals.FEAT_MIN_LABEL);
 		maxAttribute = new Attribute(Globals.FEAT_MAX_LABEL);
-		//meanAttribute = new Attribute(Globals.FEAT_MEAN_LABEL);
-		//stdAttribute = new Attribute(Globals.FEAT_STD_LABEL);
-		//meanAbsDeviationAttribute = new Attribute(Globals.FEAT_MEAN_ABSOLUTE_DEVIATION_LABEL);
-		
-		//attributeList.add(minAttribute);
 		attributeList.add(maxAttribute);
-		//attributeList.add(meanAttribute);
-		//attributeList.add(stdAttribute);
-		//attributeList.add(meanAbsDeviationAttribute);
 
 		
 		// Declare a nominal attribute along with its candidate values
-		ArrayList<String> labelItems = new ArrayList<String>(2);
+		ArrayList<String> labelItems = new ArrayList<String>(6);
+		labelItems.add(Globals.CLASS_LABEL_IN_DOORS);
 		labelItems.add(Globals.CLASS_LABEL_IN_SHADE);
 		labelItems.add(Globals.CLASS_LABEL_IN_SUN);
+		labelItems.add(Globals.CLASS_LABEL_IN_PARTIAL_CLOUD);
 		labelItems.add(Globals.CLASS_LABEL_IN_CLOUD);
 		labelItems.add(Globals.CLASS_LABEL_OTHER);
 		mClassNameForData = new Attribute(Globals.CLASS_LABEL_KEY, labelItems);
@@ -124,12 +194,13 @@ public class LightSensorService extends Service implements SensorEventListener {
 		
 		// Construct the dataset with the attributes specified as allAttr and
 		// capacity 10000
-		mDataset = new Instances(Globals.FEAT_LIGHT_SET_NAME, attributeList, Globals.FEATURE_SET_CAPACITY);
-
+		mDatasetArdurino = new Instances(Globals.FEAT_LIGHT_SET_NAME, attributeList, Globals.FEATURE_SET_CAPACITY);
+		mDatasetPhone = new Instances(Globals.FEAT_LIGHT_SET_NAME, attributeList, Globals.FEATURE_SET_CAPACITY);
+		
 		// Set the last column/attribute (standing/walking/running) as the class
 		// index for classification
-		mDataset.setClassIndex(mDataset.numAttributes() - 1);
-
+		mDatasetArdurino.setClassIndex(mDatasetArdurino.numAttributes() - 1);
+		mDatasetPhone.setClassIndex(mDatasetPhone.numAttributes() - 1);
 		
 		Intent collectorActivity = new Intent(this, LightCollectorActivity.class);
 		// Read:
@@ -149,22 +220,34 @@ public class LightSensorService extends Service implements SensorEventListener {
 		notificationManager.notify(0, notification);
 
 		//JERRID: Executor tasks execute on a single thread. However, one can change it to execute on multiple threads
-		mSensorDataProcessingTask = new SensorDataProcessorAsyncTask();
-		mSensorDataProcessingTask.execute();
-
+		mSensorDataProcessingPhoneTask = new SensorDataProcessorPhoneAsyncTask();
+		mSensorDataProcessingPhoneTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		 
+		if(Globals.FOUND_ARDUINO)
+		{		
+			mSensorDataProcessingArdurinoTask = new SensorDataProcessorArdurinoAsyncTask();
+			mSensorDataProcessingArdurinoTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		}
 		return START_STICKY;
 	}
 
 	@Override
 	public void onDestroy() {
 		mSensorManager.unregisterListener(this);
-		mSensorDataProcessingTask.cancel(false);
+		mSensorDataProcessingPhoneTask.cancel(false);
+		
+		if(Globals.FOUND_ARDUINO){
+			mSensorDataProcessingArdurinoTask.cancel(false);
+			mLightSensor0.unregister();
+			mLightSensor1.unregister();
+		}
 		Log.i("Collector App","onDestroy()");
 		super.onDestroy();
 
 	}
 
-	private class SensorDataProcessorAsyncTask extends AsyncTask<Void, Void, Void> {
+	
+	private class SensorDataProcessorArdurinoAsyncTask extends AsyncTask<Void, Void, Void> {
 		@Override
 		protected Void doInBackground(Void... arg0) {
 
@@ -175,17 +258,109 @@ public class LightSensorService extends Service implements SensorEventListener {
 			 *  feature vector comprises: magnitudes (f0..f14), MAX magnitude, label....
 			 */
 			Instance featureInstance = new DenseInstance(mFeatLen);
-			featureInstance.setDataset(mDataset);
 			int blockSize = 0;
 			
-			double[] lightIntensityDataBlock = new double[Globals.LIGHT_BLOCK_CAPACITY];
-			double maxLightMagnitude = Double.MIN_VALUE,
-					minLightMagnitude = Double.MAX_VALUE,
-					meanLightIntensity = 0,
-					varianceIntensity = 0,
-					stdLightMagnitude = 0,
-					meanAbsoluteDeveationLightIntensity = 0;
+			double maxLightIntensity = Double.MIN_VALUE,
+					lightIntensityReading=0;
 
+			//Create file if doesnt exist
+			if(!mWekaFeaturesFileArduino.exists()){
+				ArffSaver saver = new ArffSaver();
+				// Set the data source of the file content
+				saver.setInstances(mDatasetArdurino);
+				try {
+					saver.setFile(mWekaFeaturesFileArduino);
+					// Write into the file
+					saver.writeBatch();
+					Log.i("batch","write batch here");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			while (true) {
+				try 
+				{
+					// need to check if the AsyncTask is cancelled or not in the while loop
+					if (isCancelled () == true)
+				    {
+				        return null;
+				    }
+
+					// JERRID: Pops the "head" element from the Blocking Queue one at a time
+					lightIntensityReading = Math.max(light0, light1);
+			        blockSize++;
+			        
+			        if(lightIntensityReading > maxLightIntensity)
+			        	maxLightIntensity = lightIntensityReading;
+				     
+			        //JERRID: Once 16 readings are found, identify the MIN, MAX, magnitude
+			        if (blockSize == Globals.LIGHT_BLOCK_CAPACITY_ARDURINO) 
+			        {
+						featureInstance.setValue(maxAttribute,maxLightIntensity);
+						featureInstance.setValue(mClassNameForData, mLabel);
+						featureInstance.setDataset(mDatasetArdurino);
+						// Set the data source of the file content
+						
+						BufferedWriter writer = new BufferedWriter(new FileWriter(mWekaFeaturesFileArduino,true));
+		        		writer.write(featureInstance.toString()+"\n");
+		        		writer.flush();
+		        		writer.close();
+		        		
+			        	//Reset the Values
+			        	blockSize = 0;
+			        	maxLightIntensity = Double.MIN_VALUE;
+			        	lightIntensityReading = -1;
+			        }
+			     
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		@Override
+		protected void onCancelled() {
+			if (mServiceTaskType == Globals.SERVICE_TASK_TYPE_CLASSIFY) {
+				super.onCancelled();
+				return;
+			}
+			super.onCancelled();
+		}
+	}
+	
+	private class SensorDataProcessorPhoneAsyncTask extends AsyncTask<Void, Void, Void> {
+		@Override
+		protected Void doInBackground(Void... arg0) {
+
+			/*
+			 * The training phase stores the min, max, mean, std, and mean absolute deviation of an intensity window
+			 * for each of the 16 light intensity readings (m0..m14), and the label the user provided to the 
+			 *  collector (see collector UI later). Collectively, we call these features the 
+			 *  feature vector comprises: magnitudes (f0..f14), MAX magnitude, label....
+			 */
+			Instance featureInstance = new DenseInstance(mFeatLen);
+			int blockSize = 0;
+			
+			double maxLightIntensity = Double.MIN_VALUE,
+					lightIntensityReading=0;
+			
+			//Create file if doesnt exist
+			if(!mWekaFeaturesFilePhone.exists()){
+				ArffSaver saver = new ArffSaver();
+				// Set the data source of the file content
+				saver.setInstances(mDatasetPhone);
+				try {
+					// Set the destination of the file.
+					saver.setFile(mWekaFeaturesFilePhone);
+					// Write into the file
+					saver.writeBatch();
+					Log.i("batch","write batch here");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
 			while (true) {
 				try 
 				{
@@ -196,63 +371,30 @@ public class LightSensorService extends Service implements SensorEventListener {
 				    }
 					
 					// JERRID: Pops the "head" element from the Blocking Queue one at a time
-					LumenDataPoint reading = mLightIntensityReadingBuffer.take();
-					
-					double intensityReading = reading.getIntensity();
-						
-					
-					lightIntensityDataBlock[blockSize++] = intensityReading;
-					
-					//Calculate Mean Intensity Value
-					if(blockSize <= 1)
-						meanLightIntensity = intensityReading;
-					else
-						meanLightIntensity = (intensityReading + meanLightIntensity*(blockSize-1))/blockSize;
-				
-					
-					//JERRID: Once 16 readings are found, identify the MIN, MAX, magnitude
-					if (blockSize == Globals.LIGHT_BLOCK_CAPACITY) 
-					{
-						//Compute the Mean Absolute Deviation since we have a full buffer=
-						for (double val : lightIntensityDataBlock) {
-							//find mean absolute deviation
-							double diff = val - meanLightIntensity;
-							varianceIntensity += diff * diff;
-							meanAbsoluteDeveationLightIntensity += Math.abs(diff);
-							
-							//Calculate the MIN/MAX (seen so far)
-							if (maxLightMagnitude < intensityReading) {
-								maxLightMagnitude = intensityReading;
-							}
-							
-							//find the min intensity
-							if (minLightMagnitude > intensityReading) {
-								minLightMagnitude = intensityReading;
-							}
-						}
-						
-						varianceIntensity = varianceIntensity/Globals.LIGHT_BLOCK_CAPACITY;
-						stdLightMagnitude = Math.sqrt(varianceIntensity);
-						meanAbsoluteDeveationLightIntensity = meanAbsoluteDeveationLightIntensity / Globals.LIGHT_BLOCK_CAPACITY;
-					
-						//featureInstance.setValue(minAttribute,minLightMagnitude);
-						featureInstance.setValue(maxAttribute,maxLightMagnitude);
-						//featureInstance.setValue(meanAttribute,meanLightIntensity);
-						//featureInstance.setValue(stdAttribute,stdLightMagnitude);
-						//featureInstance.setValue(meanAbsDeviationAttribute,meanAbsoluteDeveationLightIntensity);
+					lightIntensityReading = lightPhone;
+			        //only want max, don't store buffer
+			        blockSize++;
+			        
+			        if(lightIntensityReading > maxLightIntensity)
+			        	maxLightIntensity = lightIntensityReading;
+				     
+			        //JERRID: Once 16 readings are found, identify the MIN, MAX, magnitude
+			        if (blockSize == Globals.LIGHT_BLOCK_CAPACITY) 
+			        {
+						featureInstance.setValue(maxAttribute,maxLightIntensity);
 						featureInstance.setValue(mClassNameForData, mLabel);
-						mDataset.add(featureInstance);
+						featureInstance.setDataset(mDatasetPhone);
 						
-						//Reset the Values
-						blockSize = 0;
-						// time = System.currentTimeMillis();
-						maxLightMagnitude = Double.MIN_VALUE;
-						minLightMagnitude = Double.MAX_VALUE;
-						stdLightMagnitude = 0;
-						varianceIntensity = 0;
-						meanAbsoluteDeveationLightIntensity = 0;
-						meanLightIntensity = 0;
-					}
+						BufferedWriter writer = new BufferedWriter(new FileWriter(mWekaFeaturesFilePhone,true));
+		        		writer.write(featureInstance.toString()+"\n");
+		        		writer.flush();
+		        		writer.close();
+						
+			        	//Reset the Values
+			        	blockSize = 0;
+			        	maxLightIntensity = Double.MIN_VALUE;
+			        	lightIntensityReading = -1;		
+			        }
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -266,137 +408,16 @@ public class LightSensorService extends Service implements SensorEventListener {
 				super.onCancelled();
 				return;
 			}
-			Log.i("in the loop","still in the loop cancelled");
-			String toastDisp;
-
-			if (mWekaFeaturesFile.exists()) {
-
-				// merge existing and delete the old dataset
-				DataSource source;
-				try {
-					// Create a datasource from mFeatureFile where
-					// mFeatureFile = new File(getExternalFilesDir(null),
-					// "features.arff");
-					source = new DataSource(new FileInputStream(mWekaFeaturesFile));
-					// Read the dataset set out of this datasource
-					Instances oldDataset = source.getDataSet();
-					oldDataset.setClassIndex(mDataset.numAttributes() - 1);
-					// Sanity checking if the dataset format matches.
-					if (!oldDataset.equalHeaders(mDataset)) {
-						// Log.d(Globals.TAG,
-						// oldDataset.equalHeadersMsg(mDataset));
-						throw new Exception("The two datasets have different headers:\n");
-					}
-
-					// Move all items over manually
-					for (int i = 0; i < mDataset.size(); i++) {
-						oldDataset.add(mDataset.get(i));
-					}
-
-					mDataset = oldDataset;
-					// Delete the existing old file.
-					mWekaFeaturesFile.delete();
-					Log.i("delete","delete the file");
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				toastDisp = getString(R.string.ui_sensor_service_toast_success_file_updated);
-
-			} else {
-				toastDisp = getString(R.string.ui_sensor_service_toast_success_file_created);
-			}
-			Log.i("save","create saver here");
-			// create new Arff file
-			ArffSaver saver = new ArffSaver();
-			// Set the data source of the file content
-			saver.setInstances(mDataset);
-			try {
-				// Set the destination of the file.
-				// mFeatureFile = new File(getExternalFilesDir(null),
-				// "features.arff");
-				saver.setFile(mWekaFeaturesFile);
-				// Write into the file
-				saver.writeBatch();
-				Log.i("batch","write batch here");
-				Toast.makeText(getApplicationContext(), toastDisp,
-						Toast.LENGTH_SHORT).show();
-			} catch (IOException e) {
-				toastDisp = getString(R.string.ui_sensor_service_toast_error_file_saving_failed);
-				e.printStackTrace();
-			}
-			
-			Log.i("toast","toast here");
 			super.onCancelled();
 		}
 
 	}
 
-	float mGravity[]=null;
-	float[] mGeomagnetic=null;
-	float []pitchReading={0,0,0};
 	public void onSensorChanged(SensorEvent event) {
-
 		if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
 			//JERRID: Light Sensor Reading
-			double lightReading = event.values[0];
-			if (mGravity != null && mGeomagnetic != null && lightReading > 0)
-	          {
-	              float R[] = new float[9];
-	              float I[] = new float[9];
-	              boolean success = android.hardware.SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-	              if (success) 
-	              {
-	                  float orientation[] = new float[3];
-	                  android.hardware.SensorManager.getOrientation(R, orientation); 
-		              pitchReading[0] = Math.round(Math.abs((orientation[0]*180)/Math.PI));
-		              pitchReading[1] = Math.round(Math.abs((orientation[1]*180)/Math.PI));
-		              pitchReading[2] = Math.round(Math.abs((orientation[2]*180)/Math.PI));
-		             
-
-					// Inserts the specified element into this queue if it is possible
-					// to do so immediately without violating capacity restrictions,
-					// returning true upon success and throwing an IllegalStateException
-					// if no space is currently available. When using a
-					// capacity-restricted queue, it is generally preferable to use
-					// offer.
-					try {
-						//JERRID: Add the magnitude reading to the buffer
-						mLightIntensityReadingBuffer.add(new LumenDataPoint(System.currentTimeMillis(),pitchReading,lightReading));
-						
-						File dir = new File (android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/accelerometer");
-						dir.mkdirs();
-						FileWriter sunClassificationFile = new FileWriter(dir.getAbsolutePath()+"/"+Globals.LIGHT_INTENSITY_FILE_NAME, true);                       
-						try {                  
-							String out = (System.currentTimeMillis() + "\t" + event.values[0] + "\t" + pitchReading[0] +  "\t" + pitchReading[1] + "\t" + pitchReading[2] +"\n");         
-							sunClassificationFile.append(out);           
-						} catch (IOException ex){
-							ex.printStackTrace();
-						}
-						finally{
-							sunClassificationFile.flush();
-							sunClassificationFile.close();
-						}
-					} catch (IllegalStateException e) {
-						
-						// Exception happens when reach the capacity.
-						// Doubling the buffer. ListBlockingQueue has no such issue,
-						// But generally has worse performance
-						ArrayBlockingQueue<LumenDataPoint> newBuf = new ArrayBlockingQueue<LumenDataPoint>(mLightIntensityReadingBuffer.size() * 2);
-		
-						mLightIntensityReadingBuffer.drainTo(newBuf);
-						mLightIntensityReadingBuffer = newBuf;
-						mLightIntensityReadingBuffer.add(new LumenDataPoint(System.currentTimeMillis(),pitchReading,lightReading));
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-	              }
-	          }
-		}else if(event.sensor.getType() == android.hardware.Sensor.TYPE_GRAVITY){
-			mGravity = event.values;
-	    }else if (event.sensor.getType() == android.hardware.Sensor.TYPE_MAGNETIC_FIELD){
-           mGeomagnetic = event.values;
-	    }
+	    	lightPhone = event.values[0];
+        }
 	}
 
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {

@@ -10,9 +10,10 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Rect;
+import android.graphics.Region;
 import android.util.SparseArray;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
@@ -21,7 +22,7 @@ import edu.dartmouth.cs.myruns5.UserBodyProfileDialog.OurView;
 public class SpriteSPF implements ChooseSPFLevelCaller {
 	int x, y, height, width;
 	public static int[] positionToSPF = {0, 8, 15, 30, 45, 50};
-	
+	Bitmap image = null;
 	public int getX() {
 		return x;
 	}
@@ -46,22 +47,37 @@ public class SpriteSPF implements ChooseSPFLevelCaller {
 	public SpriteSPF(OurView ourView) {
 		ov = ourView;
 		context = ourView.getContext();
-		//SPF Array for images
-		spfMap = new SparseArray<Bitmap>(6);
-		spfMap.put(0, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_0));
-		spfMap.put(1, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_8));
-		spfMap.put(2, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_15));
-		spfMap.put(3, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_30));
-		spfMap.put(4, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_45));
-		spfMap.put(5, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_50));
+
+		ov.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+	        @Override
+	        public void onGlobalLayout() {
+	        	
+	        	if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN)
+	        		ov.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+	        	else
+	        		ov.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+
+
+	    		//SPF Array for images
+	    		spfMap = new SparseArray<Bitmap>(6);
+	    		spfMap.put(0, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_0));
+	    		spfMap.put(1, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_8));
+	    		spfMap.put(2, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_15));
+	    		spfMap.put(3, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_30));
+	    		spfMap.put(4, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_45));
+	    		spfMap.put(5, BitmapFactory.decodeResource(context.getResources(),R.drawable.spf_50));
+	    		
+	    		getSPFFromSharedPreferences();
+	    		
+	    		//Set the dimension variable for the default option
+	    		setDimension();
+	    		//position of the icon 
+	    		y=ov.getHeight() - height;
+	    		x=ov.getWidth() - width;
+	    		ov.updateRegion(SpriteSPF.class, new Region(x,y,x+width,y+height));
+	        }
+	    });
 		
-		getSPFFromSharedPreferences();
-		
-		//Set the dimension variable for the default option
-		setDimension();
-		//position of the icon 
-		y=ov.getHeight() - height;
-		x=ov.getWidth() - width;
 	}
 
 	public void getSPFFromSharedPreferences(){
@@ -88,15 +104,15 @@ public class SpriteSPF implements ChooseSPFLevelCaller {
 	
 	@SuppressLint("DrawAllocation")
 	public void onDraw(Canvas canvas) {
-		setDimension();
-		canvas.drawBitmap(spfMap.get(selection),x, y, null );
+		if(image != null)
+			canvas.drawBitmap(image,x, y, null );
 	}
 
 	private void setDimension(){
 		//set dimensions of the app
-		Bitmap spf = spfMap.get(selection);
-		width = spf.getWidth();
-		height = spf.getHeight();
+		image = spfMap.get(selection);
+		width = image.getWidth();
+		height = image.getHeight();
 	}
 	
 	public void onTouch(){

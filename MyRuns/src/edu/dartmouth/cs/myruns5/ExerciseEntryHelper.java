@@ -46,8 +46,6 @@ public class ExerciseEntryHelper {
 		values.put(HistoryTable.KEY_CLIMB, mData.getClimb());
 		Log.d(null, "wrote climb to values");
 		
-		values.put(HistoryTable.KEY_GENDER, mData.getGender());
-		values.put(HistoryTable.KEY_SKIN_TONE, mData.getSkinTone());
 		values.put(HistoryTable.KEY_SPF, mData.getSPF());
 		values.put(HistoryTable.KEY_CLOTHING_COVER, mData.getClothingCover());
 		//values.put(HistoryTable.KEY_HEAD_APPAREL, mData.getHeadApparel().name());
@@ -109,7 +107,7 @@ public class ExerciseEntryHelper {
 		return mData.getDistance();
 	}
 
-	public String getSweatRate() {
+	public double getSweatRate() {
 		return mData.getSweatRate();
 	}
 	public int getCalories() {
@@ -167,8 +165,8 @@ public class ExerciseEntryHelper {
 		mData.setDistance(distanceInMeters);
 	}
 	
-	public void setSweatRate(String sweatRate) {
-		mData.setSweatRate(sweatRate);
+	public void setSweatRate(double sweatRate) {
+		mData.setSweatCumulative(sweatRate);
 	}
 
 	public void setCalories(int calories) {
@@ -211,13 +209,6 @@ public class ExerciseEntryHelper {
 		return mData.getInputType();
 	}
 	
-	public int getGender() {
-		return mData.getGender();
-	}
-	
-	public int getSkinTone() {
-		return mData.getSkinTone();
-	}
 	
 	public int getSPF() {
 		return mData.getSPF();

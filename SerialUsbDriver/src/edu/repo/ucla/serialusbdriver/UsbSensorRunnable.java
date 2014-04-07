@@ -61,8 +61,7 @@ public class UsbSensorRunnable implements Runnable
 					if(mCallback_map != null)
 					{
 						UsbSensor sensor;
-						Iterator<Entry<UsbSensor, UsbSensor.Callback>> sensor_iter = 
-								mCallback_map.entrySet().iterator();
+						Iterator<Entry<UsbSensor, UsbSensor.Callback>> sensor_iter = mCallback_map.entrySet().iterator();
 						
 						while(sensor_iter.hasNext())
 						{

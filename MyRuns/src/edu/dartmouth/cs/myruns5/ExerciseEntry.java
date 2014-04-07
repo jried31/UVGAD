@@ -15,7 +15,7 @@ public class ExerciseEntry {
 	private Date dateTime;
 	private int duration;
 	private double distance;
-	private String sweatrate;
+	private double sweatrate;
 	private double avgPace; 
 	private double avgSpeed;
 	private int calorie;
@@ -23,10 +23,8 @@ public class ExerciseEntry {
 	private int heartrate;
 	private double uvExposureCum;
 	private double vitaminDExposureCum;
-	private int gender;
-	private int skinTone;
 	private int spf;
-	private float clothingCover;
+	private float bodyExposurePercentage;
 	//private SpriteHeadApparel.HeadApparelType headApparel;
 	//private SpriteUpperApparel.UpperApparelType upperApparel;
 	//private SpriteLowerApparel.LowerApparelType lowerApparel;
@@ -42,7 +40,7 @@ public class ExerciseEntry {
 		this.dateTime = new Date(System.currentTimeMillis());
 		this.duration = 0;
 		this.distance = 0;
-		this.sweatrate = "";
+		this.sweatrate = 0;
 		this.avgPace = 0;
 		this.avgSpeed = 0;
 		this.calorie = 0;
@@ -51,10 +49,8 @@ public class ExerciseEntry {
 		this.vitaminDExposureCum=0;
 		this.uvExposureCum=0;
 		this.comment = "";
-		this.gender = 0;
-		this.skinTone = 0;
 		this.spf = 0;
-		this.clothingCover = 0.0f;
+		this.bodyExposurePercentage = 0.0f;
 		//this.headApparel = SpriteHeadApparel.HeadApparelType.NONE;
 		//this.upperApparel = SpriteUpperApparel.UpperApparelType.NONE;
 		//this.lowerApparel = SpriteLowerApparel.LowerApparelType.NONE;
@@ -135,11 +131,11 @@ public class ExerciseEntry {
 		this.distance = distance;
 	}
 	
-	public String getSweatRate() {
+	public double getSweatRate() {
 		return sweatrate;
 	}
 	
-	public void setSweatRate(String sweatRate) {
+	public void setSweatCumulative(double sweatRate) {
 		this.sweatrate = sweatRate;
 	}
 
@@ -191,22 +187,6 @@ public class ExerciseEntry {
 		this.comment = comment;
 	}
 	
-	public int getGender() {
-		return gender;
-	}
-	
-	public void setGender(int gender) {
-		this.gender = gender;
-	}
-	
-	public int getSkinTone() {
-		return skinTone;
-	}
-	
-	public void setSkinTone(int skinTone) {
-		this.skinTone = skinTone;
-	}
-	
 	public int getSPF() {
 		return spf;
 	}
@@ -216,11 +196,11 @@ public class ExerciseEntry {
 	}
 	
 	public float getClothingCover() {
-		return clothingCover;
+		return bodyExposurePercentage;
 	}
 	
 	public void setClothingCover(float clothingCover) {
-		this.clothingCover = clothingCover;
+		this.bodyExposurePercentage = clothingCover;
 	}
 	
 	/*

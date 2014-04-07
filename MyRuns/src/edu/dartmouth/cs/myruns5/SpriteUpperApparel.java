@@ -1,123 +1,175 @@
 package edu.dartmouth.cs.myruns5;
 
+import java.util.HashMap;
+
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.util.SparseArray;
+import android.graphics.Region;
+import edu.dartmouth.cs.myruns5.Person.Gender;
+import edu.dartmouth.cs.myruns5.Person.HeadApparelType.UpperApparelFemaleType;
+import edu.dartmouth.cs.myruns5.Person.HeadApparelType.UpperApparelMaleType;
 import edu.dartmouth.cs.myruns5.UserBodyProfileDialog.OurView;
 
-public class SpriteUpperApparel extends SpriteClothing {
+@SuppressLint("UseSparseArrays")
+public class SpriteUpperApparel implements IScaleCallback,IGenderCallback{
+	UpperApparelMaleType upperApparelMale;	
 	final int defaultHeight = 100;
 	final int defaultWidth = 100;
-	UpperApparelType upperApparel;
-	
-	public enum UpperApparelType {
-		NONE(0f), TANK_TOP_MALE(0.20f), TANK_TOP_FEMALE(0.20f), TEESHIRT_LONGSLEEVE_MALE(0.35f), 
-		TEESHIRT_LONGSLEEVE_FEMALE(0.35f), TEESHIRT_SHORTSLEEVE_MALE(0.25f), TEESHIRT_SHORTSLEEVE_FEMALE(0.25f), 
-		SPORTS_BRA_FEMALE(0.05f);
+	UpperApparelFemaleType upperApparelFemale;
+	protected int x, y, height, width;
+	OurView ov;
+	Context context;
+	HashMap<Integer,Bitmap> clothingMaleMap,clothingFemaleMap;
+	Rect display=null;
+	Bitmap image = null;
+	private Gender gender=null;
+	private double scale;
+	private int personSpriteY;
+	private int personSpriteX;
+	public int getX() {
+		return x;
+	}
 
-		float cover;
-		UpperApparelType(float cover) {
-			this.cover = cover;
-		}
+	public int getY() {
+		return y;
+	}
 
-		public float getCover() {
-			return cover;
-		}
+	public int getHeight() {
+		return height;
+	}
+
+	public int getWidth() {
+		return width;
+	}
+
+	public SpriteUpperApparel(OurView ourView) {
+		ov = ourView;
+		context = ov.getContext();
+		clothingFemaleMap = new HashMap<Integer,Bitmap>(6);
+		clothingMaleMap = new HashMap<Integer,Bitmap>(4);
 	}
 	
-	public SpriteUpperApparel(OurView ourView,SpritePerson person) {
-		super(ourView, person);
-		
-		double scale = person.getScale();
-		clothingMap.put(UpperApparelType.NONE.name(), null);
-		
-		Bitmap b = BitmapFactory.decodeResource(context.getResources(),R.drawable.tank_top_man);
-		clothingMap.put(UpperApparelType.TANK_TOP_MALE.name(), 
-				Bitmap.createScaledBitmap(b, (int)(b.getWidth()*scale), (int)(b.getHeight()*scale), false));
-		b = BitmapFactory.decodeResource(context.getResources(),R.drawable.tank_top_woman);
-		clothingMap.put(UpperApparelType.TANK_TOP_FEMALE.name(), 
-				Bitmap.createScaledBitmap(b, (int)(b.getWidth()*scale), (int)(b.getHeight()*scale), false));
-		b = BitmapFactory.decodeResource(context.getResources(),R.drawable.teeshirt_longsleeve_man);
-		clothingMap.put(UpperApparelType.TEESHIRT_LONGSLEEVE_MALE.name(), 
-				Bitmap.createScaledBitmap(b, (int)(b.getWidth()*scale), (int)(b.getHeight()*scale), false));
-		b = BitmapFactory.decodeResource(context.getResources(),R.drawable.teeshirt_longsleeve_woman);
-		clothingMap.put(UpperApparelType.TEESHIRT_LONGSLEEVE_FEMALE.name(), 
-				Bitmap.createScaledBitmap(b, (int)(b.getWidth()*scale), (int)(b.getHeight()*scale), false));
-		b = BitmapFactory.decodeResource(context.getResources(),R.drawable.teeshirt_shortsleeve_man);
-		clothingMap.put(UpperApparelType.TEESHIRT_SHORTSLEEVE_MALE.name(), 
-				Bitmap.createScaledBitmap(b, (int)(b.getWidth()*scale), (int)(b.getHeight()*scale), false));
-		b = BitmapFactory.decodeResource(context.getResources(),R.drawable.teeshirt_shortsleeve_woman);
-		clothingMap.put(UpperApparelType.TEESHIRT_SHORTSLEEVE_FEMALE.name(), 
-				Bitmap.createScaledBitmap(b, (int)(b.getWidth()*scale), (int)(b.getHeight()*scale), false));
-		b = BitmapFactory.decodeResource(context.getResources(),R.drawable.sports_bra);
-		clothingMap.put(UpperApparelType.SPORTS_BRA_FEMALE.name(), 
-				Bitmap.createScaledBitmap(b, (int)(b.getWidth()*scale), (int)(b.getHeight()*scale), false));
-		
-		SharedPreferences sharedPref = context.getSharedPreferences(Globals.TAG,Context.MODE_PRIVATE);
-		String value = sharedPref.getString(context.getString(R.string.data_ApparelTop), UpperApparelType.NONE.name());
-		upperApparel = UpperApparelType.valueOf(value);
-		height = upperApparel == UpperApparelType.NONE ? 
-				defaultHeight : clothingMap.get(upperApparel.name()).getHeight();
-		width = upperApparel == UpperApparelType.NONE ? 
-				defaultWidth : clothingMap.get(upperApparel.name()).getWidth();
-		x = ov.getWidth()/2 - width/2;
-		y = ov.getHeight()/3 - height/2; // TODO: Use a member variable from SpritePerson
-		
-		display = new Rect(x, y, x + width, y + height);
-	}
-	
-	@Override
+
 	public void onDraw(Canvas canvas) {
-		if (upperApparel != UpperApparelType.NONE)
-			canvas.drawBitmap(clothingMap.get(upperApparel.name()), null, display, null);
+		if (display != null)
+			canvas.drawBitmap(image, null, display, null);
 	}
 
 	//Method invoked to toggle body apparel for male/female sprite
-	@Override
 	public void toggle() {
-		switch (upperApparel) {
-			case NONE: // Switch to tank top
-				upperApparel = personSprite.getGenderFromSharedPreferences() == SpritePerson.Gender.MALE ? 
-						UpperApparelType.TANK_TOP_MALE : UpperApparelType.TANK_TOP_FEMALE;
-				break;
-			case TANK_TOP_FEMALE:
-			case TANK_TOP_MALE: // Switch to long sleeve
-				upperApparel = personSprite.getGenderFromSharedPreferences() == SpritePerson.Gender.MALE ? 
-						UpperApparelType.TEESHIRT_LONGSLEEVE_MALE : UpperApparelType.TEESHIRT_LONGSLEEVE_FEMALE;
-				break;
-			case TEESHIRT_LONGSLEEVE_FEMALE:
-			case TEESHIRT_LONGSLEEVE_MALE: // Switch to short sleeve
-				upperApparel = personSprite.getGenderFromSharedPreferences() == SpritePerson.Gender.MALE ? 
-						UpperApparelType.TEESHIRT_SHORTSLEEVE_MALE : UpperApparelType.TEESHIRT_SHORTSLEEVE_FEMALE;
-				break;
-			case TEESHIRT_SHORTSLEEVE_FEMALE: // Switch to sports bra
-				upperApparel = UpperApparelType.SPORTS_BRA_FEMALE;
-				break;
-			case SPORTS_BRA_FEMALE:
-			case TEESHIRT_SHORTSLEEVE_MALE: // Switch to short sleeve
-			default:
-				upperApparel = UpperApparelType.NONE;
+		if(gender == Gender.MALE){
+			UpperApparelMaleType values[] = UpperApparelMaleType.values();
+			int size = values.length,newIndex = upperApparelMale.ordinal() + 1;
+			upperApparelMale = values[newIndex == size ? 0:newIndex];
+			
+			display = null;
+			image = clothingMaleMap.get(upperApparelMale.ordinal());
+			height = upperApparelMale == UpperApparelMaleType.NONE ? defaultHeight : image.getHeight();
+			width = upperApparelMale == UpperApparelMaleType.NONE ? defaultWidth : image.getWidth();
+			
+			saveClothingOptions(R.string.data_ApparelTop, upperApparelMale.ordinal());
+		}else{
+			UpperApparelFemaleType values[] = UpperApparelFemaleType.values();
+			int size = values.length,newIndex = upperApparelFemale.ordinal() + 1;
+			upperApparelFemale = values[newIndex == size ? 0:newIndex];
+			
+			display = null;
+			image = clothingFemaleMap.get(upperApparelFemale.ordinal());
+			height = upperApparelFemale == UpperApparelFemaleType.NONE ? defaultHeight : image.getHeight();
+			width = upperApparelFemale == UpperApparelFemaleType.NONE ? defaultWidth : image.getWidth();
+			
+			saveClothingOptions(R.string.data_ApparelTop, upperApparelFemale.ordinal());
 		}
-		
-		height = upperApparel == UpperApparelType.NONE ? 
-				defaultHeight : clothingMap.get(upperApparel.name()).getHeight();
-		width = upperApparel == UpperApparelType.NONE ? 
-				defaultWidth : clothingMap.get(upperApparel.name()).getWidth();
-		
+
 		x = ov.getWidth()/2 - width/2;
-		y = personSprite.getY() + (int)(personSprite.getHeight()*0.3) - (int)(height*0.4);
+		y = (int) (ov.getHeight()/2.7 - height/2);
 		
-		display = new Rect(x, y, x + width, y + height);
-		
-		super.saveClothingOptions(R.string.data_ApparelTop, upperApparel.name());
+		if(image != null){
+			display = new Rect(x, y, x + width, y + height);
+			ov.updateRegion(SpriteUpperApparel.class,new Region(x,y,x+width,y+height ));
+		}
+	}
+
+	protected void saveClothingOptions(int resourceId, int index) {
+		if (context != null) {
+			SharedPreferences sharedPref = context.getSharedPreferences(Globals.TAG,Context.MODE_PRIVATE);
+			SharedPreferences.Editor editor = sharedPref.edit();
+			editor.putInt(context.getString(resourceId), index);
+			editor.commit();
+		}
+	}
+
+	@Override
+	public void genderUpdate(Gender gender) {
+		this.gender = gender;
+		//reset the clothing
+		if(gender == Gender.MALE){
+			upperApparelMale = UpperApparelMaleType.TEESHIRT_SHORTSLEEVE;
+			saveClothingOptions(R.string.data_ApparelBottom, upperApparelMale.ordinal());
+		}else{
+			upperApparelFemale =UpperApparelFemaleType.TEESHIRT_SHORTSLEEVE;
+			saveClothingOptions(R.string.data_ApparelBottom, upperApparelFemale.ordinal());
+		}
 	}
 	
 	@Override
-	public void reset() {
-		upperApparel = UpperApparelType.NONE;
+	public void displayScaleUpdate(double scale,int x,int y) {
+		this.scale=scale;
+		this.personSpriteX=x;
+		this.personSpriteY=y;
+
+		//Male
+		clothingMaleMap.put(UpperApparelMaleType.NONE.ordinal(), null);
+		image = BitmapFactory.decodeResource(context.getResources(),R.drawable.tank_top_man);
+		clothingMaleMap.put(UpperApparelMaleType.TANK_TOP.ordinal(), Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+		image = BitmapFactory.decodeResource(context.getResources(),R.drawable.teeshirt_shortsleeve_man);
+		clothingMaleMap.put(UpperApparelMaleType.TEESHIRT_SHORTSLEEVE.ordinal(),  Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+		image = BitmapFactory.decodeResource(context.getResources(),R.drawable.teeshirt_longsleeve_man);
+		clothingMaleMap.put(UpperApparelMaleType.TEESHIRT_LONGSLEEVE.ordinal(),  Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+
+		//Female
+		clothingFemaleMap.put(UpperApparelFemaleType.NONE.ordinal(), null);
+		image = BitmapFactory.decodeResource(context.getResources(),R.drawable.bikini_top);
+		clothingFemaleMap.put(UpperApparelFemaleType.BIKINI_TOP.ordinal(), Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+		image = BitmapFactory.decodeResource(context.getResources(),R.drawable.sports_bra);
+		clothingFemaleMap.put(UpperApparelFemaleType.SPORTS_BRA.ordinal(), Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+		image = BitmapFactory.decodeResource(context.getResources(),R.drawable.tank_top_woman);
+		clothingFemaleMap.put(UpperApparelFemaleType.TANK_TOP.ordinal(), Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+		image = BitmapFactory.decodeResource(context.getResources(),R.drawable.teeshirt_shortsleeve_woman);
+		clothingFemaleMap.put(UpperApparelFemaleType.TEESHIRT_SHORTSLEEVE.ordinal(),  Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+		image = BitmapFactory.decodeResource(context.getResources(),R.drawable.teeshirt_longsleeve_woman);
+		clothingFemaleMap.put(UpperApparelFemaleType.TEESHIRT_LONGSLEEVE.ordinal(),  Bitmap.createScaledBitmap(image, (int)(image.getWidth()*scale), (int)(image.getHeight()*scale), false));
+
+		image=null;
+		//Load saved apparel
+		SharedPreferences sharedPref = context.getSharedPreferences(Globals.TAG,Context.MODE_PRIVATE);
+		switch(gender){
+		case MALE:
+			int value = sharedPref.getInt(context.getString(R.string.data_ApparelTop), UpperApparelMaleType.NONE.ordinal());
+			upperApparelMale = UpperApparelMaleType.values()[value];
+			image = clothingMaleMap.get(value);
+			height = upperApparelMale == UpperApparelMaleType.NONE ? defaultHeight : image.getHeight();
+			width = upperApparelMale == UpperApparelMaleType.NONE ? defaultWidth : image.getWidth();
+			break;
+		case FEMALE:
+			value = sharedPref.getInt(context.getString(R.string.data_ApparelTop), UpperApparelFemaleType.NONE.ordinal());
+			upperApparelFemale = UpperApparelFemaleType.values()[value];
+			image = clothingFemaleMap.get(value);
+			height = upperApparelFemale == UpperApparelFemaleType.NONE ? defaultHeight : image.getHeight();
+			width = upperApparelFemale == UpperApparelFemaleType.NONE ? defaultWidth : image.getWidth();
+		}
+
+		this.x = ov.getWidth()/2 - width/2;
+		this.y = (int) (ov.getHeight()/2.7 - height/2);
+
+		if(image != null){
+			display = new Rect(this.x, this.y, this.x + width, this.y + height);
+			ov.updateRegion(SpriteUpperApparel.class,new Region(this.x,this.y,this.x+width,this.y+height));
+		}
 	}
 }
