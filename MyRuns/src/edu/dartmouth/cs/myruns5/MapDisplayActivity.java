@@ -91,7 +91,6 @@ public class MapDisplayActivity extends Activity {
     private double mClimb;
     private double mCurSpeed;
     private double mDuration;
-    
     public LatLng firstLatLng;
 
 

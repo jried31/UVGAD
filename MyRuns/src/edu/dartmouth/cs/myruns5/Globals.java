@@ -243,5 +243,9 @@ public abstract class Globals {
 	public static final String SWEAT_TOTAL = "sweat_total";
 
 	protected static final long SUN_ANGLE_UPDATE_RATE = Globals.ONE_SECOND*10;
+
+	public static final String STOP_TRACKING = "STOP_TRACKING";
+
+	public static final String START_TRACKING = "START_TRACKING";
 	
 }

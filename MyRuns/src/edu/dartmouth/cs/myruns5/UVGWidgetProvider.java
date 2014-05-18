@@ -78,8 +78,6 @@ public class UVGWidgetProvider extends AppWidgetProvider {
 			// widget
 			appWidgetManager.updateAppWidget(appWidgetId, views);
 
-			
-
 			// Update The clock label using a shared method
 			updateAppWidget(context, appWidgetManager, appWidgetId);
 		}

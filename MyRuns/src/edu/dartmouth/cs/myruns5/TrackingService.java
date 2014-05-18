@@ -23,9 +23,11 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -61,8 +63,9 @@ public class TrackingService extends Service implements LocationListener, Sensor
 	
 	private SunAngleReciever sunAngleReciever = new SunAngleReciever();
 
-	private static boolean IS_TRACKING=false;
-	public static boolean isTracking(){return IS_TRACKING;}
+	private static boolean LOGGING_ENABLED=false;
+	private static boolean IS_PATH_TRACKING=false;
+	public static boolean isTracking(){return IS_PATH_TRACKING;}
 	
 	public static double  cumulativeSweatRate = 0.0;
 	public static int sweatRateIndex=1;
@@ -194,36 +197,38 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		return mBinder;
 	}
 	
-	
 	private TextToSpeech tts; 
 	@Override
 	public void onCreate() {
 		
-		speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
-		
+		speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());		
 		mLocationList = new ArrayList<Location>();
+		
+		//Instantiate the motion broadcast classes
 		mLocationUpdateBroadcast = new Intent();
 		mLocationUpdateBroadcast.setAction(Globals.ACTION_TRACKING);
 		mMotionUpdateBroadcast = new Intent();
 		mMotionUpdateBroadcast.setAction(Globals.ACTION_MOTION_UPDATE);
 		
+		//Initialize the activity and enviornment buffers
 		mAccBuffer = new ArrayBlockingQueue<Double>(Globals.ACCELEROMETER_BUFFER_CAPACITY);
 		mLightBuffer = new ArrayBlockingQueue<Double>(Globals.LIGHT_BLOCK_CAPACITY);
 		mAccelerometerActivityClassificationTask = new AccelerometerActivityClassificationTask();
-		mUsbSensorManager = UsbSensorManager.getManager();	
 		
-		// Create the sensor callback objects
+		//Initialize the light sensor information
+		mUsbSensorManager = UsbSensorManager.getManager();	
 		mLightSensor0Callback = new LightSensor0Callback();
 		mLightSensor1Callback = new LightSensor1Callback();
 		
-		//Start the timer for data collection
+		
+		//Start timer toggle for data collection
 		dataCollector = new Timer();
 		dataCollector.scheduleAtFixedRate(dataCollectorTask, Globals.DATA_COLLECTOR_START_DELAY, Globals.DATA_COLLECTOR_INTERVAL);
 		
+		//Register sun angle data
 		IntentFilter sunAngleFilter = new IntentFilter();
 		sunAngleFilter.addAction(UltravioletIndexService.CURRENT_SUN_ANGLE);
     	registerReceiver(sunAngleReciever, sunAngleFilter);
-    	
 		sunAngleHandler = new Handler();
 		sunAngleHandler.postDelayed(this.sunAngleRunnable, 5000);
 		
@@ -259,57 +264,45 @@ public class TrackingService extends Service implements LocationListener, Sensor
 				return START_STICKY;
 			}
 			
-			if(action.equals(Globals.TRACK_COMMAND)){
-				
+			if(action.equals(Globals.TRACK_COMMAND))
+			{
+				String extra = intent.getExtras().getString(Globals.TRACK_COMMAND);
+				if(extra != null)
+				{
+					if(extra.equals(Globals.START_TRACKING)){
+						//Stop the GPS part but just track Exposure
+						
+						
+					}else if(extra.equals(Globals.STOP_TRACKING)){
+						
+					}
+				}
+				 intent.putExtra(Globals.VOICE_COMMAND, Globals.STOP_TRACKING);
+				 startService(intent);
+			 }else
+			 //Start the path recordings
+			 if(input.contains("record") && input.contains("path")){
+				 Intent intent = new Intent(this, TrackingService.class);
+				 intent.putExtra(Globals.VOICE_COMMAND, Globals.START_TRACKING);
 			}
 		}
+		
+		
     	Toast.makeText(getApplicationContext(), "service onStartCommand", Toast.LENGTH_SHORT).show();
 		
-		//In here, create an instance of Daniel's sensor callback. Put that clas down in the bottom of this file and use it here
-		Globals.FOUND_ARDUINO = false;
+    	//Configure the Ardurino Sensors
+    	setupArdurinoTracking();
 		
-		// Get the UV and light sensors that the UsbSensorManager recognizes
-		List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
+
+		setupLocationTracking();
+
+		if(LOGGING_ENABLED)
+			setupDataLogging();
+		timestamp = new GregorianCalendar();
+	   
 		
-		// Make sure that the lists aren't empty
-		if(lightSensor_list.isEmpty())
-		{
-			Toast.makeText(this, "ERROR 1: Sensor hardware not detected", Toast.LENGTH_LONG).show();
-		}
-		else
-		{
-			// Grab the first pair of sensor objects.  On an Android phone there really shouldn't 
-			// be more than one
-			mLightSensor0 = lightSensor_list.get(0);
-			
-			// @NOTE: We need to grab a new list of sensors since Java must create a new sensor 
-			//    	  object.  Otherwise, they'll refer to the same sensor object and invoking 
-			// 		  the register() method will overwrite the original callback object.
-			// 		  Another way to think about it is the getLightSensorList() method is like a 
-			// 		  factory that returns light sensor objects so we need it to create a new 
-			// 		  object for us.
-			lightSensor_list = mUsbSensorManager.getLightSensorList();
-			
-			// Make sure that the lists aren't empty
-			if(lightSensor_list.isEmpty())
-			{
-				Toast.makeText(this, "ERROR 2: Sensor hardware not detected", Toast.LENGTH_LONG).show();
-			}
-			else
-			{	
-				// Grab the handle to the UV sensor and second light sensor objects
-				mLightSensor1 = lightSensor_list.get(0);
-				
-				// Initialize the UV sensor and light sensor objects
-				mLightSensor0.init(Constants.PULSE_ID_LIGHT_0);
-				mLightSensor1.init(Constants.PULSE_ID_LIGHT_1);
-				
-				Globals.FOUND_ARDUINO = true;
-				Toast.makeText(this, "Initialized sensor hardware!", Toast.LENGTH_LONG).show();
-			}
-		}
-		
-				
+    	
+    	// init sensor manager
 		// Get LocationManager and set related provider.
 	    mLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 	    boolean gpsEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
@@ -321,27 +314,6 @@ public class TrackingService extends Service implements LocationListener, Sensor
 	    	mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, Globals.RECORDING_NETWORK_PROVIDER_INTERVAL_DEFAULT,
 	    			Globals.RECORDING_NETWORK_PROVIDER_DISTANCE_DEFAULT, this);
 
-
-		timestamp = new GregorianCalendar();
-	   
-    	File root = Environment.getExternalStorageDirectory();
-    	File file = new File(root.getAbsolutePath()+"/dataTrace"+System.currentTimeMillis()+".txt");
-    	try {
-			// if file doesnt exists, then create it
-			if (!file.exists()) {
-				file.createNewFile();
-				trainingDataFileStream = new FileOutputStream(file);
-				myOutWriter = new OutputStreamWriter(trainingDataFileStream);
-			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	
-    	// init sensor manager
     	mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
     
     	mGravitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
@@ -387,11 +359,76 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		notificationManager.notify(0, notification);
 
 		//setup tracking
-		IS_TRACKING = true;
+		IS_PATH_TRACKING = true;
 		
 		return START_STICKY;
 	}
 
+	private void setupDataLogging() {    	
+		File root = Environment.getExternalStorageDirectory();
+		File file = new File(root.getAbsolutePath()+"/dataTrace"+System.currentTimeMillis()+".txt");
+		try {
+			// if file doesnt exists, then create it
+			if (!file.exists()) {
+				file.createNewFile();
+				trainingDataFileStream = new FileOutputStream(file);
+				myOutWriter = new OutputStreamWriter(trainingDataFileStream);
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private void setupLocationTracking() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void setupArdurinoTracking(){
+		// Get the UV and light sensors that the UsbSensorManager recognizes
+		List<ILightSensor> lightSensor_list = mUsbSensorManager.getLightSensorList();
+		if(lightSensor_list.isEmpty())
+		{
+			Globals.FOUND_ARDUINO = false;
+			Toast.makeText(this, "ERROR 1: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+		}
+		else
+		{
+			// Grab the first pair of sensor objects.  On an Android phone there really shouldn't 
+			// be more than one
+			mLightSensor0 = lightSensor_list.get(0);
+			
+			// @NOTE: We need to grab a new list of sensors since Java must create a new sensor 
+			//    	  object.  Otherwise, they'll refer to the same sensor object and invoking 
+			// 		  the register() method will overwrite the original callback object.
+			// 		  Another way to think about it is the getLightSensorList() method is like a 
+			// 		  factory that returns light sensor objects so we need it to create a new 
+			// 		  object for us.
+			lightSensor_list = mUsbSensorManager.getLightSensorList();
+			if(lightSensor_list.isEmpty())
+			{
+				Globals.FOUND_ARDUINO = false;
+				Toast.makeText(this, "ERROR 2: Sensor hardware not detected", Toast.LENGTH_LONG).show();
+			}
+			else
+			{	
+				// Grab the handle to the UV sensor and second light sensor objects
+				mLightSensor1 = lightSensor_list.get(0);
+				
+				// Initialize the UV sensor and light sensor objects
+				mLightSensor0.init(Constants.PULSE_ID_LIGHT_0);
+				mLightSensor1.init(Constants.PULSE_ID_LIGHT_1);
+				
+				Globals.FOUND_ARDUINO = true;
+				Toast.makeText(this, "Initialized sensor hardware!", Toast.LENGTH_LONG).show();
+			}
+		}
+	}
+	
 	@Override
 	public void onDestroy() {
         try {
@@ -422,7 +459,7 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		mAccBuffer.clear();
 		mLightBuffer.clear();
 
-		IS_TRACKING = false;
+		IS_PATH_TRACKING = false;
 	}
 	
 	public class TrackingBinder extends Binder{
@@ -690,10 +727,11 @@ public class TrackingService extends Service implements LocationListener, Sensor
 					        	maxIntensityThisBuffer = lightIntensityReading;
 					        if (blockSizeLight == Globals.LIGHT_BLOCK_CAPACITY ) 
 					        {
+					        	if(LOGGING_ENABLED){
 					        	//Indoors
-								myOutWriter.write(environmentClassification+",");
-								myOutWriter.write(maxIntensityThisBuffer+",");
-								
+					        		myOutWriter.write(environmentClassification+",");
+					        		myOutWriter.write(maxIntensityThisBuffer+",");
+					        	}
 					        	System.out.print("Environmant Classificaton: "+environmentClassification);
 					        	System.out.print(" | Intensity Default: "+ maxIntensityThisBuffer);
 				        		
@@ -910,29 +948,30 @@ public class TrackingService extends Service implements LocationListener, Sensor
 						}
 						mMotionUpdateBroadcast.putExtra(Globals.SWEAT_TOTAL, cumulativeSweatRate);
 
-						myOutWriter.write(Long.toString(bufferFillFinishTime)+",");
-						myOutWriter.write(Double.toString(timeElapsedSeconds)+",");
-						myOutWriter.write(Float.toString(solarZenithAngle)+",");
-						myOutWriter.write(Float.toString(elevationAngle)+",");
-						myOutWriter.write(Float.toString(azimuthAngle)+",");
-						myOutWriter.write(Double.toString(phoneScreenAngle)+",");
-						myOutWriter.write(Double.toString(phoneVsSunOrientationDifference)+",");
-						myOutWriter.write(Double.toString(relativeFaceAngle)+",");
-						myOutWriter.write(Double.toString(relativeNeckAngle)+",");
-						myOutWriter.write(Double.toString(relativeChestAngle)+",");
-						myOutWriter.write(Double.toString(relativeBackAngle)+",");
-						myOutWriter.write(Double.toString(relativeForearmAngle)+",");
-						myOutWriter.write(Double.toString(relativeDorsalHandAngle)+",");
-						myOutWriter.write(Float.toString(relativeLegAngle)+",");
-						myOutWriter.write(Globals.ACTIVITY_TYPES[currentActivity]+",");
-						myOutWriter.write(Globals.ACTIVITY_TYPES[mInferredActivityType]+",");
-						
-						if(mLocationList.size() > 0){
-							Location location = mLocationList.get(mLocationList.size()-1);
-							myOutWriter.write(","+location.getLatitude()+","+location.getLongitude());
+						if(LOGGING_ENABLED){
+							myOutWriter.write(Long.toString(bufferFillFinishTime)+",");
+							myOutWriter.write(Double.toString(timeElapsedSeconds)+",");
+							myOutWriter.write(Float.toString(solarZenithAngle)+",");
+							myOutWriter.write(Float.toString(elevationAngle)+",");
+							myOutWriter.write(Float.toString(azimuthAngle)+",");
+							myOutWriter.write(Double.toString(phoneScreenAngle)+",");
+							myOutWriter.write(Double.toString(phoneVsSunOrientationDifference)+",");
+							myOutWriter.write(Double.toString(relativeFaceAngle)+",");
+							myOutWriter.write(Double.toString(relativeNeckAngle)+",");
+							myOutWriter.write(Double.toString(relativeChestAngle)+",");
+							myOutWriter.write(Double.toString(relativeBackAngle)+",");
+							myOutWriter.write(Double.toString(relativeForearmAngle)+",");
+							myOutWriter.write(Double.toString(relativeDorsalHandAngle)+",");
+							myOutWriter.write(Float.toString(relativeLegAngle)+",");
+							myOutWriter.write(Globals.ACTIVITY_TYPES[currentActivity]+",");
+							myOutWriter.write(Globals.ACTIVITY_TYPES[mInferredActivityType]+",");
+							
+							if(mLocationList.size() > 0){
+								Location location = mLocationList.get(mLocationList.size()-1);
+								myOutWriter.write(","+location.getLatitude()+","+location.getLongitude());
+							}
+							myOutWriter.write("\n");
 						}
-						myOutWriter.write("\n");
-						
 						 // Used to update the current type.
 						 sendBroadcast(mMotionUpdateBroadcast);
 						//Reset the max value
@@ -1013,17 +1052,34 @@ public class TrackingService extends Service implements LocationListener, Sensor
         SnowballStemmer stemmer = new SnowballStemmer();  // initialize stopwords
         stemmer.setStemmer("english");
                    
-        String input=stemmer.stem(strlist.get(0).toString().toLowerCase()) + " ";;
+        String input=stemmer.stem(strlist.get(0).toString().toLowerCase()) + " ";
+        if(input.contains ("start") && input.contains("log")){
+        	LOGGING_ENABLED=true;
+        	setupDataLogging();
+        }else
+        if(input.contains ("stop") && input.contains("log")){
+        	LOGGING_ENABLED=false;
+        	try {
+				myOutWriter.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+        	
+        }else
 		 //for (int i = 0; i < strlist.size();i++ ) 
-			 //input+=stemmer.stem(strlist.get(i).toString().toLowerCase()) + " ";
+        	//input+=stemmer.stem(strlist.get(i).toString().toLowerCase()) + " ";
 			 
 		 //Stop the path recording
 		 if(input.contains("stop") && input.contains("record")){
-			 
-		 }
+			 Intent intent = new Intent(this, TrackingService.class);
+			 intent.putExtra(Globals.VOICE_COMMAND, Globals.STOP_TRACKING);
+			 startService(intent);
+		 }else
 		 //Start the path recordings
 		 if(input.contains("record") && input.contains("path")){
-			 
+			 Intent intent = new Intent(this, TrackingService.class);
+			 intent.putExtra(Globals.VOICE_COMMAND, Globals.START_TRACKING);
+			 startService(intent);
 		 }
 		 Log.e("TGAGS",input);
 	}
