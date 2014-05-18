@@ -47,6 +47,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.TextToSpeech.OnInitListener;
 import android.util.Log;
 import android.widget.Toast;
 import edu.dartmouth.cs.myruns5.util.LocationUtils;
@@ -55,7 +56,7 @@ import edu.repo.ucla.serialusbdriver.ILightSensor;
 import edu.repo.ucla.serialusbdriver.UsbSensorManager;
 
 
-public class TrackingService extends Service implements LocationListener, SensorEventListener,RecognitionListener
+public class TrackingService extends Service implements OnInitListener,LocationListener, SensorEventListener,RecognitionListener
 {
 	// Use in case you want to collect data for training
 	FileOutputStream trainingDataFileStream = null;
@@ -200,6 +201,7 @@ public class TrackingService extends Service implements LocationListener, Sensor
 	private TextToSpeech tts; 
 	@Override
 	public void onCreate() {
+		tts = new TextToSpeech(this,  this);
 		
 		speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());		
 		mLocationList = new ArrayList<Location>();
@@ -434,6 +436,7 @@ public class TrackingService extends Service implements LocationListener, Sensor
         try {
             myOutWriter.close();
 			trainingDataFileStream.close();
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -460,6 +463,11 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		mLightBuffer.clear();
 
 		IS_PATH_TRACKING = false;
+
+	     if (tts != null) {
+	            tts.stop();
+	            tts.shutdown();
+	     }
 	}
 	
 	public class TrackingBinder extends Binder{
@@ -1066,9 +1074,7 @@ public class TrackingService extends Service implements LocationListener, Sensor
 			}
         	
         }else
-		 //for (int i = 0; i < strlist.size();i++ ) 
-        	//input+=stemmer.stem(strlist.get(i).toString().toLowerCase()) + " ";
-			 
+		
 		 //Stop the path recording
 		 if(input.contains("stop") && input.contains("record")){
 			 Intent intent = new Intent(this, TrackingService.class);
@@ -1080,7 +1086,22 @@ public class TrackingService extends Service implements LocationListener, Sensor
 			 Intent intent = new Intent(this, TrackingService.class);
 			 intent.putExtra(Globals.VOICE_COMMAND, Globals.START_TRACKING);
 			 startService(intent);
+		 }else
+		 // Find uv index, ultraviolet index.
+		 if (input.contains("ultraviolet") && input. contains ("index")){
+		 	tts.speak("The ultraviolet index is 3", TextToSpeech.QUEUE_FLUSH, null);
+		 }else
+		 // Find vitamin d exposure
+		 if (input.contains ("vitamin d") && input. contains ("exposure")){
+		 	tts.speak("10 mins of direct sun exposure", TextToSpeech.QUEUE_FLUSH, null);
 		 }
+		 
+		 // Find when I should reapply sunblock 
+		 if (input.contains("reapply") && input. contains ("sunblock")){
+			 tts.speak("In 20 minutes based on your recent activity levels", TextToSpeech. QUEUE_FLUSH, null);
+		 }
+		 
+		
 		 Log.e("TGAGS",input);
 	}
 
@@ -1092,6 +1113,12 @@ public class TrackingService extends Service implements LocationListener, Sensor
 
 	@Override
 	public void onEvent(int eventType, Bundle params) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onInit(int status) {
 		// TODO Auto-generated method stub
 		
 	}
