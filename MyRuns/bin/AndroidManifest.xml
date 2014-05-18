@@ -22,6 +22,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
@@ -129,7 +130,14 @@
 
         <!-- Android Broadcast receiver -->
         <receiver android:name=".MyBroadcastReceiver"></receiver>
-        
+        		
+       	<receiver android:name="edu.dartmouth.cs.myruns5.UVGWidgetProvider" android:label="UV Guardian">
+			<intent-filter>
+				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+          		<action android:name="edu.dartmouth.cs.myruns5.UVG_UPDATE" />
+      		</intent-filter>
+			<meta-data android:name="android.appwidget.provider" android:resource="@xml/uvg_widgit_info" />
+		</receiver>
     </application>
 
 </manifest>

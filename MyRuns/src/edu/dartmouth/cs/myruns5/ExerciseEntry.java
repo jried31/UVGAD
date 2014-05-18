@@ -21,7 +21,6 @@ public class ExerciseEntry {
 	private int calorie;
 	private double climb;
 	private int heartrate;
-	private double uvExposureCum;
 	private double vitaminDExposureCum;
 	private int spf;
 	private float bodyExposurePercentage;
@@ -32,6 +31,15 @@ public class ExerciseEntry {
 	private String comment;
     private Location[] myTrack; // Location array
     private ArrayList<Location> mLocationList;
+
+	private double cumulativeBackExposure;
+	private double cumulativeDorsalHandExposure;
+	private double cumulativeChestExposure;
+	private double cumulativeFaceExposure;
+	private double cumulativeLegExposure;
+	private double cumulativeForearmExposure;
+	private double cumulativeNeckExposure;
+	private double mCumulativeUVExposure;
 	
 	public ExerciseEntry(){
 		this.remoteId = -1L;
@@ -45,9 +53,16 @@ public class ExerciseEntry {
 		this.avgSpeed = 0;
 		this.calorie = 0;
 		this.climb = 0;
-		this.heartrate = 0;
+		this.heartrate = 0; 
+		cumulativeBackExposure=0;
+		cumulativeDorsalHandExposure=0;
+		cumulativeChestExposure=0;
+		cumulativeFaceExposure=0;
+		cumulativeLegExposure=0;
+		cumulativeForearmExposure=0;
+		cumulativeNeckExposure=0;
+		mCumulativeUVExposure=0;
 		this.vitaminDExposureCum=0;
-		this.uvExposureCum=0;
 		this.comment = "";
 		this.spf = 0;
 		this.bodyExposurePercentage = 0.0f;
@@ -68,13 +83,7 @@ public class ExerciseEntry {
 	public void setVitaminDExposureCumulative(double vitaminDExposureCum) {
 		this.vitaminDExposureCum = vitaminDExposureCum;
 	}
-	public double getUVExposureCumulative() {
-		return uvExposureCum;
-	}
-	public void setUvExposureCumulative(double uvExposureCum) {
-		this.uvExposureCum = uvExposureCum;
-	}
-	
+
 	public long getRemoteId() {
 		return remoteId;
 	}
@@ -233,5 +242,58 @@ public class ExerciseEntry {
 	public String toString() {
 		return super.toString();
 	}
+
+	public double getCumulativeBackExposure(){
+		return this.cumulativeBackExposure;
+	}
 	
+	public void setCumulativeBackExposure(double cumulativeBackExposure) {
+		this.cumulativeBackExposure = cumulativeBackExposure;
+	}
+
+	public void setCumulativeHandExposure(double cumulativeDorsalHandExposure) {
+		this.cumulativeDorsalHandExposure=cumulativeDorsalHandExposure;
+	}
+	public double getCumulativeHandExposure(){
+		return this.cumulativeDorsalHandExposure;
+	}
+	
+	public void setCumulativeChestExposure(double cumulativeChestExposure) {
+		this.cumulativeChestExposure=cumulativeChestExposure;
+	}
+
+	public double getCumulativeChestExposure(){
+		return this.cumulativeChestExposure;
+	}
+	public void setCumulativeFaceExposure(double cumulativeFaceExposure) {
+		this.cumulativeFaceExposure=cumulativeFaceExposure;
+	}
+	public double getCumulativeFaceExposure(){
+		return this.cumulativeFaceExposure;
+	}
+	public void setCumulativeLegExposure(double cumulativeLegExposure) {
+		this.cumulativeLegExposure=cumulativeLegExposure;
+	}
+	public double getCumulativeLegExposure(){
+		return this.cumulativeBackExposure;
+	}
+	
+	public void setCumulativeForearmExposure(double cumulativeForearmExposure) {
+		this.cumulativeForearmExposure=cumulativeForearmExposure;
+	}
+	public double getCumulativeForearmExposure(){
+		return this.cumulativeForearmExposure;
+	}
+	public void setCumulativeNeckExposure(double cumulativeNeckExposure) {
+		this.cumulativeNeckExposure=cumulativeNeckExposure;
+	}
+	public double getCumulativeNeckExposure(){
+		return this.cumulativeNeckExposure;
+	}
+	public void setCumulativeHorizontalExposure(double mCumulativeUVExposure) {
+		this.mCumulativeUVExposure = mCumulativeUVExposure;
+	}
+	public double getCumulativeHorizontalExposure(){
+		return this.mCumulativeUVExposure;
+	}
 }

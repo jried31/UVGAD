@@ -1,7 +1,13 @@
 package edu.dartmouth.cs.myruns5;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +16,8 @@ import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import weka.core.Attribute;
+import weka.core.stemmers.SnowballStemmer;
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -25,11 +33,18 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.Toast;
 import edu.dartmouth.cs.myruns5.util.LocationUtils;
@@ -38,11 +53,19 @@ import edu.repo.ucla.serialusbdriver.ILightSensor;
 import edu.repo.ucla.serialusbdriver.UsbSensorManager;
 
 
-public class TrackingService extends Service implements LocationListener, SensorEventListener
+public class TrackingService extends Service implements LocationListener, SensorEventListener,RecognitionListener
 {
+	// Use in case you want to collect data for training
+	FileOutputStream trainingDataFileStream = null;
+	OutputStreamWriter myOutWriter = null;
 	
-	private UVIBroadcastReciever mUVReceiver = new UVIBroadcastReciever();
-	private double  cumulativeSweatRate = 0.0, cumulativeUVExposure = 0.0;
+	private SunAngleReciever sunAngleReciever = new SunAngleReciever();
+
+	private static boolean IS_TRACKING=false;
+	public static boolean isTracking(){return IS_TRACKING;}
+	
+	public static double  cumulativeSweatRate = 0.0;
+	public static int sweatRateIndex=1;
 	public static int MAX_ACTIVITY_INFERENCE_WINDOW = 5;//Allow 5 readings to dictate the Voted activity
 
 	//Classes for connecting to Arduino light sensor
@@ -113,14 +136,13 @@ public class TrackingService extends Service implements LocationListener, Sensor
 	private Intent mLocationUpdateBroadcast;
 	private Intent mMotionUpdateBroadcast;
 	
-	private int mInputType;
-	public int mCurrentActivityIndex=Globals.ACTIVITY_ID_STANDING,mInferredActivityType=Globals.INFERENCE_MAPPING[mCurrentActivityIndex];
+	public static int currentActivity=Globals.ACTIVITY_ID_STANDING,mCurrentActivityIndex=Globals.ACTIVITY_ID_STANDING,mInferredActivityType=Globals.INFERENCE_MAPPING[mCurrentActivityIndex];
 	
 	private SensorManager mSensorManager;
 	private Sensor mAccelerometer,mLightSensor,mMagnetSensor,mGravitySensor;
 	
 	private float[] mGeomagnetic;
-	private static ArrayBlockingQueue<Double> mAccBuffer;
+	private static ArrayBlockingQueue<Double> mAccBuffer,mLightBuffer;
 	
 	private AccelerometerActivityClassificationTask mAccelerometerActivityClassificationTask;
 	
@@ -141,7 +163,7 @@ public class TrackingService extends Service implements LocationListener, Sensor
 	public static final String CURRENT_SWEAT_RATE_INTERVAL = "sweat rate Interval";
 	public static final String FINAL_SWEAT_RATE_AVERAGE = "average sweat rate";
 	
-	private static String environmentClassification=Globals.CLASS_LABEL_IN_SHADE;
+	public static String environmentClassification=Globals.CLASS_LABEL_IN_DOORS;
 	
 	private static final String TAG = "TrackingService";
 	
@@ -172,8 +194,13 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		return mBinder;
 	}
 	
+	
+	private TextToSpeech tts; 
 	@Override
 	public void onCreate() {
+		
+		speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
+		
 		mLocationList = new ArrayList<Location>();
 		mLocationUpdateBroadcast = new Intent();
 		mLocationUpdateBroadcast.setAction(Globals.ACTION_TRACKING);
@@ -181,6 +208,7 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		mMotionUpdateBroadcast.setAction(Globals.ACTION_MOTION_UPDATE);
 		
 		mAccBuffer = new ArrayBlockingQueue<Double>(Globals.ACCELEROMETER_BUFFER_CAPACITY);
+		mLightBuffer = new ArrayBlockingQueue<Double>(Globals.LIGHT_BLOCK_CAPACITY);
 		mAccelerometerActivityClassificationTask = new AccelerometerActivityClassificationTask();
 		mUsbSensorManager = UsbSensorManager.getManager();	
 		
@@ -192,18 +220,49 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		dataCollector = new Timer();
 		dataCollector.scheduleAtFixedRate(dataCollectorTask, Globals.DATA_COLLECTOR_START_DELAY, Globals.DATA_COLLECTOR_INTERVAL);
 		
-		IntentFilter filter = new IntentFilter();
-    	filter.addAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
-    	registerReceiver(mUVReceiver, filter);
+		IntentFilter sunAngleFilter = new IntentFilter();
+		sunAngleFilter.addAction(UltravioletIndexService.CURRENT_SUN_ANGLE);
+    	registerReceiver(sunAngleReciever, sunAngleFilter);
+    	
+		sunAngleHandler = new Handler();
+		sunAngleHandler.postDelayed(this.sunAngleRunnable, 5000);
 		
-		uviHandler = new Handler();
-		uviHandler.postDelayed(uviRunnable, 1000);
     	Toast.makeText(getApplicationContext(), "service onCreate", Toast.LENGTH_SHORT).show();
 	}
 
+	private float solarZenithAngle=Float.MAX_VALUE;
+	private float azimuthAngle=Float.MAX_VALUE;
+	private float elevationAngle=Float.MAX_VALUE;
+	
+	public class SunAngleReciever extends BroadcastReceiver{
+		@Override
+		public void onReceive(Context context, Intent intent){
+			azimuthAngle = intent.getExtras().getFloat(UltravioletIndexService.AZIMUTH_ANGLE,Float.MAX_VALUE);
+			solarZenithAngle = intent.getExtras().getFloat(UltravioletIndexService.SOLAR_ZENITH_ANGLE,Float.MAX_VALUE);
+			elevationAngle = intent.getExtras().getFloat(UltravioletIndexService.ELEVATION_ANGLE, Float.MAX_VALUE);
+		}
+	}
+	
+	SpeechRecognizer speechRecognizer = null;
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 
+		String action = intent.getAction();
+		if(action != null){
+			if(action.equals(Globals.VOICE_COMMAND)){
+				//Listen for speech
+				speechRecognizer.setRecognitionListener(this);
+				speechRecognizer.startListening(RecognizerIntent.getVoiceDetailsIntent(getApplicationContext()));
+				
+				ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);				
+				toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 500); 
+				return START_STICKY;
+			}
+			
+			if(action.equals(Globals.TRACK_COMMAND)){
+				
+			}
+		}
     	Toast.makeText(getApplicationContext(), "service onStartCommand", Toast.LENGTH_SHORT).show();
 		
 		//In here, create an instance of Daniel's sensor callback. Put that clas down in the bottom of this file and use it here
@@ -250,46 +309,65 @@ public class TrackingService extends Service implements LocationListener, Sensor
 			}
 		}
 		
-		
-		// Read inputType, can be GPS or Automatic.
-		mInputType = intent.getIntExtra(MapDisplayActivity.INPUT_TYPE, -1);
-		//Toast.makeText(getApplicationContext(), String.valueOf(mInputType), Toast.LENGTH_SHORT).show();
 				
 		// Get LocationManager and set related provider.
 	    mLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 	    boolean gpsEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 	    
 	    if (gpsEnabled)
-	    	mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, Globals.RECORDING_GPS_INTERVAL_DEFAULT, Globals.RECORDING_GPS_DISTANCE_DEFAULT, this);
+	    	mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, Globals.RECORDING_GPS_INTERVAL_DEFAULT,
+	    			Globals.RECORDING_GPS_DISTANCE_DEFAULT, this);
 	    else
-	    	mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, Globals.RECORDING_NETWORK_PROVIDER_INTERVAL_DEFAULT,Globals.RECORDING_NETWORK_PROVIDER_DISTANCE_DEFAULT, this);
+	    	mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, Globals.RECORDING_NETWORK_PROVIDER_INTERVAL_DEFAULT,
+	    			Globals.RECORDING_NETWORK_PROVIDER_DISTANCE_DEFAULT, this);
 
-	    if (mInputType == Globals.INPUT_TYPE_AUTOMATIC){
-	    	// init sensor manager
-	    	mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-	    
-	    	mGravitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-	    	mSensorManager.registerListener(this, mGravitySensor, SensorManager.SENSOR_DELAY_FASTEST);
-	    	
-	    	mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-	    	mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
-	    	
-			mMagnetSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-			mSensorManager.registerListener(this, mMagnetSensor,SensorManager.SENSOR_DELAY_FASTEST);
-	    	
-			//register the phones light sensor
-			mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-			mSensorManager.registerListener(this, mLightSensor,SensorManager.SENSOR_DELAY_FASTEST);
-		 
-			if(Globals.FOUND_ARDUINO)
-			{
-				mLightSensor0.register(mLightSensor0Callback);
-				mLightSensor1.register(mLightSensor1Callback);
+
+		timestamp = new GregorianCalendar();
+	   
+    	File root = Environment.getExternalStorageDirectory();
+    	File file = new File(root.getAbsolutePath()+"/dataTrace"+System.currentTimeMillis()+".txt");
+    	try {
+			// if file doesnt exists, then create it
+			if (!file.exists()) {
+				file.createNewFile();
+				trainingDataFileStream = new FileOutputStream(file);
+				myOutWriter = new OutputStreamWriter(trainingDataFileStream);
 			}
-				
-			bufferFillStartTime = System.currentTimeMillis();
-	    	mAccelerometerActivityClassificationTask.execute();
-	    }
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	
+    	// init sensor manager
+    	mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+    
+    	mGravitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+    	mSensorManager.registerListener(this, mGravitySensor, SensorManager.SENSOR_DELAY_FASTEST);
+    	
+    	mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+    	mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+    	
+		mMagnetSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		mSensorManager.registerListener(this, mMagnetSensor,SensorManager.SENSOR_DELAY_FASTEST);
+		
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),SensorManager.SENSOR_DELAY_GAME);
+        
+		//register the phones light sensor
+		mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+		mSensorManager.registerListener(this, mLightSensor,SensorManager.SENSOR_DELAY_FASTEST);
+	 
+		if(Globals.FOUND_ARDUINO)
+		{
+			mLightSensor0.register(mLightSensor0Callback);
+			mLightSensor1.register(mLightSensor1Callback);
+		}
+			
+		bufferFillStartTime = System.currentTimeMillis();
+    	mAccelerometerActivityClassificationTask.execute();
+    
 	    
 		// Using pending intent to bring back the MapActivity from notification center.
 		// Use NotificationManager to build notification(icon, content, title, flag and pIntent)
@@ -307,14 +385,22 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		notification.flags = notification.flags | Notification.FLAG_ONGOING_EVENT;
 		//notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		notificationManager.notify(0, notification);
+
+		//setup tracking
+		IS_TRACKING = true;
 		
-		//---
-    
 		return START_STICKY;
 	}
 
 	@Override
 	public void onDestroy() {
+        try {
+            myOutWriter.close();
+			trainingDataFileStream.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     	Toast.makeText(getApplicationContext(), "service onDestroy", Toast.LENGTH_SHORT).show();
 
 		// Unregistering listeners
@@ -324,17 +410,19 @@ public class TrackingService extends Service implements LocationListener, Sensor
 	    notificationManager.cancelAll();
 
 	    // unregister listener
-	    if (mInputType == Globals.INPUT_TYPE_AUTOMATIC){
 //	    	Toast.makeText(getApplicationContext(), "unregister linstener", Toast.LENGTH_SHORT).show();
-	    	mSensorManager.unregisterListener(this);
-	    }
+	    mSensorManager.unregisterListener(this);
+	    
 	    
 	    //Unregister the UVI filter/
-    	unregisterReceiver(mUVReceiver);
+    	unregisterReceiver(sunAngleReciever);
     	
 	    // cancel task
 	    mAccelerometerActivityClassificationTask.cancel(true);
 		mAccBuffer.clear();
+		mLightBuffer.clear();
+
+		IS_TRACKING = false;
 	}
 	
 	public class TrackingBinder extends Binder{
@@ -384,12 +472,24 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		mGeomagnetic=null;
 		//clear the buffer becasue we don't need it anymore
 		mAccBuffer.clear();
+		mLightBuffer.clear();
 	}
 	
+	double phoneVsSunOrientationDifference = 0,phoneScreenAngle=0;
 	/************ implement SensorEventLister interface ***********/
 	public void onSensorChanged(SensorEvent event) {
 	      if (event.sensor.getType() == android.hardware.Sensor.TYPE_MAGNETIC_FIELD){
 	           mGeomagnetic = event.values;
+	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_ORIENTATION){
+	          // get the angle around the z-axis rotated
+	    	  //NOTE: I subtract 180 because the orientation assumes the back side of the phone facing sun as front.
+	          phoneScreenAngle = Math.abs(Math.round(event.values[0]-180));
+	          
+	          if(azimuthAngle != Float.MAX_VALUE)
+	        	  phoneVsSunOrientationDifference = Math.abs(azimuthAngle - phoneScreenAngle);
+
+	         //System.out.println("Phone Orintation (Screen): " + phoneScreenAngle + " | Elevation Angle (Sun): "+elevationAngle + " | Azimuth Angle (Sun): "+ azimuthAngle +" | Difference: "+phoneVsSunOrientationDifference);
+	          
 	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_GRAVITY){
 	    	  mGravity = event.values;
 	      }else if(event.sensor.getType() == android.hardware.Sensor.TYPE_LINEAR_ACCELERATION )
@@ -429,14 +529,20 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		      }
 	      }else if (event.sensor.getType() == android.hardware.Sensor.TYPE_LIGHT) {
 				lightIntensityReading = event.values[0];
-				gotLightSensorData();
-//			Toast.makeText(getApplicationContext(), String.valueOf(mAccBuffer.size()), Toast.LENGTH_SHORT).show();
+              try {
+            	  mLightBuffer.add(lightIntensityReading);
+              } catch (IllegalStateException e) {
+            	  ArrayBlockingQueue<Double> newBuf = new ArrayBlockingQueue<Double>(2*mLightBuffer.size());
+            	  mLightBuffer.drainTo(newBuf);
+            	  mLightBuffer = newBuf;
+            	  mLightBuffer.add(lightIntensityReading);				
+              }
 	      }
 	}
 
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 	
-//SEND IN timestamp as long and then luxvalue as float
+//NO LONGER CALLED AT THE MOMENT
 	public void gotLightSensorData() {
 
         //only want max, don't store buffer
@@ -448,15 +554,15 @@ public class TrackingService extends Service implements LocationListener, Sensor
         //JERRID: Once 16 readings are found, identify the MIN, MAX, magnitude
         if (blockSize == Globals.LIGHT_BLOCK_CAPACITY) 
         {
-
-    		if(maxIntensityThisBuffer > 1500){
-    				environmentClassification = Globals.CLASS_LABEL_IN_SUN;
-    		}else if(maxIntensityThisBuffer < 200){
-    			environmentClassification = Globals.CLASS_LABEL_IN_DOORS;
-    		}else{
+        	//Indoors
+    		if(maxIntensityThisBuffer <= 200){
+    				environmentClassification = Globals.CLASS_LABEL_IN_DOORS;
+    		}else if(maxIntensityThisBuffer > 200 && maxIntensityThisBuffer <= 6000){
     			environmentClassification = Globals.CLASS_LABEL_IN_SHADE;
-    		}
-        	
+    		}else if(maxIntensityThisBuffer > 6000 && maxIntensityThisBuffer <= 10000){
+    			environmentClassification = Globals.CLASS_LABEL_IN_CLOUD;
+    		}else
+    			environmentClassification = Globals.CLASS_LABEL_IN_SUN;
         	
 			mMotionUpdateBroadcast.putExtra(Globals.ENVIRONMENT_CLASSIFICATION,environmentClassification);
 			mMotionUpdateBroadcast.putExtra(Globals.PITCH_BODY,pitchReading);
@@ -471,35 +577,22 @@ public class TrackingService extends Service implements LocationListener, Sensor
         	//varianceIntensity = 0;
         	//meanAbsoluteDeveationLightIntensity = 0;
         	//meanLightIntensity = 0;
+        	lightIntensityReading=0;
         	maxIntensityThisBuffer = -1;
         }
 		return;
 	}
 
-	Handler uviHandler;
-	Runnable uviRunnable = new Runnable() {
+	Handler sunAngleHandler;
+	Runnable sunAngleRunnable = new Runnable() {
         @Override
         public void run() {
-        	final Intent currentUVIIntent = new Intent(getApplicationContext(), UltravioletIndexService.class);
-        	currentUVIIntent.setAction(UltravioletIndexService.CURRENT_UV_INDEX_ALL);
-        	startService(currentUVIIntent);
-
-    		uviHandler.postDelayed(uviRunnable, Globals.UVI_UPDATE_RATE);
+        	final Intent currentSunAngleIntent = new Intent(getApplicationContext(), UltravioletIndexService.class);
+        	currentSunAngleIntent.setAction(UltravioletIndexService.CURRENT_SUN_ANGLE);
+        	startService(currentSunAngleIntent);
+        	sunAngleHandler.postDelayed(sunAngleRunnable, Globals.SUN_ANGLE_UPDATE_RATE);
         }
     };
-			
-    private double mCurrentUVISun = 0.0;
-    private double mCurrentUVIShade = 0.0;
-	class UVIBroadcastReciever extends BroadcastReceiver {
-
-		
-		@Override
-		public void onReceive(Context arg0, Intent arg1) {
-			 // Convert from mW/cm^2 to (J/s)/m^2
-			mCurrentUVISun = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SUN) * (100*100 / 1000);
-			mCurrentUVIShade = arg1.getExtras().getDouble(UltravioletIndexService.CURRENT_UV_INDEX_SHADE) * (100*100 / 1000);
-		}
-	}
 	
 	// Timer object to periodically update final type
 	Timer updateFinalTypeTimer = new Timer();
@@ -509,9 +602,57 @@ public class TrackingService extends Service implements LocationListener, Sensor
 	Map<Integer,Integer> mFinalInferredActivityTypeMap = new HashMap<Integer,Integer>();
 	Map<Integer,Double> mActivityVsDurationMap = new HashMap<Integer,Double>();
 
+
+	private void updateRelativeExposurePercentages() {
+		if(this.solarZenithAngle >= 0 && this.solarZenithAngle <= 30){
+			relativeFaceAngle=.26f;
+			relativeNeckAngle=.23f;
+			relativeChestAngle=.23f;
+			relativeBackAngle=.23f;
+			relativeForearmAngle=.13f;
+			relativeDorsalHandAngle=.30f;
+			relativeLegAngle=.12f;
+		}else if(this.solarZenithAngle >= 31 && this.solarZenithAngle <= 50){
+			relativeFaceAngle=.39f;
+			relativeNeckAngle=.36f;
+			relativeChestAngle=.36f;
+			relativeBackAngle=.36f;
+			relativeForearmAngle=.17f;
+			relativeDorsalHandAngle=.35f;
+			relativeLegAngle=.23f;
+		}else if(this.solarZenithAngle >= 51 && this.solarZenithAngle <= 80){
+			relativeFaceAngle=.48f;
+			relativeNeckAngle=.59f;
+			relativeChestAngle=.59f;
+			relativeBackAngle=.59f;
+			relativeForearmAngle=.41f;
+			relativeDorsalHandAngle=.42f;
+			relativeLegAngle=.47f;
+		}
+	}
+
 	private int leadInferredActivityIndex = Globals.ACTIVITY_ID_STANDING,leadActivityCount=0;
+	Calendar timestamp;
+	public static double cumulativeFaceExposure=0,
+			cumulativeNeckExposure=0,
+			cumulativeChestExposure=0,
+			cumulativeBackExposure=0,
+			cumulativeForearmExposure=0,
+			cumulativeDorsalHandExposure=0,
+			cumulativeLegExposure=0,
+			cumulativeHorizontalExposure=0;
+
+	private float relativeFaceAngle=.26f;
+	private float relativeNeckAngle=.23f;
+	private float relativeChestAngle=.23f;
+	private float relativeBackAngle=.23f;
+	private float relativeForearmAngle=.13f;
+	private float relativeDorsalHandAngle=.30f;
+	private float relativeLegAngle=.12f;
 	
+	@SuppressLint("DefaultLocale")
 	private class AccelerometerActivityClassificationTask extends AsyncTask<Void, Void, Void> {
+
 		@Override
 		protected Void doInBackground(Void... arg0) {
 
@@ -522,60 +663,153 @@ public class TrackingService extends Service implements LocationListener, Sensor
 			double[] im = new double[Globals.ACCELEROMETER_BLOCK_CAPACITY];
 			
 			double max = Double.MIN_VALUE;
-			// Use in case you want to collect data for training
-			FileOutputStream trainingDataFileStream = null;
 
-			while (true) {
-				
-				try {
-					//PROCESS LIGHT SENSOR DATA
-					lightIntensityReading = Math.max(light0, light1);
-			        if(lightIntensityReading > maxIntensityThisBuffer)
-			        	maxIntensityThisBuffer = lightIntensityReading;
+			while (true) 
+			{
+				try 
+				{
+		        	Calendar time = new GregorianCalendar();
+		    		//Update the Sun angles
+		            if(time.getTimeInMillis() > timestamp.getTimeInMillis() + 12 * Globals.ONE_MINUTE) {
+		        		final Intent currentUVIIntent = new Intent();
+		        		currentUVIIntent.setAction(UltravioletIndexService.CURRENT_SUN_ANGLE);
+		        		startService(currentUVIIntent);
+		        		timestamp = time;
+		            }
+		            
+		            //-------Update the Light Intensity Values-----
+		            
+			            
+			        if(Globals.FOUND_ARDUINO == false)
+					{
+			        	try
+			        	{
+			        		lightIntensityReading = mLightBuffer.take().doubleValue();
+			        		blockSizeLight++;
+					        if(lightIntensityReading > maxIntensityThisBuffer)
+					        	maxIntensityThisBuffer = lightIntensityReading;
+					        if (blockSizeLight == Globals.LIGHT_BLOCK_CAPACITY ) 
+					        {
+					        	//Indoors
+								myOutWriter.write(environmentClassification+",");
+								myOutWriter.write(maxIntensityThisBuffer+",");
+								
+					        	System.out.print("Environmant Classificaton: "+environmentClassification);
+					        	System.out.print(" | Intensity Default: "+ maxIntensityThisBuffer);
+				        		
+					        	/*
+				        		 * NOTE: THe commented out sections were an attempt to scale the light intensity values when the phone
+				        		 * screen is oriented opposite from the Sun. The falasy of this approach is more information is required
+				        		 * to discriminate between shade vs Sun so this same scalor is applied when the phones in the shade, which
+				        		 * causes the shade values to reflect Sun, and thats not what we want
+				        		 */
+					        	/*if(elevationAngle != Float.MAX_VALUE)
+					        	{
 
-					blockSizeLight++;
-			        //JERRID: Once 16 readings are found, identify the MIN, MAX, magnitude
-			        if (blockSizeLight == Globals.LIGHT_BLOCK_CAPACITY) 
-			        {
+					        		//double scalor=1;
+					        		//if(phoneVsSunOrientationDifference > 180){
+					        			//NOTE: I fit the linear model as a factor of 0:180 0x:16x in terms of avg intensity difference
+					        			//So if angular difference is > 180 then I need to normalize back to w/in 180 range
+					        		//	phoneVsSunOrientationDifference = 180 - (phoneVsSunOrientationDifference % 180);
+					        		//}
+					        		//scalor = phoneVsSunOrientationDifference*8/90;//slope measured of intensity differences standing still and turning in a circle
+					        		//NOTE: The true function is exponential but for time it's linear for now
 
-			    		if(maxIntensityThisBuffer > 1500){
-			    				environmentClassification = Globals.CLASS_LABEL_IN_SUN;
-			    		}else if(maxIntensityThisBuffer < 200){
-			    			environmentClassification = Globals.CLASS_LABEL_IN_DOORS;
-			    		}else{
-			    			environmentClassification = Globals.CLASS_LABEL_IN_SHADE;
-			    		}
-			        	
-			        	
-						mMotionUpdateBroadcast.putExtra(Globals.ENVIRONMENT_CLASSIFICATION,environmentClassification);
-						mMotionUpdateBroadcast.putExtra(Globals.PITCH_BODY,pitchReading);
-						mMotionUpdateBroadcast.putExtra(Globals.LIGHT_INTENSITY_READING,maxIntensityThisBuffer);
-						
-			        	//Reset the Values
-						blockSizeLight = 0;
-			        	// time = System.currentTimeMillis();
-			        	maxLightMagnitude = Double.MIN_VALUE;
-			        	//minLightMagnitude = Double.MAX_VALUE;
-			        	//stdLightMagnitude = 0;
-			        	//varianceIntensity = 0;
-			        	//meanAbsoluteDeveationLightIntensity = 0;
-			        	//meanLightIntensity = 0;
-			        	maxIntensityThisBuffer = -1;
-			        }
+						        	//System.out.print(" | Scalor Default: "+ scalor);
+									//myOutWriter.write(scalor+",");
+					        		//maxIntensityThisBuffer = maxIntensityThisBuffer + maxIntensityThisBuffer*scalor*Math.sin(Utils.convertDegreeToRadian(phoneVsSunOrientationDifference))*Math.cos(Utils.convertDegreeToRadian(elevationAngle));
+
+									//myOutWriter.write(maxIntensityThisBuffer+",");
+									//System.out.println(" | New Intensity: "+ maxIntensityThisBuffer);
+					        		//System.out.println("Elevation Angle (Sun): "+elevationAngle + " | Azimuth Angle (Sun): "+ azimuthAngle +" | Difference: "+phoneVsSunOrientationDifference);
+
+									myOutWriter.write(elevationAngle+",");
+									myOutWriter.write(azimuthAngle+",");
+									myOutWriter.write(phoneVsSunOrientationDifference+",");
+					        	}
+								myOutWriter.write("\n");
+					    		*/
+					        	 
+					    		if(maxIntensityThisBuffer <= 200){
+					    				environmentClassification = Globals.CLASS_LABEL_IN_DOORS;
+					    		}else if(maxIntensityThisBuffer > 200 && maxIntensityThisBuffer <= 4800){
+					    			environmentClassification = Globals.CLASS_LABEL_IN_SHADE;
+					    		}
+					    		//else if(maxIntensityThisBuffer > 2000 && maxIntensityThisBuffer <= 10000){
+					    		//	environmentClassification = Globals.CLASS_LABEL_IN_CLOUD;
+					    		//}
+					    		else
+					    			environmentClassification = Globals.CLASS_LABEL_IN_SUN;
+					        	
+								mMotionUpdateBroadcast.putExtra(Globals.ENVIRONMENT_CLASSIFICATION,environmentClassification);
+								mMotionUpdateBroadcast.putExtra(Globals.PITCH_BODY,pitchReading);
+								mMotionUpdateBroadcast.putExtra(Globals.LIGHT_INTENSITY_READING,maxIntensityThisBuffer);
+								
+					        	//Reset the Values
+								blockSizeLight = 0;
+					        	// time = System.currentTimeMillis();
+					        	maxLightMagnitude = Double.MIN_VALUE;
+					        	//minLightMagnitude = Double.MAX_VALUE;
+					        	//stdLightMagnitude = 0;
+					        	//varianceIntensity = 0;
+					        	//meanAbsoluteDeveationLightIntensity = 0;
+					        	//meanLightIntensity = 0;
+					        	lightIntensityReading=0;
+					        	maxIntensityThisBuffer = -1;
+					        }
+						}catch(Exception e){
+							e.printStackTrace();
+						}
+					}else
+					{
+						//PROCESS ARDURINO LIGHT SENSOR DATA
+						lightIntensityReading = Math.max(light0, light1);
+				        if(lightIntensityReading > maxIntensityThisBuffer)
+				        	maxIntensityThisBuffer = lightIntensityReading;
+	
+						blockSizeLight++;
+				        //JERRID: Once 16 readings are found, identify the MIN, MAX, magnitude
+				        if (blockSizeLight == Globals.LIGHT_BLOCK_CAPACITY_ARDURINO) 
+				        {
+				        	//Indoors
+				    		if(maxIntensityThisBuffer <= 200){
+				    				environmentClassification = Globals.CLASS_LABEL_IN_DOORS;
+				    		}else if(maxIntensityThisBuffer > 200 && maxIntensityThisBuffer <= 700){
+				    			environmentClassification = Globals.CLASS_LABEL_IN_CLOUD;
+				    		}else if(maxIntensityThisBuffer > 700 && maxIntensityThisBuffer <= 1500){
+				    			environmentClassification = Globals.CLASS_LABEL_IN_SHADE;
+				    		}else 
+				    			environmentClassification = Globals.CLASS_LABEL_IN_SUN;
+				        	
+				        	
+							mMotionUpdateBroadcast.putExtra(Globals.ENVIRONMENT_CLASSIFICATION,environmentClassification);
+							mMotionUpdateBroadcast.putExtra(Globals.PITCH_BODY,pitchReading);
+							mMotionUpdateBroadcast.putExtra(Globals.LIGHT_INTENSITY_READING,maxIntensityThisBuffer);
+							
+				        	//Reset the Values
+							blockSizeLight = 0;
+				        	// time = System.currentTimeMillis();
+				        	maxLightMagnitude = Double.MIN_VALUE;
+				        	//minLightMagnitude = Double.MAX_VALUE;
+				        	//stdLightMagnitude = 0;
+				        	//varianceIntensity = 0;
+				        	//meanAbsoluteDeveationLightIntensity = 0;
+				        	//meanLightIntensity = 0;
+				        	maxIntensityThisBuffer = -1;
+				        }
+					}
 			        //-------------END LIGHT SENSOR
 			        
 					//----------PROCESS ACCELEROMATER DATA
 					ArrayList<Double> featVect = new ArrayList<Double>(Globals.ACCELEROMETER_BLOCK_CAPACITY + 1);
-					
-					// Dumping buffer
-					double accelValue = mAccBuffer.take().doubleValue();		
+					// Pops the "head" element from the Blocking Queue one at a time
+					double accelValue = mAccBuffer.take().doubleValue();
 					accBlock[blockSize++] = accelValue;
-					
-					// JERRID: Pops the "head" element from the Blocking Queue one at a time
 					if(accelValue > max)
 						max = accelValue;
 					
-					if (blockSize == Globals.ACCELEROMETER_BLOCK_CAPACITY) {
+					if (blockSize == Globals.ACCELEROMETER_BLOCK_CAPACITY) 
+					{
 						//Recieved a full block/disable data collection						
 						pauseDataCollection();
 						
@@ -587,16 +821,38 @@ public class TrackingService extends Service implements LocationListener, Sensor
 						bufferFillStartTime = bufferFillFinishTime;
 						
 						// Calculate running total of UV Exposure w.r.t. second
-						if (environmentClassification.equals(Globals.CLASS_LABEL_IN_SUN))
-							cumulativeUVExposure += mCurrentUVISun * timeElapsedSeconds;
-						else if (environmentClassification.equals(Globals.CLASS_LABEL_IN_SHADE))
-							cumulativeUVExposure += mCurrentUVIShade * timeElapsedSeconds;
-					
-						mMotionUpdateBroadcast.putExtra(Globals.CUMULATIVE_UV_EXPOSURE, cumulativeUVExposure);
+						double uviValue = 0;
+						if (environmentClassification.equals(Globals.CLASS_LABEL_IN_SUN)){
+							uviValue = UltravioletIndexService.uvIrradianceSun;
+						}if(environmentClassification.equals(Globals.CLASS_LABEL_IN_CLOUD)){
+							uviValue = UltravioletIndexService.uvIrradianceShade;
+						}else if (environmentClassification.equals(Globals.CLASS_LABEL_IN_SHADE)){
+							uviValue = UltravioletIndexService.uvIrradianceShade;
+						}else if (environmentClassification.equals(Globals.CLASS_LABEL_IN_DOORS)){
+							uviValue = 0;
+						}
+
+						updateRelativeExposurePercentages();
+						cumulativeHorizontalExposure+= uviValue * timeElapsedSeconds;
+						cumulativeFaceExposure+= uviValue * relativeFaceAngle * timeElapsedSeconds;
+						cumulativeNeckExposure+= uviValue * relativeNeckAngle * timeElapsedSeconds;
+						cumulativeChestExposure+= uviValue * relativeChestAngle * timeElapsedSeconds;
+						cumulativeBackExposure+= uviValue * relativeBackAngle * timeElapsedSeconds;
+						cumulativeForearmExposure+= uviValue * relativeForearmAngle * timeElapsedSeconds;
+						cumulativeDorsalHandExposure+= uviValue * relativeDorsalHandAngle * timeElapsedSeconds;
+						cumulativeLegExposure+= uviValue * relativeLegAngle * timeElapsedSeconds;
+
+						mMotionUpdateBroadcast.putExtra(Globals.CUMULATIVE_UV_EXPOSURE, cumulativeHorizontalExposure);
+						mMotionUpdateBroadcast.putExtra(Globals.CUMULATIVE_FACE_UV_EXPOSURE, cumulativeFaceExposure);
+						mMotionUpdateBroadcast.putExtra(Globals.CUMULATIVE_NECK_UV_EXPOSURE, cumulativeNeckExposure);
+						mMotionUpdateBroadcast.putExtra(Globals.CUMULATIVE_CHEST_UV_EXPOSURE, cumulativeChestExposure);
+						mMotionUpdateBroadcast.putExtra(Globals.CUMULATIVE_BACK_UV_EXPOSURE, cumulativeBackExposure);
+						mMotionUpdateBroadcast.putExtra(Globals.CUMULATIVE_FOREARM_UV_EXPOSURE, cumulativeForearmExposure);
+						mMotionUpdateBroadcast.putExtra(Globals.CUMULATIVE_DORSAL_HAND_UV_EXPOSURE, cumulativeDorsalHandExposure);
+						mMotionUpdateBroadcast.putExtra(Globals.CUMULATIVE_LEG_UV_EXPOSURE, cumulativeLegExposure);
 						//----------
 						
 						blockSize = 0;
-		
 						fft.fft(re, im);
 						for (int i = 0; i < re.length; i++) {
 							double mag = Math.sqrt(re[i] * re[i] + im[i] * im[i]);
@@ -607,7 +863,6 @@ public class TrackingService extends Service implements LocationListener, Sensor
 						// Append max after frequency component
 						featVect.add(max);						
 						mCurrentActivityIndex = (int) WekaClassifier.classify(featVect.toArray());
-						
 						int currentActivityCount = mInferredActivityTypeMap.containsKey(mCurrentActivityIndex) ? mInferredActivityTypeMap.get(mCurrentActivityIndex) : 0;
 						mInferredActivityTypeMap.put(mCurrentActivityIndex, currentActivityCount++);
 						
@@ -635,11 +890,11 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		                	mInferredActivityType = Globals.INFERENCE_MAPPING[leadInferredActivityIndex];
 		                	mMotionUpdateBroadcast.putExtra(Globals.VOTED_ACTIVITY_TYPE, mInferredActivityType);
 		                	
-							int sweatRateIndex = GetSweatRateIndexForActivity(mInferredActivityType);
+							sweatRateIndex = GetSweatRateIndexForActivity(mInferredActivityType);
 							mMotionUpdateBroadcast.putExtra(Globals.SWEAT_RATE_INDEX,Globals.SWEAT_RATE_INTERVALS[sweatRateIndex]);
 		                }
 		                
-						int currentActivity = Globals.INFERENCE_MAPPING[mCurrentActivityIndex];
+						currentActivity = Globals.INFERENCE_MAPPING[mCurrentActivityIndex];
 						mMotionUpdateBroadcast.putExtra(Globals.CURRENT_ACTIVITY_TYPE, currentActivity);
 						
 						
@@ -653,9 +908,30 @@ public class TrackingService extends Service implements LocationListener, Sensor
 						} else if(leadInferredActivityIndex == Globals.ACTIVITY_TYPE_RUNNING) {
 							cumulativeSweatRate += Globals.SWEAT_RATE_HOURLY_RUNNING * (timeElapsedSeconds/Globals.ONE_HOUR);
 						}
-	
 						mMotionUpdateBroadcast.putExtra(Globals.SWEAT_TOTAL, cumulativeSweatRate);
 
+						myOutWriter.write(Long.toString(bufferFillFinishTime)+",");
+						myOutWriter.write(Double.toString(timeElapsedSeconds)+",");
+						myOutWriter.write(Float.toString(solarZenithAngle)+",");
+						myOutWriter.write(Float.toString(elevationAngle)+",");
+						myOutWriter.write(Float.toString(azimuthAngle)+",");
+						myOutWriter.write(Double.toString(phoneScreenAngle)+",");
+						myOutWriter.write(Double.toString(phoneVsSunOrientationDifference)+",");
+						myOutWriter.write(Double.toString(relativeFaceAngle)+",");
+						myOutWriter.write(Double.toString(relativeNeckAngle)+",");
+						myOutWriter.write(Double.toString(relativeChestAngle)+",");
+						myOutWriter.write(Double.toString(relativeBackAngle)+",");
+						myOutWriter.write(Double.toString(relativeForearmAngle)+",");
+						myOutWriter.write(Double.toString(relativeDorsalHandAngle)+",");
+						myOutWriter.write(Float.toString(relativeLegAngle)+",");
+						myOutWriter.write(Globals.ACTIVITY_TYPES[currentActivity]+",");
+						myOutWriter.write(Globals.ACTIVITY_TYPES[mInferredActivityType]+",");
+						
+						if(mLocationList.size() > 0){
+							Location location = mLocationList.get(mLocationList.size()-1);
+							myOutWriter.write(","+location.getLatitude()+","+location.getLongitude());
+						}
+						myOutWriter.write("\n");
 						
 						 // Used to update the current type.
 						 sendBroadcast(mMotionUpdateBroadcast);
@@ -689,5 +965,78 @@ public class TrackingService extends Service implements LocationListener, Sensor
 		
 		return sweatRateIndex;
 		}
+	}
+
+
+	
+	@Override
+	public void onReadyForSpeech(Bundle params) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onBeginningOfSpeech() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onRmsChanged(float rmsdB) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onBufferReceived(byte[] buffer) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onEndOfSpeech() {
+		// TODO Auto-generated method stub
+
+		speechRecognizer.stopListening();
+	}
+
+	@Override
+	public void onError(int error) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onResults(Bundle results) {
+		//Disable the speech
+		ArrayList strlist = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        SnowballStemmer stemmer = new SnowballStemmer();  // initialize stopwords
+        stemmer.setStemmer("english");
+                   
+        String input=stemmer.stem(strlist.get(0).toString().toLowerCase()) + " ";;
+		 //for (int i = 0; i < strlist.size();i++ ) 
+			 //input+=stemmer.stem(strlist.get(i).toString().toLowerCase()) + " ";
+			 
+		 //Stop the path recording
+		 if(input.contains("stop") && input.contains("record")){
+			 
+		 }
+		 //Start the path recordings
+		 if(input.contains("record") && input.contains("path")){
+			 
+		 }
+		 Log.e("TGAGS",input);
+	}
+
+	@Override
+	public void onPartialResults(Bundle partialResults) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onEvent(int eventType, Bundle params) {
+		// TODO Auto-generated method stub
+		
 	}
 }

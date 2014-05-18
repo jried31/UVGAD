@@ -18,7 +18,7 @@ public abstract class Globals {
 	
 	//JERRID: ******************************
 	public static final int FEAT_NUMBER_FEATURES=2;
-	public static final int LIGHT_BLOCK_CAPACITY = 512;
+	public static final int LIGHT_BLOCK_CAPACITY = 1500000;
 	public static final int LIGHT_BLOCK_CAPACITY_ARDURINO = 42;
 	public static final String LIGHT_INTENSITY_FILE_NAME = "lightClassification.txt";
 	

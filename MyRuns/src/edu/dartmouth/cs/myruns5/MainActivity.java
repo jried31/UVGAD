@@ -27,7 +27,6 @@ public class MainActivity extends Activity {
 	public static final String ACTIVITY_TYPE = "activity type";
 	public static final String INPUT_TYPE = "input type";
 	public static final String TASK_TYPE = "task type";
-	public static final String SWEAT_RATE = "sweat rate";
 	private Context mContext;
 	private SharedPreferences sp;
 	CurrentUVIFragment uviFragment;
@@ -40,8 +39,6 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-
-
         ParseObject.registerSubclass(ParseUVReading.class);
 		Parse.initialize(this, "WbDp7JEI27askcOboEqer63TlIPGKLmNZQM92ivU","B6lwzPTXqLJOxPUtutKngW7rNKZeNVKuIRLtJZRJ");
 		
@@ -49,6 +46,7 @@ public class MainActivity extends Activity {
 		saveSettings();
 		mContext = this;
 
+		//Grab the current UVI
 		final Intent currentUVIIntent = new Intent(this, UltravioletIndexService.class);
 		currentUVIIntent.setAction(UltravioletIndexService.CURRENT_UV_INDEX);
 		startService(currentUVIIntent);
@@ -125,8 +123,6 @@ public class MainActivity extends Activity {
 		super.onSaveInstanceState(outState);
 		outState.putInt(KEY_TAB_INDEX, getActionBar().getSelectedNavigationIndex());
 	}
-
-	
 	
 	public boolean getShowHintStatus() {
 		return sp.getBoolean("ShowHintStatus", true);
@@ -178,8 +174,6 @@ public class MainActivity extends Activity {
 		}
 
 		// put extra
-		intent.putExtra(INPUT_TYPE, pos);
-
 		spinner = (Spinner) findViewById(R.id.Spinner_ActivityType);
 		pos = spinner.getSelectedItemPosition();
 		intent.putExtra(ACTIVITY_TYPE, pos);
@@ -220,8 +214,6 @@ public class MainActivity extends Activity {
         .show();
 	}
 }
-
-
 
 class MyTabListener implements ActionBar.TabListener {
 	private Fragment mFragment;

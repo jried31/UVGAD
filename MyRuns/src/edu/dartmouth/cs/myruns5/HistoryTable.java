@@ -16,7 +16,7 @@ public class HistoryTable{
 			public static final String KEY_DATE_TIME = Globals.KEY_DATE_TIME;
 			public static final String KEY_DURATION = Globals.KEY_DURATION;
 			public static final String KEY_DISTANCE = Globals.KEY_DISTANCE;
-			public static final String KEY_SWEATRATE = Globals.KEY_SWEATRATE;
+			public static final String KEY_SWEAT_TOTAL = Globals.KEY_SWEAT_TOTAL;
 			public static final String KEY_AVG_PACE = Globals.KEY_AVG_PACE;
 			public static final String KEY_AVG_SPEED = Globals.KEY_AVG_SPEED;
 			public static final String KEY_CALORIES = Globals.KEY_CALORIES;
@@ -27,6 +27,13 @@ public class HistoryTable{
 			public static final String KEY_GPS_DATA = Globals.KEY_GPS_DATA;
 			public static final String KEY_VITAMIN_D = Globals.KEY_VITAMIN_D;
 			public static final String KEY_UV_EXPOSURE = Globals.KEY_UV_EXPOSURE;
+			public static final String KEY_UV_EXPOSURE_FACE = Globals.KEY_UV_EXPOSURE_FACE;
+			public static final String KEY_UV_EXPOSURE_NECK = Globals.KEY_UV_EXPOSURE_NECK;
+			public static final String KEY_UV_EXPOSURE_CHEST = Globals.KEY_UV_EXPOSURE_CHEST;
+			public static final String KEY_UV_EXPOSURE_FOREARM = Globals.KEY_UV_EXPOSURE_FOREARM;
+			public static final String KEY_UV_EXPOSURE_DORSAL_HAND = Globals.KEY_UV_EXPOSURE_DORSAL_HAND;
+			public static final String KEY_UV_EXPOSURE_LEG = Globals.KEY_UV_EXPOSURE_LEG;
+			
 			public static final String KEY_TRACK = Globals.KEY_TRACK;
 			public static final String KEY_GENDER = Globals.KEY_GENDER;
 			public static final String KEY_SKIN_TONE = Globals.KEY_SKIN_TONE;
@@ -38,6 +45,8 @@ public class HistoryTable{
 
 			// SQL query to create the table for the first time
 			// Data types are defined below
+			
+			
 			public static final String CREATE_TABLE_ENTRIES = "CREATE TABLE IF NOT EXISTS "
 					+ TABLE_NAME_ENTRIES
 					+ " ("
@@ -47,12 +56,18 @@ public class HistoryTable{
 					+ KEY_DATE_TIME + " DATETIME NOT NULL, "
 					+ KEY_DURATION + " INTEGER NOT NULL, "
 					+ KEY_DISTANCE + " FLOAT, "
-					+ KEY_SWEATRATE + " FLOAT, "
+					+ KEY_SWEAT_TOTAL + " FLOAT, "
 					+ KEY_AVG_PACE + " FLOAT, "
 					+ KEY_AVG_SPEED + " FLOAT,"
 					+ KEY_CALORIES + " INTEGER, "
 					+ KEY_CLIMB + " FLOAT, "
 					+ KEY_UV_EXPOSURE + " FLOAT, "
+					+ KEY_UV_EXPOSURE_FACE + " FLOAT, "
+					+ KEY_UV_EXPOSURE_NECK + " FLOAT, "
+					+ KEY_UV_EXPOSURE_CHEST + " FLOAT, "
+					+ KEY_UV_EXPOSURE_FOREARM + " FLOAT, "
+					+ KEY_UV_EXPOSURE_DORSAL_HAND + " FLOAT, "
+					+ KEY_UV_EXPOSURE_LEG + " FLOAT, "
 					+ KEY_VITAMIN_D + " FLOAT, "
 					+ KEY_HEARTRATE + " INTEGER, "
 					+ KEY_COMMENT + " TEXT, "

@@ -39,8 +39,7 @@ public class LocationUtils {
    * @return true if the location is a valid location.
    */
   public static boolean isValidLocation(Location location) {
-    return location != null && Math.abs(location.getLatitude()) <= 90
-        && Math.abs(location.getLongitude()) <= 180;
+    return location != null && Math.abs(location.getLatitude()) <= 90 && Math.abs(location.getLongitude()) <= 180;
   }
 
   /**

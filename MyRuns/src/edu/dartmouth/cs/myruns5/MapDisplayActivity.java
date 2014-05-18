@@ -70,7 +70,6 @@ public class MapDisplayActivity extends Activity {
 	PolylineOptions rectOptions;
 	Polyline polyline;
 
-	 
 	public ArrayList<Location> mLocationList;
 	private ArrayList<LatLng> mLatLngList;
 	
@@ -116,7 +115,6 @@ public class MapDisplayActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 
     	Toast.makeText(getApplicationContext(), "MapDisplay onCreate", Toast.LENGTH_SHORT).show();
-		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_map_display);
 		
@@ -167,9 +165,7 @@ public class MapDisplayActivity extends Activity {
 		mMap = mMapFragment.getMap();
 		
 		switch (mTaskType) {
-
-		case Globals.TASK_TYPE_NEW:		
-
+		case Globals.TASK_TYPE_NEW:	//Start new Track
 			intent = new Intent(this, TrackingService.class);
 			intent.putExtra(INPUT_TYPE, mInputType);
 			bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
@@ -181,8 +177,6 @@ public class MapDisplayActivity extends Activity {
 			break;
 
 		case Globals.TASK_TYPE_HISTORY:
-			Log.d(null, "history 1");
-			
 			// remove buttons
 			Button saveButton = (Button) findViewById(R.id.button_map_save);
 			saveButton.setVisibility(View.GONE);
@@ -194,7 +188,6 @@ public class MapDisplayActivity extends Activity {
 			sendButton.setClickable(true);
 
 			// Read track from database
-			intent = getIntent();
 			mLocationList = intent.getParcelableArrayListExtra(HistoryFragment.TRACK);
 				
 			// sanity check
@@ -202,23 +195,20 @@ public class MapDisplayActivity extends Activity {
 				Log.d(null, "this should not happen");
 				return;
 			}
-			Log.d(null, "history 2");
 
-			// convert
+			// convert to LatLng class
 			for (int i = 0; i < mLocationList.size(); i++)
 				mLatLngList.add(Utils.fromLocationToLatLng(mLocationList.get(i)));
 			
-			boolean draw = mLocationList.size()!=0;
-			if (draw)
-				firstLatLng = Utils.fromLocationToLatLng(mLocationList.get(0));
-			Log.d(null, "history 3");
-
+			//Draw location history if it exists
+			boolean draw = mLocationList.size() > 0;
+			
 			// draw markers
 			if (draw){
+				firstLatLng = Utils.fromLocationToLatLng(mLocationList.get(0));
 				mMap.addMarker(new MarkerOptions().position(firstLatLng).title("Start Point"));
 				mMap.addMarker(new MarkerOptions().position(mLatLngList.get(mLatLngList.size()-1)).
-						title("You Are Here").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-				
+					title("You Are Here").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
 				
 				// move camera
 				mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(firstLatLng, 17));
@@ -235,7 +225,10 @@ public class MapDisplayActivity extends Activity {
 			
 			// read stats
 			intent = getIntent();
+
 			String type  = Globals.TYPE_STATS + intent.getStringExtra(HistoryFragment.ACTIVITY_TYPE);
+			String sweatTotal =  Globals.SWEAT_STATS + intent.getStringExtra(HistoryFragment.SWEAT_TOTAL);
+			
 			String avgSpeed = Globals.AVG_SPEED_STATS + String.format("%1$.2f", 
 					Double.parseDouble(intent.getStringExtra(HistoryFragment.AVG_SPEED))) + " meters / sec";
 			String curSpeed = Globals.CUR_SPEED_STATS + "0" + " meters / sec";
@@ -245,7 +238,28 @@ public class MapDisplayActivity extends Activity {
 			String distance = Globals.DISTANCE_STATS + String.format("%1$.2f", 
 					Double.parseDouble(intent.getStringExtra(HistoryFragment.DISTANCE))) + " meters";
 			
-			typeStats.setText(type);
+			String cumulativeUVExposure = intent.getStringExtra(HistoryFragment.UV_EXPOSURE);
+			String cumulativeUVExposureChest = intent.getStringExtra(HistoryFragment.UV_EXPOSURE_CHEST);
+			String cumulativeUVExposureHand = intent.getStringExtra(HistoryFragment.UV_EXPOSURE_DORSAL_HAND);
+			String cumulativeUVExposureFace = intent.getStringExtra(HistoryFragment.UV_EXPOSURE_FACE);
+			String cumulativeUVExposureForearm = intent.getStringExtra(HistoryFragment.UV_EXPOSURE_FOREARM);
+			String cumulativeUVExposureLeg = intent.getStringExtra(HistoryFragment.UV_EXPOSURE_LEG);
+			String cumulativeUVExposureNeck = intent.getStringExtra(HistoryFragment.UV_EXPOSURE_NECK);	
+
+			mEntry.setSweatCumulative(mCumulativeSweatTotal);
+			mEntry.setCumulativeBackExposure(cumulativeBackExposure);
+			mEntry.setCumulativeChestExposure(cumulativeChestExposure);
+			mEntry.setCumulativeHandExposure(cumulativeDorsalHandExposure);
+			mEntry.setCumulativeFaceExposure(cumulativeFaceExposure);
+			mEntry.setCumulativeForearmExposure(cumulativeForearmExposure);
+			mEntry.setCumulativeLegExposure(cumulativeLegExposure);
+			mEntry.setCumulativeNeckExposure(cumulativeNeckExposure);
+			mEntry.setCumulativeHorizontalExposure(mCumulativeUVExposure);
+			
+			uviStats.setText(String.format("Total UV Exposure: \nFace: %s J/m^2 | Neck: %s J/m^2\nChest: %s J/m^2 | Forearm: %s J/m^2\nHand: %s J/m^2 | Leg: %s J/m^2\nBody: %s J/m^2", 
+					cumulativeUVExposureFace,cumulativeUVExposureNeck,cumulativeUVExposureChest,cumulativeUVExposureForearm,cumulativeUVExposureHand,cumulativeUVExposureLeg,cumulativeUVExposure));
+
+			typeStats.setText(String.format("%s\nSweat Total: %s liters/hr",type,sweatTotal));
 			avgspeedStats.setText(avgSpeed);
 			curspeedStats.setText(curSpeed);
 			climbStats.setText(climb);
@@ -335,9 +349,16 @@ public class MapDisplayActivity extends Activity {
 		mEntry.setLocationList(mLocationList);
 		mEntry.setDuration((int)mDuration);
 		mEntry.setActivityType(mInferredActivityType);
-		mEntry.setUvExposureCumulative(mCumulativeUVExposure);
 		mEntry.setSweatCumulative(mCumulativeSweatTotal);
-		
+		mEntry.setCumulativeBackExposure(cumulativeBackExposure);
+		mEntry.setCumulativeChestExposure(cumulativeChestExposure);
+		mEntry.setCumulativeHandExposure(cumulativeDorsalHandExposure);
+		mEntry.setCumulativeFaceExposure(cumulativeFaceExposure);
+		mEntry.setCumulativeForearmExposure(cumulativeForearmExposure);
+		mEntry.setCumulativeLegExposure(cumulativeLegExposure);
+		mEntry.setCumulativeNeckExposure(cumulativeNeckExposure);
+		mEntry.setCumulativeHorizontalExposure(mCumulativeUVExposure);
+			
 		SharedPreferences sharedPref = mContext.getSharedPreferences(Globals.TAG, Context.MODE_PRIVATE);
 		mEntry.setSPF(SpriteSPF.positionToSPF[sharedPref.getInt(mContext.getString(R.string.data_SPF), 0)]);
 		mEntry.setClothingCover(sharedPref.getFloat(mContext.getString(R.string.data_ClothingCover), 0.0f));
@@ -467,8 +488,7 @@ public class MapDisplayActivity extends Activity {
 		// To delete the entry
 		MenuItem menuitem;
 		if (mTaskType == Globals.TASK_TYPE_HISTORY) {
-			menuitem = menu.add(Menu.NONE, MENU_ID_DELETE, MENU_ID_DELETE,
-					"Delete");
+			menuitem = menu.add(Menu.NONE, MENU_ID_DELETE, MENU_ID_DELETE,"Delete");
 			menuitem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		}
 		return true;
@@ -538,8 +558,9 @@ public class MapDisplayActivity extends Activity {
     				// draw current marker
     				if (curMarker!=null)
     					curMarker.remove();
+    				
     				curMarker = mMap.addMarker(new MarkerOptions().position(mLatLngList.get(mLatLngList.size()-1)).
-    						title("You Are Here").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+    					title("You Are Here").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
     				
     				// Get real-time stats from the Exercise Entry
     				String type = "Not initialized";
@@ -555,6 +576,7 @@ public class MapDisplayActivity extends Activity {
     				// Draw the stats on the map
     				if (mInputType == Globals.INPUT_TYPE_GPS)
     					typeStats.setText(type);
+    				
     				avgspeedStats.setText(avgSpeed);
     				curspeedStats.setText(curSpeed);
     				climbStats.setText(climb);
@@ -578,36 +600,46 @@ public class MapDisplayActivity extends Activity {
         }
 	}
 
-	private double mCumulativeUVExposure,mCumulativeSweatTotal;
+	private double mCumulativeUVExposure=0,mCumulativeSweatTotal,cumulativeDorsalHandExposure=0,cumulativeChestExposure=0,
+	cumulativeBackExposure=0,cumulativeFaceExposure=0,cumulativeForearmExposure=0,cumulativeNeckExposure=0,cumulativeLegExposure=0;
 	private String environmentClassification;
 	private int mInferredActivityType;
-	
+	int interval = 0;
 	public class MotionUpdateReceiver extends BroadcastReceiver{
 		@Override
 		public void onReceive(Context context, Intent intent){
-
+		
+			cumulativeBackExposure = intent.getDoubleExtra(Globals.CUMULATIVE_BACK_UV_EXPOSURE,0.0);
+			cumulativeChestExposure = intent.getDoubleExtra(Globals.CUMULATIVE_CHEST_UV_EXPOSURE, 0);
+			cumulativeDorsalHandExposure = intent.getDoubleExtra(Globals.CUMULATIVE_DORSAL_HAND_UV_EXPOSURE, 0);
+			cumulativeFaceExposure = intent.getDoubleExtra(Globals.CUMULATIVE_FACE_UV_EXPOSURE, 0);
+			cumulativeForearmExposure = intent.getDoubleExtra(Globals.CUMULATIVE_FOREARM_UV_EXPOSURE, 0);
+			cumulativeLegExposure = intent.getDoubleExtra(Globals.CUMULATIVE_LEG_UV_EXPOSURE, 0);
+			cumulativeNeckExposure = intent.getDoubleExtra(Globals.CUMULATIVE_NECK_UV_EXPOSURE, 0);
+			mCumulativeUVExposure = intent.getDoubleExtra(Globals.CUMULATIVE_UV_EXPOSURE, 0);
 			environmentClassification = intent.getStringExtra(Globals.ENVIRONMENT_CLASSIFICATION);
-			double []pitch = intent.getDoubleArrayExtra(Globals.PITCH_BODY);
 			double lightIntensity = intent.getDoubleExtra(Globals.LIGHT_INTENSITY_READING,0);
 			mInferredActivityType = intent.getIntExtra(Globals.VOTED_ACTIVITY_TYPE, 0);
 			int currentActivity = intent.getIntExtra(Globals.CURRENT_ACTIVITY_TYPE, 0);
 			String type = Globals.TYPE_STATS + "Instant: " + Globals.ACTIVITY_TYPES[currentActivity] + " Voted: " + Globals.ACTIVITY_TYPES[mInferredActivityType];
 			
-			mCumulativeUVExposure = intent.getDoubleExtra(Globals.CUMULATIVE_UV_EXPOSURE, 0);
 			mCumulativeSweatTotal = intent.getDoubleExtra(Globals.SWEAT_TOTAL, 0);
 			String sweatRate = intent.getStringExtra(Globals.SWEAT_RATE_INDEX);
-			sweatRate =  Globals.SWEAT_STATS + sweatRate;
 			
-			typeStats.setText(type + "\n" + sweatRate + "\n" + "Total amount sweat:" + mCumulativeSweatTotal + "liters/hr");
-			
-			uviStats.setText(String.format("Total UV Exposure: %.2f J/m^2", mCumulativeUVExposure));
-			
-			
-			/*if (sweatRate > Globals.SWEAT_REAPPLY ) {
-				sunblockReapp(context);
-			}*/
-			
-			lightingType.setText((Globals.FOUND_ARDUINO == true ? "Arduino":"") + " Lighting Condition: " + environmentClassification + ", Last Max: " +lightIntensity + " lux");
+			//if(interval++ % 100==0){
+				sweatRate =  Globals.SWEAT_STATS + sweatRate;
+				typeStats.setText(String.format("%s\n%s\nSweat Total: %.2f liters/hr",type,sweatRate,mCumulativeSweatTotal));//type + "\n" + sweatRate + "\n" + "Total amount sweat:  %.2f liters/hr",mCumulativeSweatTotal);
+				
+				uviStats.setText(String.format("Total UV Exposure: \nFace: %.2f J/m^2 | Neck: %.2f J/m^2\nChest: %.2f J/m^2 | Forearm: %.2f J/m^2\nHand: %.2f J/m^2 | Leg: %.2f J/m^2\nBody: %.2f J/m^2", 
+						cumulativeFaceExposure,cumulativeNeckExposure,cumulativeChestExposure,cumulativeForearmExposure,cumulativeDorsalHandExposure,cumulativeLegExposure,mCumulativeUVExposure));
+				
+				
+				/*if (sweatRate > Globals.SWEAT_REAPPLY ) {
+					sunblockReapp(context);
+				}*/
+				
+				lightingType.setText((Globals.FOUND_ARDUINO == true ? "Arduino":"") + " Environment: " + environmentClassification);// + "\nLast Max: " +lightIntensity + " lux");
+			//}
 		}
 	}
 	

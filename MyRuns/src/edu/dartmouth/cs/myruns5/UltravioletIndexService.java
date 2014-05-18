@@ -1,21 +1,38 @@
 package edu.dartmouth.cs.myruns5;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
+import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -38,14 +55,13 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
-import android.support.v4.app.NotificationCompat;
-import android.widget.Toast;
 
 import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 
+import edu.dartmouth.cs.myruns5.util.SunAngle;
 import edu.dartmouth.cs.myruns5.util.uv.ParseUVReading;
 
 public class UltravioletIndexService extends Service implements LocationListener {
@@ -56,6 +72,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 																// Forecast from
 																// 6am-6pm
 	public static final String CURRENT_UV_INDEX = "CURRENT_UVI";
+	public static final String CURRENT_SUN_ANGLE = "CURRENT_SUN_ANGLE";
 	public static final String HOURLY_UV_INDEX = "HOURLY_UVI";
 	public static final String WEB_UVI = "WEB_UVI";
 	public static final String UVI_RECOMMENDATION = "UVI_RECOMMENDATION";
@@ -64,7 +81,13 @@ public class UltravioletIndexService extends Service implements LocationListener
 	public static final String CURRENT_UV_INDEX_SUN = "CURRENT_UVI_SUN";
 	public static final String CURRENT_UV_INDEX_SHADE = "CURRENT_UVI_SHADE";
 	public static final String CURRENT_UV_INDEX_CLOUD = "CURRENT_UVI_CLOUD";
+	public static final String AZIMUTH_ANGLE = "AZIMUTH_ANGLE";
+	public static final String ELEVATION_ANGLE = "ELEVATION_ANGLE";
+	public static final String SOLAR_ZENITH_ANGLE = "SOLAR_ZENITH_ANGLE";
+	
 	public static final String CURRENT_UV_INDEX_ALL = "uvi_all";
+	public static Location location = null;
+	public static double uvIrradianceSun=0,uvIrradianceShade=0,uvIrradianceCloud=0;
 
 	public static enum DAY_OF_WEEK {
 		SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY;
@@ -79,14 +102,12 @@ public class UltravioletIndexService extends Service implements LocationListener
 	private boolean hasData = false;
 	// private boolean looperCalled=false;
 	private Context mContext;
-	private static double uvIndexSun=0,uvIndexShade=0,uvIndexCloud=0;
 	private String option;
 	private NotificationManager nm;
-	private Location location = null;
 
 	@Override
 	public void onLocationChanged(Location location) {
-		this.location=location;
+		UltravioletIndexService.location=location;
 	}
 
 	@Override
@@ -99,7 +120,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 	public void onProviderEnabled(String provider) {
 		// TODO Auto-generated method stub
 		System.out.println("GPS provider enabled!");
-		this.location=(myTracksLocationManager.getLastKnownLocation(provider));
+		UltravioletIndexService.location=(myTracksLocationManager.getLastKnownLocation(provider));
 	}
 
 	@Override
@@ -108,39 +129,129 @@ public class UltravioletIndexService extends Service implements LocationListener
 	}
 	
 	// Timer to periodically invoke updateUVITask
-	private final Timer timer = new Timer();
+	private final Timer uviTimer = new Timer();
 	private TimerTask updateUVITask = new TimerTask() {
 		@Override
 		public void run() {
-			updateHourlyUVI(location);
+			updateHourlyUVI();
 			sendData();
 		}
 	};
 	
-	public void setUVISun(double uvi) {
-		uvIndexSun = uvi;
-	}
-
-	public void setUVIShade(double uvi) {
-		uvIndexShade = uvi;
-	}
-
-	public void setUVICloud(double uvi) {
-		uvIndexCloud = uvi;
-	}
 	
+	private final ScheduledExecutorService sunAngleTimer = Executors.newScheduledThreadPool(1);
+
+	private Runnable updateSunAngleTask = new Runnable() {
+		@Override
+		public void run() {
+			try {
+				reverseGeocodedLocation();
+				updateSunAngle();
+	            sunAngleTimer.schedule(updateSunAngleTask, Globals.ONE_MINUTE*12, TimeUnit.MILLISECONDS);
+			} catch (ClientProtocolException e) {
+				sunAngleTimer.schedule(updateSunAngleTask, MIN_TIME_BW_UPDATES, TimeUnit.MILLISECONDS);
+				e.printStackTrace();
+			} catch (IOException e) {
+				sunAngleTimer.schedule(updateSunAngleTask, MIN_TIME_BW_UPDATES, TimeUnit.MILLISECONDS);
+				e.printStackTrace();
+			} catch (JSONException e) {
+				sunAngleTimer.schedule(updateSunAngleTask, MIN_TIME_BW_UPDATES, TimeUnit.MILLISECONDS);
+				e.printStackTrace();
+			}
+		}
+	};
+	
+    private void updateCurrentTime() {
+        GregorianCalendar now = new GregorianCalendar();
+        month=Integer.toString(now.get(Calendar.MONTH)+1);
+        day=Integer.toString(now.get(Calendar.DAY_OF_MONTH));
+        year=Integer.toString(now.get(Calendar.YEAR));
+        hour=Integer.toString(now.get(Calendar.HOUR_OF_DAY));
+        minute=Integer.toString(now.get(Calendar.MINUTE));
+    }
+    
+	//----------SUN ANGLE VARIABLES ----------
+    private String month;
+    private String day;
+    private String year;
+    private String city = "Los Angeles";
+    private String state = "CA";
+    private String hour = null;
+    private String minute = null;
+    public static HashMap<String,SunAngle> sunAngles = null;
+    private Calendar time; 
+    private static final String TIME24HOURS_PATTERN = "([01]?[0-9]|2[0-3]):[0-5][0-9].*";
+    private final String interval = "10";
+    private String referrerURI="http://aa.usno.navy.mil/data/docs/AltAz.php";
+    private String url ="http://aa.usno.navy.mil/cgi-bin/aa_altazw.pl";
+    //private String url ="http://aa.usno.navy.mil/cgi-bin/aa_altazw.pl?FFX=1&obj=INTERVAL&xxy=2014&xxm=2&xxd=25&xxi=10&st=CA&place=los+angeles&ZZZ=END";
+	//---------------------------
+    private void updateSunAngle() throws ClientProtocolException, IOException {
+
+    	//if(location != null){
+	        updateCurrentTime();
+	        HttpClient httpclient = new DefaultHttpClient();
+	        HttpPost httppost = new HttpPost(url);
+	        httppost.addHeader("Referer", referrerURI);
+	        //httppost.addHeader("Host","aa.usno.navy.mil");
+	        String responseString = null;
+	
+	        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(10);
+	        nameValuePairs.add(new BasicNameValuePair("FFX", "1"));
+	        nameValuePairs.add(new BasicNameValuePair("ZZZ", "END"));
+	        nameValuePairs.add(new BasicNameValuePair("sun", "10"));
+	        nameValuePairs.add(new BasicNameValuePair("place", city));
+	        nameValuePairs.add(new BasicNameValuePair("st", state));
+	        nameValuePairs.add(new BasicNameValuePair("obj", interval));
+	        nameValuePairs.add(new BasicNameValuePair("xxi", interval));
+	        nameValuePairs.add(new BasicNameValuePair("xxd", day));//day
+	        nameValuePairs.add(new BasicNameValuePair("xxy", year));//year
+	        nameValuePairs.add(new BasicNameValuePair("xxm", month));//month
+	
+	        httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+	            //System.out.println(httppost.getURI().toString());
+	
+	        HttpResponse response = httpclient.execute(httppost);
+	        StatusLine statusLine = response.getStatusLine();
+	        String[] token;
+	        if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+	            ByteArrayOutputStream out = new ByteArrayOutputStream();
+	            response.getEntity().writeTo(out);
+	            out.close();
+	            responseString = out.toString();
+	
+	            token = responseString.split("\n");
+	            UltravioletIndexService.sunAngles = new HashMap<String, SunAngle>();
+	            for (String row : token) {
+	                boolean val = row.matches(TIME24HOURS_PATTERN);
+	                if (val == true) {
+	                    String data[] = row.split("\\s+");
+	                    UltravioletIndexService.sunAngles.put(data[0], new SunAngle(data[0], Float.valueOf(data[1]), Float.valueOf(data[2])));
+	                    //System.out.println(row + " " +val);
+	                }
+	            }
+	            
+	        } else {
+	            //Closes the connection.
+	            response.getEntity().getContent().close();
+	            throw new IOException(statusLine.getReasonPhrase());
+	        }
+    	//}else
+    	//	throw new IOException("Locataion not found in updateSunAngleFunction");
+    }
+    
+    
 	boolean dailyUVIRetrieved = false;
-	private void updateHourlyUVI(final Location location) {
+	private void updateHourlyUVI() {
 		Handler handler = new Handler(Looper.getMainLooper());
 
 		if (location == null) 
 		{
-			NotificationCompat.Builder n = new NotificationCompat.Builder(this)
+			/*NotificationCompat.Builder n = new NotificationCompat.Builder(this)
 					.setSmallIcon(R.drawable.runner)
 					.setContentTitle("UV notification")
 					.setAutoCancel(true)
-					.setContentText(
-							"GPS locating service is off, please turn it on!");
+					.setContentText("GPS locating service is off, please turn it on!");
 			nm.notify(0, n.build());
 
 			handler.post(new Runnable() {
@@ -151,11 +262,14 @@ public class UltravioletIndexService extends Service implements LocationListener
 							Toast.LENGTH_LONG).show();
 				}
 			});
+			*/
 			System.out.println("Location is null!");
-			return;
-		} else 
-		{
+			//return;
+		} 
+		else {
+			/*
 			nm.cancel(0);
+			
 			handler.post(new Runnable() {
 				public void run() {
 					Toast.makeText(
@@ -166,7 +280,11 @@ public class UltravioletIndexService extends Service implements LocationListener
 							.show();
 				}
 			});
+			*/
 
+			System.out.println("Position located! Longitude: "
+					+ location.getLongitude() + ", Latitude: ");
+		}//NOTE: THIS BRACKET IS TEMPOARY. THE ORIGINAL BRACKET IS IN THE BOTTOM OF THE METHOD
 			ParseQuery<ParseObject> querySun = new ParseQuery<ParseObject>("UVData"),
 					queryShade = new ParseQuery<ParseObject>("UVData"),
 					queryCloud = new ParseQuery<ParseObject>("UVData");
@@ -200,7 +318,8 @@ public class UltravioletIndexService extends Service implements LocationListener
 							}
 							//}
 						}
-						setUVISun(meanUVISun);
+
+						UltravioletIndexService.uvIrradianceSun = meanUVISun * (100*100 / 1000);
 						hasData = true;
 					} else {
 						e.printStackTrace();
@@ -236,7 +355,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 							}
 							//}
 						}
-						setUVICloud(meanUVICloud);
+						UltravioletIndexService.uvIrradianceCloud =meanUVICloud * (100*100 / 1000);
 
 						//hasData = true;
 					} else {
@@ -274,8 +393,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 							}
 							//}
 						}
-						setUVIShade(meanUVIShade);
-
+						UltravioletIndexService.uvIrradianceShade = meanUVIShade * (100*100 / 1000);
 						//hasData = true;
 					} else {
 						e.printStackTrace();
@@ -283,21 +401,21 @@ public class UltravioletIndexService extends Service implements LocationListener
 				}
 			});
 
-			if(!dailyUVIRetrieved)
-				getDataFromWeb(location);
-		}
+			//if(!dailyUVIRetrieved)
+				getDataFromWeb();
+		//}
 	}
 	
 	
 
-	public void getDataFromWeb(Location location) {
+	public void getDataFromWeb() {
 		// Get the time and day of week
 		Calendar now = Calendar.getInstance();
 		int dayOfWeek = now.get(Calendar.DAY_OF_WEEK);
 
 		String responseString = null;
 		try {
-			String postCode = "46556";//getPostcode(location);
+			String postCode = "90024";//getPostcode(location);
 
 			// curl --referer
 			// http://www.uvawareness.com/uv-index/uv-index.php?location=ucla
@@ -405,7 +523,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 	public void sendData() {
 		if (hasData) {
 			if (option.equals(CURRENT_UV_INDEX)) {
-				double uvi = uvIndexSun;
+				double uvi = uvIrradianceSun;
 				if (uvi >= 0) {
 					Intent i = new Intent(CURRENT_UV_INDEX).putExtra(CURRENT_UV_INDEX, uvi);
 					i.putExtra(WEB_UVI, HOURLY_UVI_FORECAST);
@@ -424,6 +542,9 @@ public class UltravioletIndexService extends Service implements LocationListener
 	}
 
 	final int updateInterval = 60;
+	public static float elevationAngle=Float.MIN_VALUE;
+	public static float azimuthAngle=Float.MIN_VALUE;
+	public static float solarZenithAngle=Float.MIN_VALUE;
 
 	@Override
 	public void onCreate() {
@@ -438,16 +559,15 @@ public class UltravioletIndexService extends Service implements LocationListener
 		location = myTracksLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER) == null ? myTracksLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER):location;
 		
 		nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		/*
-		 * Calendar now = Calendar.getInstance(); int minute =
-		 * now.get(Calendar.MINUTE);// 24 hr format long firstExecutionDelay =
-		 * (updateInterval - minute) Globals.ONE_MINUTE;
-		 */
-		timer.scheduleAtFixedRate(updateUVITask, 0, MIN_TIME_BW_UPDATES);
+
+		uviTimer.scheduleAtFixedRate(updateUVITask, 500, MIN_TIME_BW_UPDATES);
+		
+		//Schedule update for sunangles every 2 hrs
+		sunAngleTimer.schedule(updateSunAngleTask, 0, TimeUnit.MILLISECONDS);
 		// super.onCreate();
 		
 		if(location != null)
-			getDataFromWeb(location);
+			getDataFromWeb();
 	}
 
 
@@ -455,6 +575,54 @@ public class UltravioletIndexService extends Service implements LocationListener
 	public void onDestroy() {
 		myTracksLocationManager.removeUpdates(this);
 	}
+	
+
+    private void reverseGeocodedLocation() throws IOException, JSONException {
+    	if(location != null)
+    	{
+	        //Get Reverse Geoposition information
+	        HttpGet httpGet = new HttpGet("http://maps.google.com/maps/api/geocode/json?latlng=" + location.getLatitude() + "," + location.getLongitude() + "&sensor=false");
+	        HttpClient client = new DefaultHttpClient();
+	        HttpResponse response;
+	        StringBuilder stringBuilder = new StringBuilder();
+	
+	        response = client.execute(httpGet);
+	        HttpEntity entity = response.getEntity();
+	        InputStream stream = entity.getContent();
+	        int b;
+	        while ((b = stream.read()) != -1) {
+	            stringBuilder.append((char) b);
+	        }
+	
+	        JSONObject jsonObject = new JSONObject();
+	        jsonObject = new JSONObject(stringBuilder.toString());
+	
+	        // get lat and lng value
+	        String location_string = null;
+	        //Get JSON Array called "results" and then get the 0th complete object as JSON        
+	        JSONObject address = jsonObject.getJSONArray("results").getJSONObject(0);
+	        // Get the value of the attribute whose name is "formatted_string"
+	        JSONObject addressComponent = address.getJSONArray("address_components").getJSONObject(0);
+	
+	        JSONArray component = address.getJSONArray("address_components");
+	        boolean cityFound = false, stateFound = false;
+	        for (int i = 0; (i < component.length()) && (!cityFound || !stateFound); i++) {
+	            addressComponent = component.getJSONObject(i);
+	            JSONArray types = addressComponent.getJSONArray("types");
+	            for (int j = 0; j < types.length(); j++) {
+	                if (types.getString(j).equals("locality")) {
+	                    city = addressComponent.getString("long_name");
+	                    cityFound = true;
+	                }
+	
+	                if (types.getString(j).equals("administrative_area_level_1")) {
+	                    state = addressComponent.getString("short_name");
+	                    stateFound = true;
+	                }
+	            }
+	        }
+    	}//else throw new IOException("Location is null in updateGeoLocation()");
+    }
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -465,30 +633,41 @@ public class UltravioletIndexService extends Service implements LocationListener
 		if (hasData) {
 			if (option.equals(CURRENT_UV_INDEX_ALL)) {
 					Intent i = new Intent(CURRENT_UV_INDEX_ALL);
-					i.putExtra(CURRENT_UV_INDEX_SUN, uvIndexSun);
-					i.putExtra(CURRENT_UV_INDEX_SHADE, uvIndexShade);
+					i.putExtra(CURRENT_UV_INDEX_SUN, uvIrradianceSun);
+					i.putExtra(CURRENT_UV_INDEX_SHADE, uvIrradianceShade);
 					sendBroadcast(i);
-			} else if (option.equals(CURRENT_UV_INDEX)) {
-				double uvi = uvIndexSun;
+			} else if( option.equals(CURRENT_SUN_ANGLE)){
+				if(getCurrentSunAngle()){
+					Intent i = new Intent(CURRENT_SUN_ANGLE);
+					i.putExtra(AZIMUTH_ANGLE, azimuthAngle);
+					i.putExtra(ELEVATION_ANGLE, elevationAngle);
+					i.putExtra(SOLAR_ZENITH_ANGLE, solarZenithAngle);
+					sendBroadcast(i);
+				}else{
+					
+				}
+				
+			}else if (option.equals(CURRENT_UV_INDEX)) {
+				double uvi = uvIrradianceSun;
 				if (uvi > 0) {
 					Intent i = new Intent(CURRENT_UV_INDEX).putExtra(CURRENT_UV_INDEX, uvi);
 					i.putExtra(WEB_UVI, HOURLY_UVI_FORECAST);
 					sendBroadcast(i);
 				}
 			} else if (option.equals(CURRENT_UV_INDEX_SUN)) {
-				double uvi = uvIndexSun;
+				double uvi = uvIrradianceSun;
 				if (uvi > 0) {
 					Intent i = new Intent(CURRENT_UV_INDEX_SUN).putExtra(CURRENT_UV_INDEX_SUN, uvi);
 					sendBroadcast(i);
 				}
 			}  else if (option.equals(CURRENT_UV_INDEX_SHADE)) {
-				double uvi = uvIndexShade;
+				double uvi = uvIrradianceShade;
 				if (uvi > 0) {
 					Intent i = new Intent(CURRENT_UV_INDEX_SHADE).putExtra(CURRENT_UV_INDEX_SHADE, uvi);
 					sendBroadcast(i);
 				}
 			} else if (option.equals(CURRENT_UV_INDEX_CLOUD)) {
-				double uvi = uvIndexCloud;
+				double uvi = uvIrradianceCloud;
 				if (uvi > 0) {
 					Intent i = new Intent(CURRENT_UV_INDEX_CLOUD).putExtra(CURRENT_UV_INDEX_CLOUD, uvi);
 					sendBroadcast(i);
@@ -503,7 +682,25 @@ public class UltravioletIndexService extends Service implements LocationListener
 		}
 		return START_STICKY;
 	}
-
+	
+	private boolean getCurrentSunAngle() {
+		boolean result = false;
+		if(sunAngles != null){
+		    updateCurrentTime();
+		    String time =   ((hour.length()==1?"0"+hour:hour)+":"+(minute.length()==1?"00":(minute.charAt(0)+"0")));//"13:30";//
+		    SunAngle angle = this.sunAngles.get(time);
+		    if(angle != null){
+		    	azimuthAngle = angle.getAzimuth();
+		    	elevationAngle = angle.getAltitude();
+		    	elevationAngle = elevationAngle < 0 ? 0:elevationAngle;
+		    	
+		    	solarZenithAngle = Math.abs(90-elevationAngle);
+		       //System.out.println("Azimuth Angle: "+this.azimuthAngle+ " Elevation Angle: "+this.elevationAngle + "\nSolar Zenith Angle: "+ this.solarZenithAngle);
+		       result = true;
+			}
+		}
+	    return result;
+	}
 	/*
 	 * Handler to handle messages coming in from the android application. The
 	 * android App binds to the service
@@ -516,7 +713,7 @@ public class UltravioletIndexService extends Service implements LocationListener
 			String option = data.getString("option");
 
 			if (option.equals(CURRENT_UV_INDEX)) {
-				double uvi = uvIndexSun;
+				double uvi = uvIrradianceSun;
 				if (uvi > 0) {
 					Intent i = new Intent(CURRENT_UV_INDEX);
 					i.putExtra(CURRENT_UV_INDEX, uvi);

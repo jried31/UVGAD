@@ -37,6 +37,10 @@ public class Utils {
 			return false;
 	}
 	
+
+    public static double convertDegreeToRadian(double degree){
+        return degree*(Math.PI/180);
+    }
 	// Convert Location array to byte array, to store in SQLite database
 	public static  byte[] fromLocationArrayToByteArray(Location[] locationArray) {
 //		Log.d(null, "enter convertion");

@@ -58,8 +58,6 @@ public class DisplayEntryActivity extends Activity {
 		String date_time = intent.getStringExtra(HistoryFragment.DATE_TIME);
 		String duration = intent.getStringExtra(HistoryFragment.DURATION);
 		String distance = intent.getStringExtra(HistoryFragment.DISTANCE);
-		String sweatrate = intent.getStringExtra(HistoryFragment.SWEATRATE);
-		String uvexposure = intent.getStringExtra(HistoryFragment.UVEXPOSURE);
 		String calorie = intent.getStringExtra(HistoryFragment.CALORIE);
 		String heartrate = intent.getStringExtra(HistoryFragment.HEARTRATE);
 		String comment = intent.getStringExtra(HistoryFragment.COMMENT);
@@ -72,7 +70,6 @@ public class DisplayEntryActivity extends Activity {
 		text5.setText(calorie);
 		text6.setText(heartrate);
 		text7.setText(comment);
-
 	}
 
 	

@@ -20,17 +20,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class HistoryFragment extends ListFragment 
-			implements	LoaderManager.LoaderCallbacks<Cursor> 
-	{
-
+public class HistoryFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> 
+{
 	private static final int LOADER_ID = 0;
-
 	private LoaderManager.LoaderCallbacks<Cursor> mCallbacks;
 
 	public Context mContext; // context pointed to parent activity
 	public ActivityEntriesCursorAdapter mAdapter; // customized adapter for displaying
-	
 	
 	// Table column index
 	public int mRowIdIndex;
@@ -49,33 +45,25 @@ public class HistoryFragment extends ListFragment
 	
 	public Cursor mActivityEntryCursor;
 			
-	public static final String[] activityTypeTable = new String[] {       
-	"Running",
-    "Cycling",
-    "Walking",
-    "Hiking",
-    "Downhill Skiing",
-    "Cross-Country Skiing",
-    "Snowboarding",
-    "Skating",
-    "Swimming",
-    "Mountain Biking",
-    "Wheelchair",
-    "Elliptical",
-    "Other"
-	};
-
 	public static final String DATE_FORMAT = "H:mm:ss MMM d yyyy";
 	public static final String DISTANCE_FORMAT = "#.##";
 	public static final String MINUTES_FORMAT = "%d mins";
 	public static final String SECONDS_FORMAT = "%d secs";
 	
-	public static final String ROW_ID = "row id";
-	public static final String INPUT_TYPE = "input type";
-	public static final String COMMENT = "comment";
-	public static final String DISTANCE = "distance";
-	public static final String SWEATRATE = "sweatrate";
-	public static final String UVEXPOSURE = "uv exposure";
+	public static final String ROW_ID = Globals.KEY_ROWID;
+	public static final String INPUT_TYPE = Globals.KEY_INPUT_TYPE;
+	public static final String COMMENT = Globals.KEY_COMMENT;
+	public static final String DISTANCE = Globals.KEY_DISTANCE;
+	public static final String SWEAT_TOTAL = Globals.KEY_SWEAT_TOTAL;
+	public static final String UV_EXPOSURE = Globals.KEY_UV_EXPOSURE;
+	public static final String UV_EXPOSURE_FACE = Globals.KEY_UV_EXPOSURE_FACE;
+	public static final String UV_EXPOSURE_NECK = Globals.KEY_UV_EXPOSURE_NECK;
+	public static final String UV_EXPOSURE_CHEST = Globals.KEY_UV_EXPOSURE_CHEST;
+	public static final String UV_EXPOSURE_FOREARM = Globals.KEY_UV_EXPOSURE_FOREARM;
+	public static final String UV_EXPOSURE_DORSAL_HAND = Globals.KEY_UV_EXPOSURE_DORSAL_HAND;
+	public static final String UV_EXPOSURE_LEG = Globals.KEY_UV_EXPOSURE_LEG;
+	public static final String VITAMIN_D = Globals.KEY_VITAMIN_D;
+	
 	public static final String DURATION = "duration";
 	public static final String CALORIE = "calorie";
 	public static final String DATE_TIME = "date and time";
@@ -107,9 +95,6 @@ public class HistoryFragment extends ListFragment
                 null, 
                 null);
 		
-		// Read the column index of the database table
-        //mark: ?
-        
         mAdapter = new ActivityEntriesCursorAdapter(getActivity(), mActivityEntryCursor);
 				
         // set callback object
@@ -121,15 +106,13 @@ public class HistoryFragment extends ListFragment
 
 		// Set the mAdapter to be show the list.
 		setListAdapter(mAdapter);
-		
 	}
 
 	//	Standard layout inflation for fragment
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
-			return super.onCreateView(inflater, container, savedInstanceState);
-			}	
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
+		return super.onCreateView(inflater, container, savedInstanceState);
+	}
 	
 	
 	@Override
@@ -141,9 +124,7 @@ public class HistoryFragment extends ListFragment
 		int inputType = Integer.parseInt(mActivityEntryCursor.getString(idx));
 		
 		Intent intent = new Intent();
-		
-		// The extra information needed pass
-		// through to next activity.
+		// The extra information needed pass through to next activity.
 		Bundle extras = new Bundle();
 	
 		// Write row id into extras.
@@ -153,9 +134,6 @@ public class HistoryFragment extends ListFragment
 		
 		// Read the input type: Manual, GPS, or automatic
 		intent.putExtra(INPUT_TYPE, inputType);
-	
-		// Clicked position is the row number in the database
-		// mark: ?
 		
 		// write other info
 		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_CALORIES);
@@ -174,13 +152,37 @@ public class HistoryFragment extends ListFragment
 		String distance = mActivityEntryCursor.getString(idx);
 		intent.putExtra(DISTANCE, distance);
 		
-		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_SWEATRATE);
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_SWEAT_TOTAL);
 		String sweatrate = mActivityEntryCursor.getString(idx);
-		intent.putExtra(SWEATRATE,sweatrate);
+		intent.putExtra(SWEAT_TOTAL,sweatrate);
 		
 		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_UV_EXPOSURE);
 		String uvExposure = mActivityEntryCursor.getString(idx);
-		intent.putExtra(UVEXPOSURE,uvExposure);
+		intent.putExtra(UV_EXPOSURE,uvExposure);
+		
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_UV_EXPOSURE_FACE);
+		String uvExposureFace = mActivityEntryCursor.getString(idx);
+		intent.putExtra(UV_EXPOSURE_FACE,uvExposureFace);
+
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_UV_EXPOSURE_NECK);
+		String uvExposureNeck = mActivityEntryCursor.getString(idx);
+		intent.putExtra(UV_EXPOSURE_NECK,uvExposureNeck);
+		
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_UV_EXPOSURE_CHEST);
+		String uvExposureChest = mActivityEntryCursor.getString(idx);
+		intent.putExtra(UV_EXPOSURE_CHEST,uvExposureChest);
+		
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_UV_EXPOSURE_FOREARM);
+		String uvExposureForearm = mActivityEntryCursor.getString(idx);
+		intent.putExtra(UV_EXPOSURE_FOREARM,uvExposureForearm);
+		
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_UV_EXPOSURE_DORSAL_HAND);
+		String uvExposureHand = mActivityEntryCursor.getString(idx);
+		intent.putExtra(UV_EXPOSURE_DORSAL_HAND,uvExposureHand);
+
+		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_UV_EXPOSURE_LEG);
+		String uvExposureLeg = mActivityEntryCursor.getString(idx);
+		intent.putExtra(UV_EXPOSURE_LEG,uvExposureLeg);
 		
 		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_DURATION);
 		String duration = mActivityEntryCursor.getString(idx);
@@ -190,12 +192,9 @@ public class HistoryFragment extends ListFragment
 		String heartrate = mActivityEntryCursor.getString(idx);
 		intent.putExtra(HEARTRATE, heartrate);
 		
-		Log.d(null, "getting avgSpeed");
 		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_AVG_SPEED);
 		String avgSpeed = mActivityEntryCursor.getString(idx);
 		intent.putExtra(AVG_SPEED, avgSpeed);
-		
-		Log.d(null, "getting climb");
 
 		idx = mActivityEntryCursor.getColumnIndex(Globals.KEY_CLIMB);
 		String climb = mActivityEntryCursor.getString(idx);
@@ -247,8 +246,6 @@ public class HistoryFragment extends ListFragment
 		*/
 		
 		intent.putExtras(extras);
-		Log.d(null, "firing intent");
-
 		// Based on different input type, launching different activities
 		switch (inputType) {
 		case Globals.INPUT_TYPE_MANUAL: // Manual mode
@@ -258,21 +255,16 @@ public class HistoryFragment extends ListFragment
 			break;
 		case Globals.INPUT_TYPE_GPS: // GPS mode
 		case Globals.INPUT_TYPE_AUTOMATIC: // or automatic mode
-
 			intent.setClass(mContext, MapDisplayActivity.class);
 			intent.putExtra(MainActivity.TASK_TYPE, Globals.TASK_TYPE_HISTORY);
-			// Fire the MapDisplay
 			startActivity(intent);
 			break;
-		default:	// should not happen
+		default:
 			Toast.makeText(mContext, "u r NOT supposed to see this!!", Toast.LENGTH_SHORT).show();
 			intent = new Intent(getActivity(), MapDisplayActivity.class); 
 			startActivity(intent);
-
 			return;
 		}
-
-
 	}
 	
 	// Create a new CursorLoader with the following query parameters.
@@ -297,7 +289,6 @@ public class HistoryFragment extends ListFragment
 	private class ActivityEntriesCursorAdapter extends CursorAdapter {
 
 		private LayoutInflater mInflater;
-
 		public ActivityEntriesCursorAdapter(Context context, Cursor c) {
 			super(context, c, FLAG_REGISTER_CONTENT_OBSERVER);
 			mInflater = LayoutInflater.from(context);
@@ -308,11 +299,11 @@ public class HistoryFragment extends ListFragment
 	        int typeIndex;
 	        String line1, line2;
 	        
-	        	// line1: activity type and date_time
-				typeIndex = cursor.getColumnIndex(Globals.KEY_ACTIVITY_TYPE);
-				line1 = cursor.getString(typeIndex);
-				int code = Integer.parseInt(line1);
-				if(code != -1) {
+        	// line1: activity type and date_time
+			typeIndex = cursor.getColumnIndex(Globals.KEY_ACTIVITY_TYPE);
+			line1 = cursor.getString(typeIndex);
+			int code = Integer.parseInt(line1);
+			if(code != -1) {
 				line1 = Globals.ACTIVITY_TYPES[code].substring(0);
 				line1 = line1 + ", ";
 				typeIndex = cursor.getColumnIndex(Globals.KEY_DATE_TIME);
@@ -332,14 +323,13 @@ public class HistoryFragment extends ListFragment
 		        	line2 = line2 + " Meters, ";
 		        else if (inputType.equals("0"))
 		        	line2 = line2 + " Miles, ";
-		        else{ // hold place}
-		        }
+		        else{ }
 		        
 		        typeIndex = cursor.getColumnIndex(Globals.KEY_DURATION);
 		        line2 = line2 + cursor.getString(typeIndex);	       
 		        line2 = line2 + " Minutes, ";
 		        
-		        typeIndex = cursor.getColumnIndex(Globals.KEY_SWEATRATE);
+		        typeIndex = cursor.getColumnIndex(Globals.KEY_SWEAT_TOTAL);
 		        line2 = line2 + cursor.getString(typeIndex);	       
 		        line2 = line2 + " sweat lost, ";
 		        
@@ -348,15 +338,13 @@ public class HistoryFragment extends ListFragment
 		        line2 = line2 + " (J/s)/m^2 exposure";
 		        
 		        TextView text2 = (TextView) view.findViewById(android.R.id.text2);
-		        
 		        text2.setText(line2);
-				}
+			}
 		}
 		
 		@Override
 		public View newView(Context context, Cursor cursor, ViewGroup parent) {
 			return mInflater.inflate(android.R.layout.two_line_list_item, null);
 		}
-		
 	}
 }

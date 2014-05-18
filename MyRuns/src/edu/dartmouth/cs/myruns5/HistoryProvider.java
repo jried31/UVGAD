@@ -178,12 +178,18 @@ public class HistoryProvider extends ContentProvider {
 									HistoryTable.KEY_AVG_SPEED,
 									HistoryTable.KEY_CALORIES,
 									HistoryTable.KEY_UV_EXPOSURE,
+									HistoryTable.KEY_UV_EXPOSURE_CHEST,
+									HistoryTable.KEY_UV_EXPOSURE_FACE,
+									HistoryTable.KEY_UV_EXPOSURE_NECK,
+									HistoryTable.KEY_UV_EXPOSURE_FOREARM,
+									HistoryTable.KEY_UV_EXPOSURE_DORSAL_HAND,
+									HistoryTable.KEY_UV_EXPOSURE_LEG,
 									HistoryTable.KEY_VITAMIN_D,
 									HistoryTable.KEY_CLIMB,
 									HistoryTable.KEY_COMMENT,
 									HistoryTable.KEY_DATE_TIME,
 									HistoryTable.KEY_DISTANCE,
-									HistoryTable.KEY_SWEATRATE,
+									HistoryTable.KEY_SWEAT_TOTAL,
 									HistoryTable.KEY_DURATION,
 									HistoryTable.KEY_GPS_DATA,
 									HistoryTable.KEY_HEARTRATE,
@@ -199,10 +205,8 @@ public class HistoryProvider extends ContentProvider {
 									//HistoryTable.KEY_LOWER_APPAREL,
 									};
 			if (projection != null) {
-				HashSet<String> requestedColumns = new HashSet<String>(
-						Arrays.asList(projection));
-				HashSet<String> availableColumns = new HashSet<String>(
-						Arrays.asList(available));
+				HashSet<String> requestedColumns = new HashSet<String>(Arrays.asList(projection));
+				HashSet<String> availableColumns = new HashSet<String>(Arrays.asList(available));
 				// Check if all columns which are requested are available
 				if (!availableColumns.containsAll(requestedColumns)) {
 					throw new IllegalArgumentException(

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:gravity="center"
+  android:layout_margin="4dp"
+  android:background="@drawable/background">
+
+        <LinearLayout
+        android:id="@+id/current_uvi_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/textView1"
+                android:textColor="#fec04c" 
+                android:textSize="20sp"
+                android:layout_gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Last sunscreen application time: N/A" />
+
+        <TextView
+            android:id="@+id/current_uvi"
+            android:layout_width="210dp"
+            android:layout_height="210dp"
+            android:layout_gravity="center"
+            android:layout_margin="30dp"
+            android:background="@drawable/circle_white"
+            android:gravity="center"
+            android:shadowColor="@android:color/white"
+            android:shadowRadius="10.0"
+            android:text="0"
+            android:textColor="@color/white"
+            android:textSize="70sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+    	<ImageButton
+        android:id="@+id/speakbtn"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:contentDescription="Speak"
+        android:src="@drawable/microphone" />
+        
+    </LinearLayout>
+
+	    <Button
+	        android:id="@+id/trackbtn"
+	        android:layout_width="fill_parent"
+	        android:layout_height="30dp"
+	        android:layout_margin="5dp"
+	        android:textSize="30sp"
+	        android:layout_weight="1"
+	        android:background="@drawable/arm_btn_shape"
+	        android:text="Start Tracking" />
+
+</LinearLayout>

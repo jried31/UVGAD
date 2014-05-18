@@ -53,19 +53,13 @@
         android:title="@string/misc_title">
         
         <PreferenceScreen
-                android:title="@string/class_homepage_title"
-                android:summary="@string/class_homepage_summary">
+                android:title="@string/contact"
+                android:summary="@string/contact_summary">
 
             <intent android:action="android.intent.action.VIEW"
-                    android:data="http://www.cs.dartmouth.edu/~campbell">
+                    android:data="http://www.cs.ucla.edu/~matth122">
                 
             </intent>
-
-        </PreferenceScreen>       
-        
-        
-        
+        </PreferenceScreen>   
     </PreferenceCategory>
-        
-
 </PreferenceScreen>

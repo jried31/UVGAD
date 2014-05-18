@@ -6,7 +6,10 @@ public abstract class Globals {
 
 	// Debugging tag for the whole project
 	public static final String TAG = "MyRuns";
-	
+
+	public static final String VOICE_COMMAND = "VOICE_COMMAND";
+	public static final String TRACK_COMMAND = "TRACK_COMMAND";
+	public static final int RESULT_SPEECH = 1;
 	// Const for distance/time conversion
 	public static final double KM2MILE_RATIO = 1.609344;
 	public static final double KILO = 1000;
@@ -28,8 +31,14 @@ public abstract class Globals {
 	public static final String KEY_DATE_TIME = "date_time";
 	public static final String KEY_DURATION = "duration";
 	public static final String KEY_DISTANCE = "distance";
-	public static final String KEY_SWEATRATE = "sweatrate";
-	public static final String KEY_UV_EXPOSURE = "cumulative_uv_exposure";
+	public static final String KEY_SWEAT_TOTAL = "sweatrate";
+	public static final String KEY_UV_EXPOSURE = "mCumulativeUVExposure";
+	public static final String KEY_UV_EXPOSURE_FACE = "cumulativeFaceExposure";
+	public static final String KEY_UV_EXPOSURE_NECK = "cumulativeNeckExposure";
+	public static final String KEY_UV_EXPOSURE_CHEST = "cumulativeChestExposure";
+	public static final String KEY_UV_EXPOSURE_FOREARM = "cumulativeForearmExposure";
+	public static final String KEY_UV_EXPOSURE_DORSAL_HAND = "cumulativeDorsalHandExposure";
+	public static final String KEY_UV_EXPOSURE_LEG = "cumulativeLegExposure";
 	public static final String KEY_VITAMIN_D = "cumulative_vitamin_d";
 	public static final String KEY_AVG_PACE = "avg_pace";
 	public static final String KEY_AVG_SPEED = "avg_speed";
@@ -65,21 +74,21 @@ public abstract class Globals {
 	public static final int RECORDING_GPS_ACCURACY_POOR = 2000;
 	
 	//Recording Interval
-	public static final float RECORDING_GPS_DISTANCE_DEFAULT = 1;
-	public static final long RECORDING_GPS_INTERVAL_DEFAULT = 2*ONE_SECOND;
+	public static final float RECORDING_GPS_DISTANCE_DEFAULT = 5;//meter
+	public static final long RECORDING_GPS_INTERVAL_DEFAULT = 3*ONE_SECOND;
 	//--------------
 	
 	//--------------Network Provider _----------
-	public static final float RECORDING_NETWORK_PROVIDER_DISTANCE_DEFAULT = 5;
-	public static final long RECORDING_NETWORK_PROVIDER_INTERVAL_DEFAULT = 2*ONE_SECOND;
+	public static final float RECORDING_NETWORK_PROVIDER_DISTANCE_DEFAULT = 5;//meter
+	public static final long RECORDING_NETWORK_PROVIDER_INTERVAL_DEFAULT = 3*ONE_SECOND;
 	//-------------------
 	
 	//Weka Attributes
 	//JERRID: ******************************
 	
 	public static final int FEAT_NUMBER_FEATURES=6;
-	public static final int LIGHT_BUFFER_CAPACITY = 20;
-	public static final int LIGHT_BLOCK_CAPACITY = 18;
+	public static final int LIGHT_BLOCK_CAPACITY = 60;
+	public static final int LIGHT_BLOCK_CAPACITY_ARDURINO = 42;
 	public static boolean FOUND_ARDUINO = false;
 
 	public static final String ACTION_LIGHT_SENSOR_UPDATED = "MYRUNS_LIGHT_SENSOR_UPDATED";
@@ -89,7 +98,6 @@ public abstract class Globals {
 	public static final String CLASS_LABEL_IN_DOORS = "in_door";
 
 	
-	//public static final String FEAT_INTENSITY_LABEL = "lumen_";
 	public static final String FEAT_MEAN_ABSOLUTE_DEVIATION_LABEL = "mean_abs_dev";
 	public static final String FEAT_MIN_LABEL = "min";
 	public static final String FEAT_MEAN_LABEL = "mean";
@@ -127,6 +135,7 @@ public abstract class Globals {
 	
 	// Average sweat rate while running is 3 liters per hour
 	public static  double SWEAT_RATE_HOURLY_RUNNING = 3.0;
+
 	
 	// Int encoded activity types
 	public static final int ACTIVITY_TYPE_ERROR = -1;
@@ -182,6 +191,19 @@ public abstract class Globals {
 	public static final String CURR_SWEAT_RATE_AVERAGE = "current sweat rate";
 	
 	public static final String CUMULATIVE_UV_EXPOSURE = "current uv exposure";
+	public static final String CUMULATIVE_NECK_UV_EXPOSURE="CUMULATIVE_NECK_UV_EXPOSURE";
+
+	public static final String CUMULATIVE_FACE_UV_EXPOSURE="CUMULATIVE_FACE_UV_EXPOSURE";
+	public static final String CUMULATIVE_FOREARM_UV_EXPOSURE="CUMULATIVE_FOREARM_UV_EXPOSURE";
+
+	public static final String CUMULATIVE_BACK_UV_EXPOSURE="CUMULATIVE_BACK_UV_EXPOSURE";
+
+	public static final String CUMULATIVE_CHEST_UV_EXPOSURE="CUMULATIVE_CHEST_UV_EXPOSURE";
+
+
+	public static final String CUMULATIVE_DORSAL_HAND_UV_EXPOSURE="CUMULATIVE_DORSAL_HAND_UV_EXPOSURE";
+
+	public static final String CUMULATIVE_LEG_UV_EXPOSURE="CUMULATIVE_LEG_UV_EXPOSURE";
 	
 	//COllector Variables------
 	public static final int ACTIVITY_ID_STANDING = 0;
@@ -219,5 +241,7 @@ public abstract class Globals {
 	public static final String LIGHT_INTENSITY_READING = "light_intensity";
 
 	public static final String SWEAT_TOTAL = "sweat_total";
+
+	protected static final long SUN_ANGLE_UPDATE_RATE = Globals.ONE_SECOND*10;
 	
 }

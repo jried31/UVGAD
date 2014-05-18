@@ -52,12 +52,18 @@ public class ExerciseEntryHelper {
 		//values.put(HistoryTable.KEY_UPPER_APPAREL, mData.getUpperApparel().name());
 		//values.put(HistoryTable.KEY_LOWER_APPAREL, mData.getLowerApparel().name());
 
-		values.put(HistoryTable.KEY_UV_EXPOSURE, mData.getUVExposureCumulative());
+		values.put(HistoryTable.KEY_UV_EXPOSURE, mData.getCumulativeHorizontalExposure());
+		values.put(HistoryTable.KEY_UV_EXPOSURE_CHEST, mData.getCumulativeChestExposure());
+		values.put(HistoryTable.KEY_UV_EXPOSURE_DORSAL_HAND, mData.getCumulativeHandExposure());
+		values.put(HistoryTable.KEY_UV_EXPOSURE_FACE, mData.getCumulativeFaceExposure());
+		values.put(HistoryTable.KEY_UV_EXPOSURE_FOREARM, mData.getCumulativeForearmExposure());
+		values.put(HistoryTable.KEY_UV_EXPOSURE_LEG, mData.getCumulativeLegExposure());
+		values.put(HistoryTable.KEY_UV_EXPOSURE_NECK, mData.getCumulativeNeckExposure());
 		values.put(HistoryTable.KEY_VITAMIN_D, mData.getVitaminDExposureCumulative());
 		values.put(HistoryTable.KEY_COMMENT, mData.getComment());
 		values.put(HistoryTable.KEY_DATE_TIME, mData.getDateTime().toString());
 		values.put(HistoryTable.KEY_DISTANCE, mData.getDistance());
-		values.put(HistoryTable.KEY_SWEATRATE,mData.getSweatRate());
+		values.put(HistoryTable.KEY_SWEAT_TOTAL,mData.getSweatRate());
 		values.put(HistoryTable.KEY_DURATION, mData.getDuration());
 		values.put(HistoryTable.KEY_HEARTRATE, mData.getHeartrate());
 		values.put(HistoryTable.KEY_INPUT_TYPE, mData.getInputType());
@@ -149,8 +155,37 @@ public class ExerciseEntryHelper {
 	public void setVitaminDExposureCumulative(double vitaminDExposureCum) {
 		mData.setVitaminDExposureCumulative(vitaminDExposureCum);
 	}
-	public void setUvExposureCumulative(double uvExposureCum) {
-		mData.setUvExposureCumulative(uvExposureCum);
+	
+	public void setUvExposureHorizontalCumulative(double uvExposureCum) {
+		mData.setCumulativeHorizontalExposure(uvExposureCum);
+	}
+	
+	public void setCumulativeBackExposure(double uvExposureCum) {
+		mData.setCumulativeBackExposure(uvExposureCum);
+	}
+	
+	public void setCumulativeHandExposure(double uvExposureCum) {
+		mData.setCumulativeHandExposure(uvExposureCum);
+	}
+	
+	public void setCumulativeChestExposure(double uvExposureCum) {
+		mData.setCumulativeChestExposure(uvExposureCum);
+	}
+	
+	public void setCumulativeFaceExposure(double uvExposureCum) {
+		mData.setCumulativeFaceExposure(uvExposureCum);
+	}
+	
+	public void setCumulativeLegExposure(double uvExposureCum) {
+		mData.setCumulativeLegExposure(uvExposureCum);
+	}
+
+	public void setCumulativeForearmExposure(double uvExposureCum) {
+		mData.setCumulativeForearmExposure(uvExposureCum);
+	}
+
+	public void setCumulativeNeckExposure(double uvExposureCum) {
+		mData.setCumulativeNeckExposure(uvExposureCum);
 	}
 	
 	public void setDateTime(long timeInMS) {
